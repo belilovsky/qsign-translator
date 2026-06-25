@@ -26,6 +26,8 @@ belong to maintainers rather than code cleanup.
   GitHub.
 - Re-check the public repository settings after the first push: issues, default
   branch, description, homepage, and visibility.
+- Restore the GitHub Actions check workflow once maintainer auth can update
+  files under `.github/workflows/`.
 
 ## Still Not Public Product Claims
 
