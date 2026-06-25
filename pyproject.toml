@@ -24,6 +24,9 @@ dependencies = []
 
 [project.urls]
 Homepage = "https://qsign.qdev.run/"
+Documentation = "https://github.com/belilovsky/qsign-translator/tree/main/docs"
+Repository = "https://github.com/belilovsky/qsign-translator"
+Issues = "https://github.com/belilovsky/qsign-translator/issues"
 
 [project.optional-dependencies]
 asr = ["faster-whisper>=1.0.0"]

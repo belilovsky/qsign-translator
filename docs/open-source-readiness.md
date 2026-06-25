@@ -22,9 +22,10 @@ belong to maintainers rather than code cleanup.
   - `public/static/assets/signing-avatar.png`
   - sample lexicon data
   - source-registry metadata copied from external services
-- Add final repository, issues, and documentation URLs in `pyproject.toml`
-  after the public GitHub repo exists.
-- Publish a final public security contact in `SECURITY.md`.
+- Enable and verify the preferred private vulnerability-reporting path on
+  GitHub.
+- Re-check the public repository settings after the first push: issues, default
+  branch, description, homepage, and visibility.
 
 ## Still Not Public Product Claims
 

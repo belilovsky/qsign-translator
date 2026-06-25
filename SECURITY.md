@@ -5,8 +5,9 @@
 Please do not open a public issue for suspected secrets exposure, auth bypass,
 unsafe review access, or supply-chain concerns.
 
-Before the public launch is announced, maintainers should replace this section
-with a real security inbox or GitHub private reporting entrypoint.
+Please email `a.belilovsky@gmail.com` with the repository name, affected area,
+reproduction steps, and impact summary. If GitHub private vulnerability
+reporting is enabled for this repository, you may use that channel instead.
 
 ## Scope
 
