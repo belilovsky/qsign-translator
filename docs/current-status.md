@@ -4,6 +4,13 @@ Last updated: 2026-06-25
 
 ## Scope
 
+Repository source of truth:
+
+- active repo: `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator`
+- public GitHub: `https://github.com/belilovsky/qsign-translator`
+- archived fallback copy:
+  `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator-archive`
+
 QSign Translator is currently a transparent RU/KZ sign-planning prototype. It
 accepts short text, optionally accepts audio for ASR when the dependency is
 installed, produces a reviewable sign plan, and exposes a public-safe API
@@ -91,4 +98,4 @@ The repository is structured so that secrets stay out of git:
 
 The main remaining open-source tasks are maintainer decisions outside the code:
 final public contact points, asset redistribution checks, and the eventual
-public GitHub home.
+restoration of the GitHub Actions workflow with proper maintainer auth.

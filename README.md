@@ -23,6 +23,21 @@ audio / video / text
 - Docker Compose for the local Postgres/MinIO stack
 - `ffmpeg` only when testing review-video generation
 
+## Repository Policy
+
+This repository is the canonical source of truth for QSign Translator.
+
+- Active local checkout:
+  `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator`
+- Public GitHub repository:
+  `https://github.com/belilovsky/qsign-translator`
+- Archived pre-public working copy:
+  `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator-archive`
+
+Day-to-day development should happen only in the active checkout and be pushed
+to the public GitHub repository. The archived working copy is kept only as a
+historical fallback and should be treated as read-only.
+
 ## What This Repository Does
 
 - Source registry for datasets, models, licenses, and readiness.
@@ -174,6 +189,7 @@ make api
 - [docs/infrastructure.md](docs/infrastructure.md): storage and service layout
 - [docs/production-runbook.md](docs/production-runbook.md): generic deploy and smoke flow
 - [docs/open-source-readiness.md](docs/open-source-readiness.md): publication checklist
+- [docs/repository-policy.md](docs/repository-policy.md): canonical repo and archive policy
 - [docs/product-benchmark.md](docs/product-benchmark.md): service benchmark and competitive framing
 - [docs/product-backlog.md](docs/product-backlog.md): prioritized next steps
 - [docs/source-registry.md](docs/source-registry.md): provenance and licensing inventory

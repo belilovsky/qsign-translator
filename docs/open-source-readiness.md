@@ -11,6 +11,9 @@ belong to maintainers rather than code cleanup.
 - Environment examples keep placeholder values only.
 - Public docs now describe generic self-hosting instead of one private runtime.
 - Contributor, security, and conduct docs are present.
+- The canonical development repo is now the public GitHub-backed
+  `qsign-translator` checkout.
+- The old internal checkout was moved aside into a read-only archive.
 
 ## Recommended Before Publishing
 
