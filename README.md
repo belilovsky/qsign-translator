@@ -1,0 +1,203 @@
+# QSign Translator
+
+Open RU/KZ sign-planning prototype for transparent sign-language draft output,
+review workflows, and future video-generation handoff.
+
+This repository stays intentionally narrow. It focuses on the product core and
+keeps heavy ASR and signer-avatar generation behind explicit adapters:
+
+```text
+audio / video / text
+  -> ASR adapter
+  -> text normalization
+  -> RU/KZ language routing
+  -> text-to-gloss / sign plan
+  -> reviewable sign plan
+  -> video readiness / render manifest
+  -> future mp4 / avatar output
+```
+
+## Requirements
+
+- Python 3.11 or newer
+- Docker Compose for the local Postgres/MinIO stack
+- `ffmpeg` only when testing review-video generation
+
+## What This Repository Does
+
+- Source registry for datasets, models, licenses, and readiness.
+- Deterministic text-to-sign-plan prototype for Russian and Kazakh text.
+- Dactyl fallback for unknown words.
+- Optional ASR adapter interface; no heavy weights are required for tests.
+- Persisted translation jobs and review/feedback API scaffolding.
+- Render-plan output that reports whether video fragments exist before any
+  player controls are enabled.
+- Review-video output that can render a downloadable mp4 of the current draft
+  even before a true signer-avatar backend is connected.
+- AI-video brief output that packages a provider-ready prompt, negative prompt,
+  operator task, and QA checklist for external video generators.
+
+The current public UI is a transparent draft-and-review tool. It does not claim
+that an avatar video exists when only a sign plan or dactyl fallback is
+available.
+
+## Non-Goals
+
+This repository does not currently promise:
+
+- certified sign-language translation quality
+- native-signer validation completion
+- production-grade signer-avatar rendering
+- safe autonomous use in medical, legal, emergency, or finance settings
+
+## Quick Start
+
+Choose the smallest path that fits what you want to do.
+
+### 1. CLI only
+
+Install the package in editable mode first:
+
+```bash
+python3 -m pip install -e ".[test]"
+qsign "Привет, меня зовут Александр"
+qsign "Сәлеметсіз бе, маған көмек керек"
+./scripts/check.sh
+```
+
+The CLI prints a JSON sign plan. It does not claim to be a correct
+professional interpretation yet; it is a technical spike foundation.
+
+If you prefer not to install the package, the repository also works with
+`PYTHONPATH=src`:
+
+```bash
+PYTHONPATH=src python3 -m qsign_translator --pretty "Привет, меня зовут Александр"
+```
+
+### 2. Browser UI and local API
+
+For the browser UI and API endpoints:
+
+```bash
+python3 -m pip install -e ".[api,db,test]"
+cp .env.example .env
+docker compose up -d postgres minio
+uvicorn qsign_translator.api:app --reload
+```
+
+Then open the app at `http://127.0.0.1:8000/`.
+
+API responses follow the same rule: `metadata.output_status=not_rendered`
+means the result is a reviewable plan, not a generated video.
+
+When Postgres and `ffmpeg` are available, `GET /v1/jobs/{job_id}/review-video`
+returns an honest review mp4 for the saved draft. This is a verification aid,
+not a professional sign-language interpretation and not a finished avatar
+pipeline.
+
+When a saved job exists, `GET /v1/jobs/{job_id}/ai-video-brief` returns the
+handoff package for external AI-video systems. It is designed for operators and
+generator prompts, not as proof that the generated result is linguistically
+correct without native-signer review. The payload now includes four export
+views out of the box: `Universal prompt`, `Operator handoff`, `JSON
+payload`, and `Batch storyboard`.
+
+`POST /v1/ai-video-batch-brief` accepts a list of saved `job_ids` and returns
+a stricter batch package for multi-phrase rendering: ordered scenes, timeline
+offsets, assembly rules, and exports for operator runbooks or downstream
+automation.
+
+Example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/v1/ai-video-batch-brief \
+  -H 'content-type: application/json' \
+  -d '{"job_ids":["job-uuid-1","job-uuid-2"],"title":"Intro sequence"}'
+```
+
+### 3. Lightweight API-only smoke
+
+```bash
+python3 -m pip install -e ".[api,db]"
+uvicorn qsign_translator.api:app --reload
+curl -X POST http://127.0.0.1:8000/v1/translate/text \
+  -H 'content-type: application/json' \
+  -d '{"text":"Привет, меня зовут Александр"}'
+```
+
+## Validation
+
+Fast sanity check:
+
+```bash
+./scripts/check.sh
+```
+
+Fresh-clone contributor path:
+
+```bash
+python3 -m pip install -e ".[test]"
+pytest -q
+```
+
+The bundled check script stays dependency-light and covers:
+
+- Python compile checks
+- unit and API tests that can run without heavy backends
+- JSON fixture validation
+- SQL validation
+- RU/KZ CLI smoke
+
+## Local Infrastructure
+
+- Local API default: `http://127.0.0.1:8000/`
+- Docker Compose ports are documented in [docs/infrastructure.md](docs/infrastructure.md)
+- Initial schema: `infra/db/migrations/001_initial.sql`
+- Seed helper: `scripts/seed_db.py`
+
+## Common Commands
+
+If you prefer shorter commands, the repository also ships with a small
+`Makefile`:
+
+```bash
+make install
+make check
+make api
+```
+
+## Repository Guide
+
+- [docs/current-status.md](docs/current-status.md): current prototype scope and known limits
+- [docs/architecture.md](docs/architecture.md): system shape and data flow
+- [docs/infrastructure.md](docs/infrastructure.md): storage and service layout
+- [docs/production-runbook.md](docs/production-runbook.md): generic deploy and smoke flow
+- [docs/open-source-readiness.md](docs/open-source-readiness.md): publication checklist
+- [docs/product-benchmark.md](docs/product-benchmark.md): service benchmark and competitive framing
+- [docs/product-backlog.md](docs/product-backlog.md): prioritized next steps
+- [docs/source-registry.md](docs/source-registry.md): provenance and licensing inventory
+
+## Contributing
+
+Small, focused pull requests are easiest to review here. Start with
+[CONTRIBUTING.md](CONTRIBUTING.md)
+for setup, testing, and scope guidance. Repository norms and sensitive-report
+handling live in
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+and
+[SECURITY.md](SECURITY.md).
+
+## Project Rules
+
+- Do not treat generated signing as authoritative without native signer review.
+- Every dataset/model must have license and consent status before production use.
+- High-risk domains such as medical, legal, emergency, and finance require human
+  interpreter fallback until validated.
+- Unknown words must degrade transparently to dactyl/subtitles, not hallucinated
+  signs.
+
+## Release Hygiene
+
+Before publishing a public repository, review
+[docs/open-source-readiness.md](docs/open-source-readiness.md).

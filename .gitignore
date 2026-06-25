@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+data/raw/
+data/models/
+data/clips/
+outputs/
+experiments/*
+!experiments/README.md
+.DS_Store
+.mcp.json

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qsign-translator"
+version = "0.1.0"
+description = "RU/KZ sign-language translator research and prototype workspace"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+keywords = ["sign-language", "russian", "kazakh", "fastapi", "accessibility"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://qsign.qdev.run/"
+
+[project.optional-dependencies]
+asr = ["faster-whisper>=1.0.0"]
+api = ["fastapi>=0.111.0", "uvicorn>=0.30.0"]
+db = ["psycopg[binary]>=3.2.0"]
+test = ["httpx>=0.27.0", "pytest>=8.0.0"]
+
+[project.scripts]
+qsign = "qsign_translator.cli:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.setuptools.packages.find]
+where = ["src"]
