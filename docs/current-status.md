@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-06-25
+Last updated: 2026-06-26
 
 ## Scope
 
@@ -39,6 +39,10 @@ The project is intentionally honest about what exists today:
 - AI-video brief export for one saved phrase.
 - Batch AI-video brief export for multiple saved phrases.
 - Responsive public UI with result trace, coverage counters, and export modes.
+- Separate reviewer route in the same frontend shell, with token-gated queue and
+  details view.
+- Honest unsaved-draft states in the UI: no fake saved-job, review-video, or
+  AI-video availability when a draft only exists locally.
 
 ## Public API Shape
 
@@ -71,6 +75,7 @@ Recent validation passed with:
 - 47 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
+- stable route switching between the main app and `#/review`;
 - working single-job and batch AI-video export modes.
 
 ## Known Limits

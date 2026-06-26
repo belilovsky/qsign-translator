@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260623c" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260626c" />
   </head>
   <body>
     <div class="app-shell">
@@ -48,11 +48,18 @@
             </svg>
             <span>Источники</span>
           </button>
+          <button class="icon-button" id="reviewButton" type="button" aria-label="Ревью и админка">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h10" />
+              <path d="M18 15.5 20.5 18 24 13.5" />
+            </svg>
+            <span>Ревью</span>
+          </button>
         </div>
       </header>
 
-      <main class="workspace">
-        <div class="entry-column">
+      <main class="workspace" id="appView">
+        <div class="workspace-column workspace-column-main">
           <section class="panel input-panel" aria-labelledby="inputTitle">
             <div class="panel-heading">
               <h1 id="inputTitle">1. Фраза или аудио</h1>
@@ -103,180 +110,238 @@
             </div>
             <ol class="stepper" id="stepper"></ol>
           </section>
+          <section class="panel trace-panel" aria-labelledby="traceTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="traceTitle">4. Как принято решение</h2>
+                <p class="panel-subtitle">Короткая трасса: что распознано, что найдено в словаре, где нужна проверка.</p>
+              </div>
+              <span class="small-status" id="traceGate">ожидание</span>
+            </div>
+            <div class="trace-summary" id="traceSummary"></div>
+            <ol class="trace-list" id="traceList"></ol>
+          </section>
+
+          <section class="panel timeline-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>5. План жестов</h2>
+                <p class="panel-subtitle">Выберите единицу, чтобы увидеть причину выбора и подсказку для проверки.</p>
+              </div>
+              <div class="timeline-actions">
+                <div class="segmented view-mode-toggle" role="group" aria-label="Режим просмотра плана">
+                  <button class="active" type="button" data-view-mode="user" aria-pressed="true">Пользователь</button>
+                  <button type="button" data-view-mode="reviewer" aria-pressed="false">Ревьюер</button>
+                </div>
+                <button class="secondary-button compact" id="planViewButton" type="button" aria-pressed="false">Компактно</button>
+              </div>
+            </div>
+            <div class="coverage-strip" id="coverageStrip"></div>
+            <div class="timeline" id="timeline"></div>
+            <div class="unit-inspector" id="unitInspector" aria-live="polite"></div>
+            <div class="legend">
+              <span><i class="ok"></i>Найдено в словаре</span>
+              <span><i class="fallback"></i>Нужна замена</span>
+              <span><i class="technical"></i>Служебная пометка</span>
+            </div>
+          </section>
         </div>
 
-        <section class="panel result-panel" aria-labelledby="resultTitle">
-          <div class="panel-heading result-heading">
-            <h2 id="resultTitle">3. Результат</h2>
-            <button class="secondary-button compact" id="fullscreenButton" type="button" aria-pressed="false">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" /></svg>
-              <span id="fullscreenButtonLabel">Полный экран</span>
-            </button>
-          </div>
-          <div class="video-frame" id="videoFrame">
-            <div class="avatar" aria-hidden="true">
-              <img class="avatar-image" src="/static/assets/signing-avatar.png" alt="" decoding="async" />
-            </div>
-            <video
-              class="preview-video"
-              id="previewVideo"
-              controls
-              loop
-              muted
-              playsinline
-              preload="metadata"
-              hidden
-              aria-label="Обзорное видео черновика перевода"
-            ></video>
-            <div class="video-state" id="videoState">Сначала соберите черновик перевода.</div>
-            <div class="video-controls">
-              <button class="play-button" id="playButton" type="button" aria-label="Воспроизвести" aria-pressed="false" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
-              </button>
-              <span id="videoTime">00:00 / 00:00</span>
-              <span class="scrubber"><span></span></span>
-              <button class="ghost-icon" id="soundButton" type="button" aria-label="Озвучка недоступна в этом превью" aria-pressed="false" disabled title="Озвучка пока не подключена">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h4l5 4V6l-5 4H5Z" /><path d="M17 9c1 1 1 5 0 6" /></svg>
+        <div class="workspace-column workspace-column-aside">
+          <section class="panel result-panel" aria-labelledby="resultTitle">
+            <div class="panel-heading result-heading">
+              <h2 id="resultTitle">3. Результат</h2>
+              <button class="secondary-button compact" id="fullscreenButton" type="button" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" /></svg>
+                <span id="fullscreenButtonLabel">Полный экран</span>
               </button>
             </div>
-          </div>
-          <div class="subtitle-box" id="subtitleBox">Черновик появится после генерации.</div>
-          <div class="transcript-card" aria-labelledby="transcriptTitle">
-            <div class="transcript-head">
-              <div>
-                <strong id="transcriptTitle">Рабочий текст</strong>
-                <span id="transcriptMeta">После первой сборки здесь можно будет быстро поправить текст и пересобрать черновик.</span>
+            <div class="video-frame" id="videoFrame">
+              <div class="avatar" aria-hidden="true">
+                <img class="avatar-image" src="/static/assets/signing-avatar.png" alt="" decoding="async" />
               </div>
-              <button class="secondary-button compact" id="applyTranscriptButton" type="button" disabled>Применить</button>
-            </div>
-            <textarea id="resultTranscript" class="transcript-editor" rows="4" spellcheck="false" aria-labelledby="transcriptTitle"></textarea>
-          </div>
-          <div class="fallback-summary" id="fallbackSummary" aria-label="Сводка покрытия"></div>
-          <div class="result-meta">
-            <div>
-              <span class="meta-label">Оценка совпадения</span>
-              <div class="confidence-line"><span id="confidenceBar"></span></div>
-            </div>
-            <strong id="confidenceValue">0.00</strong>
-          </div>
-          <div class="job-meta muted" id="jobMeta" aria-live="polite">Введите фразу или загрузите аудио, затем нажмите «Собрать перевод».</div>
-          <div class="playback-tools" aria-label="Настройки воспроизведения">
-            <button class="speed-button" type="button" data-speed="0.5" aria-pressed="false" disabled>0.5x</button>
-            <button class="speed-button active" type="button" data-speed="0.75" aria-pressed="true" disabled>0.75x</button>
-            <button class="speed-button" type="button" data-speed="1" aria-pressed="false" disabled>1x</button>
-            <label class="subtitle-toggle">
-              <input id="subtitleToggle" type="checkbox" checked />
-              Субтитры
-            </label>
-          </div>
-          <div class="warning-card">
-            <div>
-              <strong>Предупреждения</strong>
-              <span id="warningText">Пока предупреждений нет.</span>
-            </div>
-            <span class="warning-count" id="warningCount">0</span>
-          </div>
-          <div class="feedback-card" aria-label="Оценка результата">
-            <span id="feedbackStatus">Оценка доступна после сохранения записи.</span>
-            <div class="feedback-actions">
-              <button type="button" data-feedback="good" disabled>Хорошо</button>
-              <button type="button" data-feedback="wrong_sign" disabled>Неверный жест</button>
-              <button type="button" data-feedback="unclear_sign" disabled>Непонятно</button>
-              <button type="button" data-feedback="missing_sign" disabled>Нет жеста</button>
-              <button type="button" data-feedback="offensive" disabled>Неприемлемо</button>
-            </div>
-          </div>
-          <div class="feedback-card render-plan-card" aria-label="Готовность видео" aria-live="polite">
-            <span id="renderPlanSummary">Видео еще не готовится. После сохранения записи здесь появится готовность к сборке.</span>
-            <div class="render-plan-list" id="renderPlanList">
-              <span>готовность: ожидание</span>
-              <span>есть фрагментов: 0</span>
-              <span>нужно добавить: 0</span>
-              <span>выпуск: нет</span>
-            </div>
-          </div>
-          <div class="feedback-card export-card" aria-label="Экспорт для AI-видео" aria-live="polite">
-            <div class="export-card-head">
-              <div>
-                <strong>Экспорт для AI-видео</strong>
-                <span id="aiBriefSummary">Пакет для AI-видео появится после сохранения черновика.</span>
+              <video
+                class="preview-video"
+                id="previewVideo"
+                controls
+                loop
+                muted
+                playsinline
+                preload="metadata"
+                hidden
+                aria-label="Обзорное видео черновика перевода"
+              ></video>
+              <div class="video-state" id="videoState">Сначала соберите черновик перевода.</div>
+              <div class="video-controls">
+                <button class="play-button" id="playButton" type="button" aria-label="Воспроизвести" aria-pressed="false" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
+                </button>
+                <span id="videoTime">00:00 / 00:00</span>
+                <span class="scrubber"><span></span></span>
+                <button class="ghost-icon" id="soundButton" type="button" aria-label="Озвучка недоступна в этом превью" aria-pressed="false" disabled title="Озвучка пока не подключена">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10v4h4l5 4V6l-5 4H5Z" /><path d="M17 9c1 1 1 5 0 6" /></svg>
+                </button>
               </div>
-              <button class="secondary-button compact" id="copyAIBriefButton" type="button" disabled>Копировать brief</button>
             </div>
-            <div class="segmented-control export-modes" role="group" aria-label="Формат экспорта brief">
-              <button type="button" class="mode-button active" id="aiBriefModeUniversal" data-brief-mode="universal_prompt" aria-pressed="true">Universal</button>
-              <button type="button" class="mode-button" id="aiBriefModeOperator" data-brief-mode="operator_handoff" aria-pressed="false">Operator</button>
-              <button type="button" class="mode-button" id="aiBriefModeJson" data-brief-mode="json_payload" aria-pressed="false">JSON</button>
-              <button type="button" class="mode-button" id="aiBriefModeBatch" data-brief-mode="batch_storyboard" aria-pressed="false">Batch</button>
+            <div class="subtitle-box" id="subtitleBox">Черновик появится после генерации.</div>
+            <div class="transcript-card" aria-labelledby="transcriptTitle">
+              <div class="transcript-head">
+                <div>
+                  <strong id="transcriptTitle">Рабочий текст</strong>
+                  <span id="transcriptMeta">После первой сборки здесь можно будет быстро поправить текст и пересобрать черновик.</span>
+                </div>
+                <button class="secondary-button compact" id="applyTranscriptButton" type="button" disabled>Применить</button>
+              </div>
+              <textarea id="resultTranscript" class="transcript-editor" rows="4" spellcheck="false" aria-labelledby="transcriptTitle"></textarea>
             </div>
-            <textarea
-              id="aiBriefOutput"
-              class="brief-output"
-              rows="9"
-              readonly
-              spellcheck="false"
-            >Пока пусто.</textarea>
-          </div>
-          <div class="risk-card" id="riskCard" hidden>
-            <strong>Нужен человек-переводчик</strong>
-            <span id="riskText">Высокорисковый домен.</span>
-          </div>
-        </section>
+            <div class="fallback-summary" id="fallbackSummary" aria-label="Сводка покрытия"></div>
+            <div class="result-meta">
+              <div>
+                <span class="meta-label">Оценка совпадения</span>
+                <div class="confidence-line"><span id="confidenceBar"></span></div>
+              </div>
+              <strong id="confidenceValue">0.00</strong>
+            </div>
+            <div class="job-meta muted" id="jobMeta" aria-live="polite">Введите фразу или загрузите аудио, затем нажмите «Собрать перевод».</div>
+            <div class="playback-tools" aria-label="Настройки воспроизведения">
+              <button class="speed-button" type="button" data-speed="0.5" aria-pressed="false" disabled>0.5x</button>
+              <button class="speed-button active" type="button" data-speed="0.75" aria-pressed="true" disabled>0.75x</button>
+              <button class="speed-button" type="button" data-speed="1" aria-pressed="false" disabled>1x</button>
+              <label class="subtitle-toggle">
+                <input id="subtitleToggle" type="checkbox" checked />
+                Субтитры
+              </label>
+            </div>
+            <div class="warning-card">
+              <div>
+                <strong>Предупреждения</strong>
+                <span id="warningText">Пока предупреждений нет.</span>
+              </div>
+              <span class="warning-count" id="warningCount">0</span>
+            </div>
+            <div class="feedback-card" aria-label="Оценка результата">
+              <span id="feedbackStatus">Оценка доступна после сохранения записи.</span>
+              <div class="feedback-actions">
+                <button type="button" data-feedback="good" disabled>Хорошо</button>
+                <button type="button" data-feedback="wrong_sign" disabled>Неверный жест</button>
+                <button type="button" data-feedback="unclear_sign" disabled>Непонятно</button>
+                <button type="button" data-feedback="missing_sign" disabled>Нет жеста</button>
+                <button type="button" data-feedback="offensive" disabled>Неприемлемо</button>
+              </div>
+            </div>
+            <div class="feedback-card render-plan-card" aria-label="Готовность видео" aria-live="polite">
+              <span id="renderPlanSummary">Видео еще не готовится. После сохранения записи здесь появится готовность к сборке.</span>
+              <div class="render-plan-list" id="renderPlanList">
+                <span>готовность: ожидание</span>
+                <span>есть фрагментов: 0</span>
+                <span>нужно добавить: 0</span>
+                <span>выпуск: нет</span>
+              </div>
+            </div>
+            <div class="feedback-card export-card" aria-label="Экспорт для AI-видео" aria-live="polite">
+              <div class="export-card-head">
+                <div>
+                  <strong>Экспорт для AI-видео</strong>
+                  <span id="aiBriefSummary">Пакет для AI-видео появится после сохранения черновика.</span>
+                </div>
+                <button class="secondary-button compact" id="copyAIBriefButton" type="button" disabled>Копировать brief</button>
+              </div>
+              <div class="segmented-control export-modes" role="group" aria-label="Формат экспорта brief">
+                <button type="button" class="mode-button active" id="aiBriefModeUniversal" data-brief-mode="universal_prompt" aria-pressed="true">Universal</button>
+                <button type="button" class="mode-button" id="aiBriefModeOperator" data-brief-mode="operator_handoff" aria-pressed="false">Operator</button>
+                <button type="button" class="mode-button" id="aiBriefModeJson" data-brief-mode="json_payload" aria-pressed="false">JSON</button>
+                <button type="button" class="mode-button" id="aiBriefModeBatch" data-brief-mode="batch_storyboard" aria-pressed="false">Batch</button>
+              </div>
+              <textarea
+                id="aiBriefOutput"
+                class="brief-output"
+                rows="9"
+                readonly
+                spellcheck="false"
+              >Пока пусто.</textarea>
+            </div>
+            <div class="risk-card" id="riskCard" hidden>
+              <strong>Нужен человек-переводчик</strong>
+              <span id="riskText">Высокорисковый домен.</span>
+            </div>
+          </section>
+
+          <section class="panel sources-panel">
+            <div class="panel-heading">
+              <h2>6. Источники</h2>
+              <span class="small-status" id="readyStatus">проверка</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Источник</th>
+                    <th>Тип</th>
+                    <th>Языки</th>
+                    <th>Статус</th>
+                  </tr>
+                </thead>
+                <tbody id="sourceRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
       </main>
 
-      <section class="panel trace-panel" aria-labelledby="traceTitle">
-        <div class="panel-heading">
-          <div>
-            <h2 id="traceTitle">4. Как принято решение</h2>
-            <p class="panel-subtitle">Короткая трасса: что распознано, что найдено в словаре, где нужна проверка.</p>
-          </div>
-          <span class="small-status" id="traceGate">ожидание</span>
-        </div>
-        <div class="trace-summary" id="traceSummary"></div>
-        <ol class="trace-list" id="traceList"></ol>
-      </section>
-
-      <section class="lower-grid">
-        <div class="panel timeline-panel">
-          <div class="panel-heading">
+      <section class="review-shell" id="reviewView" hidden aria-labelledby="reviewTitle">
+        <div class="panel review-panel">
+          <div class="panel-heading review-heading">
             <div>
-              <h2>5. План жестов</h2>
-              <p class="panel-subtitle">Выберите единицу, чтобы увидеть причину выбора и подсказку для проверки.</p>
+              <h1 id="reviewTitle">Операторская проверка</h1>
+              <p class="panel-subtitle">Очередь ревью, статусы и обратная связь по сохраненным записям.</p>
             </div>
-            <div class="timeline-actions">
-              <div class="segmented view-mode-toggle" role="group" aria-label="Режим просмотра плана">
-                <button class="active" type="button" data-view-mode="user" aria-pressed="true">Пользователь</button>
-                <button type="button" data-view-mode="reviewer" aria-pressed="false">Ревьюер</button>
+            <button class="secondary-button compact" id="reviewBackButton" type="button">К приложению</button>
+          </div>
+
+          <div class="review-toolbar">
+            <label class="review-token-field">
+              <span>Токен ревью</span>
+              <input id="reviewTokenInput" type="password" placeholder="x-qsign-review-token" autocomplete="off" />
+            </label>
+            <label class="review-filter-field">
+              <span>Статус</span>
+              <select id="reviewStatusFilter">
+                <option value="">Все</option>
+                <option value="pending_signer_review">Ожидает проверки</option>
+                <option value="needs_edit">Нужна правка</option>
+                <option value="approved">Одобрено</option>
+                <option value="rejected">Отклонено</option>
+              </select>
+            </label>
+            <button class="secondary-button compact" id="reviewLoadButton" type="button">Обновить</button>
+          </div>
+
+          <div class="review-status-banner" id="reviewStatusBanner">Введите токен и обновите очередь ревью.</div>
+          <div class="review-summary" id="reviewSummary"></div>
+
+          <div class="review-grid">
+            <section class="review-list-card">
+              <div class="review-card-head">
+                <h2>Очередь</h2>
+                <span class="small-status" id="reviewQueueStatus">ожидание</span>
               </div>
-              <button class="secondary-button compact" id="planViewButton" type="button" aria-pressed="false">Компактно</button>
-            </div>
-          </div>
-          <div class="coverage-strip" id="coverageStrip"></div>
-          <div class="timeline" id="timeline"></div>
-          <div class="unit-inspector" id="unitInspector" aria-live="polite"></div>
-          <div class="legend">
-            <span><i class="ok"></i>Найдено в словаре</span>
-            <span><i class="fallback"></i>Нужна замена</span>
-            <span><i class="technical"></i>Служебная пометка</span>
-          </div>
-        </div>
-        <div class="panel sources-panel">
-          <div class="panel-heading">
-            <h2>6. Источники</h2>
-            <span class="small-status" id="readyStatus">проверка</span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Источник</th>
-                  <th>Тип</th>
-                  <th>Языки</th>
-                  <th>Статус</th>
-                </tr>
-              </thead>
-              <tbody id="sourceRows"></tbody>
-            </table>
+              <div class="review-jobs" id="reviewJobs"></div>
+            </section>
+
+            <section class="review-detail-card">
+              <div class="review-card-head">
+                <h2>Карточка записи</h2>
+                <div class="review-actions">
+                  <button class="secondary-button compact" type="button" data-review-status-action="pending_signer_review">Ожидает</button>
+                  <button class="secondary-button compact" type="button" data-review-status-action="needs_edit">Нужна правка</button>
+                  <button class="secondary-button compact" type="button" data-review-status-action="approved">Одобрить</button>
+                  <button class="secondary-button compact" type="button" data-review-status-action="rejected">Отклонить</button>
+                </div>
+              </div>
+              <div class="review-detail-summary" id="reviewDetailSummary">Выберите запись слева, чтобы увидеть детали ревью.</div>
+              <div class="review-unit-list" id="reviewUnitList"></div>
+              <div class="review-feedback-list" id="reviewFeedbackList"></div>
+            </section>
           </div>
         </div>
       </section>
@@ -287,6 +352,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260623c" defer></script>
+    <script src="/static/app.js?v=20260626c" defer></script>
   </body>
 </html>

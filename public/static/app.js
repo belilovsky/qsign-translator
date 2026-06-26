@@ -21,6 +21,12 @@ const state = {
   renderPlanRequestId: 0,
   healthFailures: 0,
   healthRetryTimer: null,
+  route: "app",
+  reviewToken: "",
+  reviewJobs: [],
+  reviewFeedback: [],
+  selectedReviewJobId: "",
+  reviewFilter: "",
 };
 
 const defaultUploadCopy = {
@@ -85,6 +91,7 @@ const apiBadge = document.querySelector("#apiBadge");
 const footerStamp = document.querySelector("#footerStamp");
 const serviceStatusLabel = document.querySelector("#serviceStatusLabel");
 const settingsButton = document.querySelector("#settingsButton");
+const reviewButton = document.querySelector("#reviewButton");
 const fullscreenButton = document.querySelector("#fullscreenButton");
 const fullscreenButtonLabel = document.querySelector("#fullscreenButtonLabel");
 const videoFrame = document.querySelector("#videoFrame");
@@ -97,6 +104,20 @@ const subtitleToggle = document.querySelector("#subtitleToggle");
 const planViewButton = document.querySelector("#planViewButton");
 const scrubberFill = document.querySelector(".scrubber span");
 const speedButtons = Array.from(document.querySelectorAll(".speed-button"));
+const appView = document.querySelector("#appView");
+const reviewView = document.querySelector("#reviewView");
+const reviewBackButton = document.querySelector("#reviewBackButton");
+const reviewTokenInput = document.querySelector("#reviewTokenInput");
+const reviewStatusFilter = document.querySelector("#reviewStatusFilter");
+const reviewLoadButton = document.querySelector("#reviewLoadButton");
+const reviewStatusBanner = document.querySelector("#reviewStatusBanner");
+const reviewSummary = document.querySelector("#reviewSummary");
+const reviewJobs = document.querySelector("#reviewJobs");
+const reviewQueueStatus = document.querySelector("#reviewQueueStatus");
+const reviewDetailSummary = document.querySelector("#reviewDetailSummary");
+const reviewUnitList = document.querySelector("#reviewUnitList");
+const reviewFeedbackList = document.querySelector("#reviewFeedbackList");
+const reviewStatusActionButtons = Array.from(document.querySelectorAll("[data-review-status-action]"));
 
 const warningLabels = {
   prototype_sign_plan_not_professional_interpretation: "Черновик не заменяет профессиональный перевод.",
@@ -111,6 +132,13 @@ const riskLabels = {
   legal: "юридические вопросы",
   finance: "финансы",
 };
+
+const reviewStatusOptions = [
+  { value: "pending_signer_review", label: "Ожидает проверки", tone: "warn" },
+  { value: "needs_edit", label: "Нужна правка", tone: "bad" },
+  { value: "approved", label: "Одобрено", tone: "ok" },
+  { value: "rejected", label: "Отклонено", tone: "bad" },
+];
 
 const supportedAudioTypes = new Set([
   "audio/aac",
@@ -129,6 +157,52 @@ function setService(status, label) {
   if (status) serviceStatus.classList.add(status);
   serviceStatusLabel.textContent = label;
   apiBadge.textContent = `Сервис: ${label}`;
+}
+
+function loadReviewToken() {
+  try {
+    const saved = window.localStorage.getItem("qsignReviewToken");
+    state.reviewToken = String(saved || "");
+  } catch {
+    state.reviewToken = "";
+  }
+  reviewTokenInput.value = state.reviewToken;
+}
+
+function saveReviewToken(value) {
+  state.reviewToken = String(value || "").trim();
+  try {
+    if (state.reviewToken) {
+      window.localStorage.setItem("qsignReviewToken", state.reviewToken);
+    } else {
+      window.localStorage.removeItem("qsignReviewToken");
+    }
+  } catch {}
+}
+
+function reviewHeaders() {
+  if (!state.reviewToken) return {};
+  return { "x-qsign-review-token": state.reviewToken };
+}
+
+function setRoute(route) {
+  state.route = route === "review" ? "review" : "app";
+  const reviewMode = state.route === "review";
+  appView.hidden = reviewMode;
+  reviewView.hidden = !reviewMode;
+  reviewButton.classList.toggle("active-route", reviewMode);
+  if (reviewMode) {
+    window.location.hash = "#/review";
+    if (!state.reviewJobs.length) {
+      loadReviewDashboard();
+    }
+  } else if (window.location.hash === "#/review") {
+    history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+  }
+}
+
+function syncRouteFromLocation() {
+  setRoute(window.location.hash.startsWith("#/review") ? "review" : "app");
 }
 
 function scheduleHealthRetry() {
@@ -330,7 +404,7 @@ function syncFeedbackButtons() {
 }
 
 function refreshPlaybackUi() {
-  const totalMs = state.playbackDurationMs || getPreviewDurationMs();
+  const totalMs = state.videoPreviewReady ? (state.playbackDurationMs || getPreviewDurationMs()) : 0;
   const progressMs = Math.max(0, Math.min(totalMs, state.playbackProgressMs));
   const ratio = totalMs > 0 ? progressMs / totalMs : 0;
   scrubberFill.style.width = `${ratio * 100}%`;
@@ -417,7 +491,7 @@ async function loadReviewVideo(jobId) {
   const requestId = ++state.previewVideoRequestId;
   clearPreviewVideo();
   if (!jobId) {
-    setVideoPreviewState(false, "Нет сохраненного черновика для обзорного видео.");
+    setVideoPreviewState(false, "Без сохраненной записи обзорное видео не собирается.");
     return;
   }
   setVideoPreviewState(false, "Собираем обзорное видео черновика.");
@@ -455,7 +529,11 @@ async function loadReviewVideo(jobId) {
 
 async function loadAIVideoBrief(jobId) {
   if (!jobId) {
-    resetAIBrief();
+    renderAIBriefSummary(
+      "Экспорт для AI-видео доступен только после сохранения записи.",
+      "Сейчас доступен только локальный черновик плана без экспортного пакета.",
+      false
+    );
     return;
   }
   renderAIBriefSummary(
@@ -479,13 +557,27 @@ async function loadAIVideoBrief(jobId) {
   }
 }
 
+function showUnsavedDependentState() {
+  setVideoPreviewState(false, "Сохранение записи недоступно: обзорное видео не собирается.");
+  renderRenderPlanSummary(
+    "Без сохраненной записи нельзя проверить готовность к сборке видео.",
+    ["готовность: нужна запись", "есть фрагментов: —", "нужно добавить: —", "выпуск: нет"]
+  );
+  renderAIBriefSummary(
+    "Экспорт для AI-видео доступен только после сохранения записи.",
+    "Сейчас доступен только локальный черновик плана без brief-пакета.",
+    false
+  );
+}
+
 function renderSteps(activeIndex = 0) {
   clearNode(stepper);
+  const completed = activeIndex >= steps.length;
   steps.forEach((step, index) => {
     const item = document.createElement("li");
     item.className = "step";
-    if (index < activeIndex) item.classList.add("done");
-    if (index === activeIndex) item.classList.add("active");
+    if (completed || index < activeIndex) item.classList.add("done");
+    if (!completed && index === activeIndex) item.classList.add("active");
 
     appendTextElement(item, "span", "step-index", String(index + 1));
     const content = document.createElement("div");
@@ -777,7 +869,7 @@ function renderJobMeta(metadata = {}) {
     return;
   }
   if (metadata?.persisted === false) {
-    jobMeta.textContent = `Черновик показан без сохранения. ${outputSentence}. Проверка: ${reviewStatus}. Требует замены: ${fallbackCount}, неизвестно: ${unknownCount}.`;
+    jobMeta.textContent = `Черновик показан локально без сохранения. Зависимые функции ревью и AI-видео сейчас недоступны. ${outputSentence}. Проверка: ${reviewStatus}. Требует замены: ${fallbackCount}, неизвестно: ${unknownCount}.`;
     jobMeta.classList.add("muted");
     setFeedbackEnabled(false);
     return;
@@ -960,8 +1052,12 @@ async function generatePlan() {
     const plan = await response.json();
     renderPlan(plan);
     const jobId = plan?.metadata?.job_id;
-    await loadReviewVideo(jobId);
-    await Promise.allSettled([loadRenderPlan(jobId), loadAIVideoBrief(jobId)]);
+    if (jobId) {
+      await loadReviewVideo(jobId);
+      await Promise.allSettled([loadRenderPlan(jobId), loadAIVideoBrief(jobId)]);
+    } else {
+      showUnsavedDependentState();
+    }
     setService("ok", "работает");
   } catch (error) {
     renderPlan({
@@ -1235,6 +1331,251 @@ async function loadHealthAndSources() {
   }
 }
 
+function formatReviewPill(status) {
+  const match = reviewStatusOptions.find((item) => item.value === status);
+  return {
+    label: match?.label || formatReviewStatus(status),
+    tone: match?.tone || "warn",
+  };
+}
+
+function renderReviewSummary(items) {
+  const counts = {
+    total: items.length,
+    pending_signer_review: items.filter((item) => item.review_status === "pending_signer_review").length,
+    needs_edit: items.filter((item) => item.review_status === "needs_edit").length,
+    approved: items.filter((item) => item.review_status === "approved").length,
+  };
+  renderMetricGrid(
+    reviewSummary,
+    [
+      [counts.total, "записей в выборке"],
+      [counts.pending_signer_review, "ждут проверки"],
+      [counts.needs_edit, "нуждаются в правке"],
+      [counts.approved, "уже одобрены"],
+    ],
+    "review-summary-item"
+  );
+}
+
+function syncReviewActionButtons() {
+  const disabled = !state.reviewToken || !state.selectedReviewJobId;
+  reviewStatusActionButtons.forEach((button) => {
+    button.disabled = disabled;
+  });
+}
+
+function renderReviewJobs(items) {
+  clearNode(reviewJobs);
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "review-empty-state";
+    appendTextElement(empty, "strong", "", state.reviewToken ? "Очередь пуста" : "Очередь закрыта");
+    appendTextElement(
+      empty,
+      "p",
+      "",
+      state.reviewToken
+        ? "Для выбранного фильтра пока нет сохраненных записей."
+        : "Чтобы увидеть сохраненные записи, введите review token и обновите очередь."
+    );
+    reviewJobs.append(empty);
+    return;
+  }
+  items.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "review-job-card";
+    if (item.id === state.selectedReviewJobId) card.classList.add("selected");
+    card.tabIndex = 0;
+    const pill = formatReviewPill(item.review_status);
+    const head = document.createElement("div");
+    head.className = "review-job-head";
+    appendTextElement(head, "strong", "", String(item.input_text || "Без текста"));
+    const status = appendTextElement(head, "span", `review-pill ${pill.tone}`, pill.label);
+    status.title = String(item.review_status || "");
+    card.append(head);
+    appendTextElement(card, "p", "", `${formatPlanLanguage(item.detected_language)} · ${formatOutputStatus(item.output_status)}.`);
+    appendTextElement(card, "p", "", `Замены: ${Number(item.fallback_count || 0)} · неизвестно: ${Number(item.unknown_token_count || 0)}.`);
+    card.addEventListener("click", () => selectReviewJob(item.id));
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      selectReviewJob(item.id);
+    });
+    reviewJobs.append(card);
+  });
+}
+
+function renderReviewDetail(job, feedbackItems = []) {
+  clearNode(reviewDetailSummary);
+  clearNode(reviewUnitList);
+  clearNode(reviewFeedbackList);
+  syncReviewActionButtons();
+  if (!job) {
+    appendTextElement(reviewDetailSummary, "strong", "", "Выберите запись");
+    appendTextElement(
+      reviewDetailSummary,
+      "p",
+      "",
+      state.reviewToken
+        ? "После выбора записи здесь появятся детали, единицы плана и отзывы."
+        : "После ввода review token здесь откроются защищенные детали сохраненной записи."
+    );
+    return;
+  }
+  appendTextElement(reviewDetailSummary, "strong", "", String(job.input_text || "Без текста"));
+  const summaryGrid = document.createElement("div");
+  summaryGrid.className = "review-detail-grid";
+  [
+    ["Язык", formatPlanLanguage(job.detected_language)],
+    ["Статус ревью", formatReviewStatus(job.review_status)],
+    ["Вывод", formatOutputStatus(job.output_status)],
+    ["Замены", `${Number(job.fallback_count || 0)} / неизвестно ${Number(job.unknown_token_count || 0)}`],
+  ].forEach(([label, value]) => {
+    const item = document.createElement("div");
+    item.className = "review-detail-grid-item";
+    appendTextElement(item, "span", "", label);
+    appendTextElement(item, "strong", "", String(value));
+    summaryGrid.append(item);
+  });
+  reviewDetailSummary.append(summaryGrid);
+  appendTextElement(reviewDetailSummary, "p", "", formatWarnings(job.warnings || []));
+  syncReviewActionButtons();
+
+  const units = job.units || [];
+  if (!units.length) {
+    const emptyUnits = document.createElement("div");
+    emptyUnits.className = "review-empty-state";
+    appendTextElement(emptyUnits, "strong", "", "Единиц плана нет");
+    appendTextElement(emptyUnits, "p", "", "У записи пока нет загруженных единиц плана.");
+    reviewUnitList.append(emptyUnits);
+  } else {
+    units.forEach((unit, index) => {
+      const card = document.createElement("article");
+      card.className = "review-unit-card";
+      appendTextElement(card, "strong", "", `${index + 1}. ${formatGloss(unit)}`);
+      appendTextElement(card, "p", "", `${unit.source_token || "—"} · ${formatUnitSource(unit.source)}`);
+      appendTextElement(card, "p", "", `${formatUnitDecision(unit)} ${formatReviewerHint(unit)}`);
+      reviewUnitList.append(card);
+    });
+  }
+
+  if (!feedbackItems.length) {
+    const emptyFeedback = document.createElement("div");
+    emptyFeedback.className = "review-empty-state";
+    appendTextElement(emptyFeedback, "strong", "", "Отзывов пока нет");
+    appendTextElement(emptyFeedback, "p", "", "Когда пользователи оставят оценку, она появится здесь.");
+    reviewFeedbackList.append(emptyFeedback);
+  } else {
+    feedbackItems.forEach((item) => {
+      const card = document.createElement("article");
+      card.className = "review-feedback-card";
+      appendTextElement(card, "strong", "", formatStatus(item.feedback_type));
+      appendTextElement(card, "p", "", item.note || "Без дополнительной заметки.");
+      reviewFeedbackList.append(card);
+    });
+  }
+}
+
+async function loadReviewDashboard() {
+  saveReviewToken(reviewTokenInput.value);
+  state.reviewFilter = reviewStatusFilter.value || "";
+  syncReviewActionButtons();
+  reviewStatusBanner.textContent = state.reviewToken
+    ? "Загружаем очередь ревью и последние отзывы."
+    : "Введите токен ревью, чтобы открыть защищенную очередь.";
+  reviewQueueStatus.textContent = "проверка";
+  if (!state.reviewToken) {
+    state.reviewJobs = [];
+    state.selectedReviewJobId = "";
+    renderReviewSummary([]);
+    renderReviewJobs([]);
+    renderReviewDetail(null);
+    reviewQueueStatus.textContent = "нужен токен";
+    return;
+  }
+  try {
+    const params = new URLSearchParams();
+    if (state.reviewFilter) params.set("review_status", state.reviewFilter);
+    const response = await fetch(`/v1/review/jobs?${params.toString()}`, { headers: reviewHeaders() });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
+    }
+    const data = await response.json();
+    state.reviewJobs = data.items || [];
+    reviewQueueStatus.textContent = data.count ? "активно" : "пусто";
+    reviewStatusBanner.textContent = data.count
+      ? `Загружено ${data.count} записей для ревью.`
+      : "Очередь ревью сейчас пуста.";
+    renderReviewSummary(state.reviewJobs);
+    renderReviewJobs(state.reviewJobs);
+    if (!state.reviewJobs.some((item) => item.id === state.selectedReviewJobId)) {
+      state.selectedReviewJobId = state.reviewJobs[0]?.id || "";
+    }
+    await selectReviewJob(state.selectedReviewJobId, false);
+  } catch (error) {
+    state.reviewJobs = [];
+    state.selectedReviewJobId = "";
+    renderReviewSummary([]);
+    renderReviewJobs([]);
+    renderReviewDetail(null);
+    reviewQueueStatus.textContent = "ошибка";
+    reviewStatusBanner.textContent = `Ревью не загрузилось: ${String(error.message || error)}`;
+  }
+}
+
+async function selectReviewJob(jobId, refreshList = true) {
+  state.selectedReviewJobId = String(jobId || "");
+  syncReviewActionButtons();
+  if (refreshList) renderReviewJobs(state.reviewJobs);
+  if (!state.selectedReviewJobId) {
+    renderReviewDetail(null);
+    return;
+  }
+  try {
+    const [jobResponse, feedbackResponse] = await Promise.all([
+      fetch(`/v1/jobs/${state.selectedReviewJobId}`, { headers: reviewHeaders() }),
+      fetch(`/v1/review/feedback?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
+    ]);
+    if (!jobResponse.ok) {
+      const detail = await jobResponse.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${jobResponse.status}`);
+    }
+    const job = await jobResponse.json();
+    const feedbackData = feedbackResponse.ok ? await feedbackResponse.json() : { items: [] };
+    state.reviewFeedback = feedbackData.items || [];
+    renderReviewJobs(state.reviewJobs);
+    renderReviewDetail(job, state.reviewFeedback);
+  } catch (error) {
+    renderReviewDetail(null);
+    reviewStatusBanner.textContent = `Не удалось открыть запись: ${String(error.message || error)}`;
+  }
+}
+
+async function updateReviewStatus(status) {
+  if (!state.selectedReviewJobId || !state.reviewToken) return;
+  reviewStatusBanner.textContent = "Сохраняем статус ревью...";
+  try {
+    const response = await fetch(`/v1/review/jobs/${state.selectedReviewJobId}`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        ...reviewHeaders(),
+      },
+      body: JSON.stringify({ review_status: status }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
+    }
+    reviewStatusBanner.textContent = `Статус обновлен: ${formatReviewStatus(status)}.`;
+    await loadReviewDashboard();
+  } catch (error) {
+    reviewStatusBanner.textContent = `Статус не обновлен: ${String(error.message || error)}`;
+  }
+}
+
 inputText.addEventListener("input", () => {
   updateCharCount();
   syncDirtyState();
@@ -1321,6 +1662,34 @@ feedbackButtons.forEach((button) => {
 
 settingsButton.addEventListener("click", () => {
   document.querySelector(".sources-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+reviewButton.addEventListener("click", () => {
+  setRoute("review");
+});
+
+reviewBackButton.addEventListener("click", () => {
+  setRoute("app");
+});
+
+reviewLoadButton.addEventListener("click", () => {
+  loadReviewDashboard();
+});
+
+reviewStatusFilter.addEventListener("change", () => {
+  loadReviewDashboard();
+});
+
+reviewTokenInput.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  loadReviewDashboard();
+});
+
+reviewStatusActionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    updateReviewStatus(button.dataset.reviewStatusAction);
+  });
 });
 
 copyAIBriefButton.addEventListener("click", async () => {
@@ -1434,8 +1803,12 @@ previewVideo.addEventListener("ended", () => {
 updateCharCount();
 setInputLanguage(state.inputLanguage);
 setPlaybackSpeed(state.playbackSpeed);
+loadReviewToken();
+syncReviewActionButtons();
 renderEmptyState();
 renderFooterStamp();
 renderSources(sampleSources);
 loadHealthAndSources();
+syncRouteFromLocation();
+window.addEventListener("hashchange", syncRouteFromLocation);
 })();

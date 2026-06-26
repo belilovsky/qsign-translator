@@ -103,6 +103,11 @@ uvicorn qsign_translator.api:app --reload
 
 Then open the app at `http://127.0.0.1:8000/`.
 
+The public shell includes a separate reviewer route at `/#/review`. It stays
+read-only until an operator provides `x-qsign-review-token`, and it should not
+claim that saved records, review-video, or AI-video exports exist when a draft
+only lives locally in the browser session.
+
 API responses follow the same rule: `metadata.output_status=not_rendered`
 means the result is a reviewable plan, not a generated video.
 
