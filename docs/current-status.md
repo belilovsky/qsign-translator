@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-06-26
+Last updated: 2026-06-27
 
 ## Scope
 
@@ -77,6 +77,7 @@ Recent validation passed with:
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
 - working single-job and batch AI-video export modes.
+- live footer attribution now points back to `qdev.run` in a muted, non-promotional style.
 
 ## Known Limits
 
