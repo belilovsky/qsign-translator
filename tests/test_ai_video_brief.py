@@ -27,6 +27,7 @@ class AIVideoBriefTests(unittest.TestCase):
         brief = build_ai_video_brief(job, render_plan)
 
         self.assertEqual(brief["job_id"], "job-1")
+        self.assertIn("generated_at", brief)
         self.assertEqual(brief["format_version"], "qsign-ai-video-brief/v1")
         self.assertEqual(brief["summary"]["resolved_segments"], 1)
         self.assertEqual(brief["summary"]["missing_segments"], 1)
@@ -45,6 +46,7 @@ class AIVideoBriefTests(unittest.TestCase):
         self.assertIn("json_payload", brief["exports"])
         self.assertIn("render_contract", brief["exports"])
         self.assertIn("QSign AI Video Brief", brief["exports"]["universal_prompt"]["text"])
+        self.assertIn("generated_at:", brief["exports"]["universal_prompt"]["text"])
         self.assertIn("Operator handoff", brief["exports"]["operator_handoff"]["text"])
         self.assertIn("QSign render contract", brief["exports"]["render_contract"]["text"])
         self.assertIn("\"format_version\": \"qsign-ai-video-brief/v1\"", brief["exports"]["json_payload"]["text"])
@@ -86,6 +88,7 @@ class AIVideoBriefTests(unittest.TestCase):
         brief = build_ai_video_batch_brief(jobs_with_render_plans, title="Demo batch")
 
         self.assertEqual(brief["format_version"], "qsign-ai-video-batch-brief/v1")
+        self.assertIn("generated_at", brief)
         self.assertEqual(brief["summary"]["scene_count"], 2)
         self.assertEqual(brief["summary"]["fallback_units"], 1)
         self.assertEqual(brief["summary"]["review_required_scene_count"], 2)
@@ -96,6 +99,7 @@ class AIVideoBriefTests(unittest.TestCase):
         self.assertIn("scene_prompts", brief["exports"])
         self.assertIn("render_contract", brief["exports"])
         self.assertIn("QSign Batch AI Video Brief", brief["exports"]["batch_storyboard"]["text"])
+        self.assertIn("generated_at:", brief["exports"]["batch_storyboard"]["text"])
         self.assertIn("QSign batch render contract", brief["exports"]["render_contract"]["text"])
 
 

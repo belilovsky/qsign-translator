@@ -16,6 +16,7 @@ const state = {
   lastRenderPlan: null,
   lastAIBrief: null,
   aiBriefMode: "universal_prompt",
+  aiBriefRequestId: 0,
   videoPreviewReady: false,
   previewVideoRequestId: 0,
   renderPlanRequestId: 0,
@@ -313,6 +314,9 @@ function resetRenderPlanSummary() {
 function renderAIBriefSummary(summary, text, enabled) {
   aiBriefSummary.textContent = summary;
   aiBriefOutput.value = text;
+  aiBriefOutput.textContent = text;
+  aiBriefOutput.scrollTop = 0;
+  aiBriefOutput.scrollLeft = 0;
   copyAIBriefButton.disabled = !enabled;
 }
 
@@ -343,7 +347,7 @@ function renderAIBriefData() {
     return;
   }
   renderAIBriefSummary(
-    `Готов формат: ${activeExport.label || "brief"}.`,
+    `Готов формат: ${activeExport.label || "brief"} · запись ${(data.job_id || "").slice(0, 8) || "—"}.`,
     String(activeExport.text || ""),
     true
   );
@@ -555,6 +559,7 @@ async function loadReviewVideo(jobId) {
 }
 
 async function loadAIVideoBrief(jobId) {
+  const requestId = ++state.aiBriefRequestId;
   if (!jobId) {
     renderAIBriefSummary(
       "Экспорт для AI-видео доступен только после сохранения записи.",
@@ -570,11 +575,14 @@ async function loadAIVideoBrief(jobId) {
   );
   try {
     const response = await fetch(`/v1/jobs/${jobId}/ai-video-brief`);
+    if (requestId !== state.aiBriefRequestId) return;
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const data = await response.json();
+    if (requestId !== state.aiBriefRequestId) return;
     state.lastAIBrief = data;
     renderAIBriefData();
   } catch {
+    if (requestId !== state.aiBriefRequestId) return;
     state.lastAIBrief = null;
     renderAIBriefSummary(
       "Пакет для AI-видео пока не получен.",

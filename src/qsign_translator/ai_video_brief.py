@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import json
 
 
@@ -58,6 +59,7 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
     )
     brief = {
         "job_id": str(job.get("id") or ""),
+        "generated_at": _iso_now(),
         "format_version": "qsign-ai-video-brief/v1",
         "summary": {
             "input_text": str(job.get("input_text") or ""),
@@ -118,6 +120,7 @@ def build_ai_video_batch_brief(
     video_spec = default_video_spec(languages[0] if len(languages) == 1 else "mixed")
     batch_render = _build_batch_render_structure(scene_briefs, title=batch_title)
     batch_brief = {
+        "generated_at": _iso_now(),
         "format_version": "qsign-ai-video-batch-brief/v1",
         "summary": {
             "title": batch_title,
@@ -268,6 +271,7 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
     universal_lines = [
         "QSign AI Video Brief",
         f"job_id: {brief.get('job_id') or '-'}",
+        f"generated_at: {brief.get('generated_at') or '-'}",
         f"route: {summary.get('language_route') or '-'}",
         f"duration_seconds: {summary.get('duration_seconds') or '-'}",
         f"resolution: {video_spec.get('resolution') or '-'}",
@@ -296,6 +300,7 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
     operator_lines = [
         "Operator handoff for AI signer draft production",
         f"Job: {brief.get('job_id') or '-'}",
+        f"Generated at: {brief.get('generated_at') or '-'}",
         f"Route: {summary.get('language_route') or '-'}",
         f"Target duration: {summary.get('duration_seconds') or '-'} seconds",
         f"Review status: {summary.get('review_status') or '-'}",
@@ -317,6 +322,7 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
     batch = dict(brief.get("batch_render") or {})
     scene_lines = [
         "Batch storyboard for sequential render",
+        f"Generated at: {brief.get('generated_at') or '-'}",
         f"Title: {batch.get('title') or '-'}",
         f"Scenes: {batch.get('scene_count') or 0}",
         f"Total duration: {batch.get('duration_seconds') or 0} seconds",
@@ -324,11 +330,11 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
         "",
         "Scene order:",
         *[
-            (
-                f"{scene.get('scene_number')}. {scene.get('input_text')} | "
-                f"{scene.get('language_route')} | {scene.get('duration_seconds')}s | "
-                f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')}"
-            )
+                (
+                    f"{scene.get('scene_number')}. job={scene.get('job_id')} | {scene.get('input_text')} | "
+                    f"{scene.get('language_route')} | {scene.get('duration_seconds')}s | "
+                    f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')}"
+                )
             for scene in batch.get("scenes") or []
         ],
         "",
@@ -440,6 +446,7 @@ def _build_batch_export_formats(
     batch = dict(batch_brief.get("batch_render") or {})
     storyboard_lines = [
         "QSign Batch AI Video Brief",
+        f"generated_at: {batch_brief.get('generated_at') or '-'}",
         f"title: {summary.get('title') or '-'}",
         f"scene_count: {summary.get('scene_count') or 0}",
         f"duration_seconds: {summary.get('duration_seconds') or 0}",
@@ -471,6 +478,7 @@ def _build_batch_export_formats(
         )
     runbook_lines = [
         "Operator runbook for multi-scene signer draft batch",
+        f"Generated at: {batch_brief.get('generated_at') or '-'}",
         f"Batch title: {summary.get('title') or '-'}",
         f"Scenes: {summary.get('scene_count') or 0}",
         f"Total duration: {summary.get('duration_seconds') or 0} seconds",
@@ -526,6 +534,10 @@ def _ordered_unique(values: list[str]) -> list[str]:
         if value not in result:
             result.append(value)
     return result
+
+
+def _iso_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _count_fallback_units(units: list[VideoUnitBrief]) -> int:
