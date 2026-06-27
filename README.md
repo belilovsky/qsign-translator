@@ -217,7 +217,7 @@ The bundled check script stays dependency-light and covers:
 The runtime lexicon is generated from two layers:
 
 - `data/curated_overrides.json` for reviewed manual phrases, aliases, and KK entries;
-- archived `Slovo` gloss assets for wider RU coverage.
+- repo-local `data/import_sources/slovo/` assets for wider RU coverage.
 
 This keeps product-approved overrides separate from the larger imported corpus.
 

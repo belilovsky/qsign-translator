@@ -1,26 +1,13 @@
 from __future__ import annotations
 
-import csv
 import json
 from pathlib import Path
 
 
-ARCHIVE_GLOSS_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "qsign-translator-archive"
-    / "experiments"
-    / "mimic_text2video"
-    / "misc"
-    / "gloss_words_SLOVO.txt"
-)
-ARCHIVE_ANNOTATIONS_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "qsign-translator-archive"
-    / "experiments"
-    / "mimic_text2video"
-    / "misc"
-    / "annotations_cleared_19.06.2023_SLOVO.csv"
-)
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SLOVO_IMPORT_ROOT = REPO_ROOT / "data" / "import_sources" / "slovo"
+SLOVO_GLOSS_PATH = SLOVO_IMPORT_ROOT / "gloss_words_SLOVO.txt"
+SLOVO_CLIP_IDS_PATH = SLOVO_IMPORT_ROOT / "clip_ids_SLOVO.json"
 DEFAULT_CONFIDENCE = 0.63
 SOURCE_ID = "slovo:archive_gloss"
 
@@ -38,20 +25,11 @@ def load_base_entries(path: Path) -> list[dict[str, object]]:
 
 
 def load_clip_ids(path: Path) -> dict[str, str]:
-    clip_ids: dict[str, str] = {}
-    with path.open(encoding="utf-8") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        for row in reader:
-            normalized = normalize_token(row.get("gloss_norm", ""))
-            cut_name = (row.get("cut_name") or "").strip()
-            if not normalized or not cut_name or normalized in clip_ids:
-                continue
-            clip_ids[normalized] = Path(cut_name).stem
-    return clip_ids
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
-def build_slovo_entries(gloss_path: Path, annotations_path: Path) -> list[dict[str, object]]:
-    clip_ids = load_clip_ids(annotations_path)
+def build_slovo_entries(gloss_path: Path, clip_ids_path: Path) -> list[dict[str, object]]:
+    clip_ids = load_clip_ids(clip_ids_path)
     entries: list[dict[str, object]] = []
     seen_tokens: set[str] = set()
 
@@ -94,18 +72,17 @@ def merge_entries(base_entries: list[dict[str, object]], imported_entries: list[
 
 
 def main() -> int:
-    root = Path(__file__).resolve().parents[1]
-    lexicon_path = root / "data" / "sample_lexicon.json"
-    curated_path = root / "data" / "curated_overrides.json"
-    if not ARCHIVE_GLOSS_PATH.exists():
-        raise SystemExit(f"Missing archive gloss list: {ARCHIVE_GLOSS_PATH}")
-    if not ARCHIVE_ANNOTATIONS_PATH.exists():
-        raise SystemExit(f"Missing archive annotations: {ARCHIVE_ANNOTATIONS_PATH}")
+    lexicon_path = REPO_ROOT / "data" / "sample_lexicon.json"
+    curated_path = REPO_ROOT / "data" / "curated_overrides.json"
+    if not SLOVO_GLOSS_PATH.exists():
+        raise SystemExit(f"Missing repo-local gloss list: {SLOVO_GLOSS_PATH}")
+    if not SLOVO_CLIP_IDS_PATH.exists():
+        raise SystemExit(f"Missing repo-local clip id map: {SLOVO_CLIP_IDS_PATH}")
     if not curated_path.exists():
         raise SystemExit(f"Missing curated overrides file: {curated_path}")
 
     base_entries = load_base_entries(curated_path)
-    imported_entries = build_slovo_entries(ARCHIVE_GLOSS_PATH, ARCHIVE_ANNOTATIONS_PATH)
+    imported_entries = build_slovo_entries(SLOVO_GLOSS_PATH, SLOVO_CLIP_IDS_PATH)
     merged_entries = merge_entries(base_entries, imported_entries)
     payload = {"entries": merged_entries}
     lexicon_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
