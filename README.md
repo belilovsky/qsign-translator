@@ -202,6 +202,7 @@ The bundled check script stays dependency-light and covers:
 
 - Python compile checks
 - unit and API tests that can run without heavy backends
+- scenario smoke for a curated set of user-facing RU phrase cases
 - JSON fixture validation
 - SQL validation
 - RU/KZ CLI smoke

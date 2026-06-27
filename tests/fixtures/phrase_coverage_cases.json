@@ -1,0 +1,95 @@
+{
+  "cases": [
+    {
+      "text": "Привет",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["HELLO"]
+    },
+    {
+      "text": "Добрый день",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["HELLO_FORMAL"]
+    },
+    {
+      "text": "Мне нужна помощь",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["ME", "NEED", "HELP"]
+    },
+    {
+      "text": "Мне нужно помочь",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["ME", "NEED", "HELP"]
+    },
+    {
+      "text": "Я не понимаю",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["ME", "НЕ", "ПОНИМАТЬ"]
+    },
+    {
+      "text": "У меня болит голова",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["ME", "БОЛЕТЬ", "ГОЛОВА"]
+    },
+    {
+      "text": "Нужна школа для ребенка",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["NEED", "ШКОЛА", "РЕБЕНОК"]
+    },
+    {
+      "text": "Адрес и работа",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["АДРЕС/УЛИЦА", "РАБОТА"]
+    },
+    {
+      "text": "Спасибо большое",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["THANK_YOU", "БОЛЬШОЙ"]
+    },
+    {
+      "text": "Мне нужен врач",
+      "expected_language": "ru",
+      "expected_fallback_count": 1,
+      "require_exact_glosses": false,
+      "expected_glosses": ["ME", "NEED"]
+    },
+    {
+      "text": "Мне нужна больница",
+      "expected_language": "ru",
+      "expected_fallback_count": 1,
+      "require_exact_glosses": false,
+      "expected_glosses": ["ME", "NEED"]
+    },
+    {
+      "text": "Где туалет",
+      "expected_language": "ru",
+      "expected_fallback_count": 2,
+      "require_exact_glosses": false,
+      "expected_glosses": []
+    },
+    {
+      "text": "Как вас зовут",
+      "expected_language": "ru",
+      "expected_fallback_count": 1,
+      "require_exact_glosses": false,
+      "expected_glosses": ["ВЫ", "NAME"]
+    }
+  ]
+}

@@ -86,6 +86,7 @@ Protected review endpoints remain available for operator use, but require
 The current repository state has been exercised through:
 
 - unit and API tests via `./scripts/check.sh`;
+- curated phrase-coverage smoke for common RU user requests;
 - live API smoke against a deployed instance via `scripts/smoke_live.py`;
 - browser smoke at desktop and mobile widths;
 - batch-brief checks with multiple saved jobs;
