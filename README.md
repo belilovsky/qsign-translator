@@ -1,4 +1,9 @@
 # QSign Translator
+![Status](https://img.shields.io/badge/status-production-green)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python)
+[![CI](https://github.com/belilovsky/qsign-translator/actions/workflows/ci.yml/badge.svg)](https://github.com/belilovsky/qsign-translator/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 
 Open RU/KZ sign-planning prototype for transparent sign-language draft output,
 review workflows, and future video-generation handoff.
