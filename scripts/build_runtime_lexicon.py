@@ -28,7 +28,9 @@ def load_clip_ids(path: Path) -> dict[str, str]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def build_slovo_entries(gloss_path: Path, clip_ids_path: Path) -> list[dict[str, object]]:
+def build_slovo_entries(
+    gloss_path: Path, clip_ids_path: Path
+) -> list[dict[str, object]]:
     clip_ids = load_clip_ids(clip_ids_path)
     entries: list[dict[str, object]] = []
     seen_tokens: set[str] = set()
@@ -56,7 +58,9 @@ def build_slovo_entries(gloss_path: Path, clip_ids_path: Path) -> list[dict[str,
     return entries
 
 
-def merge_entries(base_entries: list[dict[str, object]], imported_entries: list[dict[str, object]]) -> list[dict[str, object]]:
+def merge_entries(
+    base_entries: list[dict[str, object]], imported_entries: list[dict[str, object]]
+) -> list[dict[str, object]]:
     merged = list(base_entries)
     existing_keys = {(entry["language"], entry["token"]) for entry in base_entries}
 
@@ -67,7 +71,13 @@ def merge_entries(base_entries: list[dict[str, object]], imported_entries: list[
         merged.append(entry)
         existing_keys.add(key)
 
-    merged.sort(key=lambda item: (str(item["language"]), str(item["token"]), str(item["source"])))
+    merged.sort(
+        key=lambda item: (
+            str(item["language"]),
+            str(item["token"]),
+            str(item["source"]),
+        )
+    )
     return merged
 
 
@@ -85,7 +95,9 @@ def main() -> int:
     imported_entries = build_slovo_entries(SLOVO_GLOSS_PATH, SLOVO_CLIP_IDS_PATH)
     merged_entries = merge_entries(base_entries, imported_entries)
     payload = {"entries": merged_entries}
-    lexicon_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    lexicon_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     print(
         json.dumps(
             {

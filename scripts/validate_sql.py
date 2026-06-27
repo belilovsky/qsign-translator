@@ -30,12 +30,20 @@ def main() -> int:
         path.read_text(encoding="utf-8")
         for path in sorted((root / "infra" / "db" / "migrations").glob("*.sql"))
     )
-    missing = [table for table in sorted(REQUIRED_TABLES) if f"CREATE TABLE IF NOT EXISTS {table}" not in sql]
+    missing = [
+        table
+        for table in sorted(REQUIRED_TABLES)
+        if f"CREATE TABLE IF NOT EXISTS {table}" not in sql
+    ]
     if missing:
         raise SystemExit(f"validate_sql: missing tables: {', '.join(missing)}")
-    missing_snippets = [name for name, snippet in REQUIRED_SNIPPETS.items() if snippet not in sql]
+    missing_snippets = [
+        name for name, snippet in REQUIRED_SNIPPETS.items() if snippet not in sql
+    ]
     if missing_snippets:
-        raise SystemExit(f"validate_sql: missing snippets: {', '.join(missing_snippets)}")
+        raise SystemExit(
+            f"validate_sql: missing snippets: {', '.join(missing_snippets)}"
+        )
     print("validate_sql: ok")
     return 0
 

@@ -10,8 +10,12 @@ from .planner import SignPlanner
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build a RU/KZ sign-language plan.")
-    parser.add_argument("text", nargs="*", help="Input text. If omitted, stdin is used.")
-    parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON output.")
+    parser.add_argument(
+        "text", nargs="*", help="Input text. If omitted, stdin is used."
+    )
+    parser.add_argument(
+        "--pretty", action="store_true", help="Pretty-print JSON output."
+    )
     return parser
 
 
@@ -27,4 +31,3 @@ def main(argv: list[str] | None = None) -> int:
     indent = 2 if args.pretty else None
     print(json.dumps(plan.to_dict(), ensure_ascii=False, indent=indent))
     return 0
-

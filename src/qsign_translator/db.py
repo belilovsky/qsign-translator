@@ -12,9 +12,21 @@ class DatabaseUnavailable(RuntimeError):
     pass
 
 
-VALID_FEEDBACK_TYPES = {"good", "wrong_sign", "unclear_sign", "missing_sign", "offensive"}
+VALID_FEEDBACK_TYPES = {
+    "good",
+    "wrong_sign",
+    "unclear_sign",
+    "missing_sign",
+    "offensive",
+}
 VALID_REVIEW_STATUSES = {"pending_signer_review", "approved", "rejected", "needs_edit"}
-VALID_PUBLISH_STATUSES = {"draft", "final_review_pending", "publishable", "needs_video_fix", "rejected"}
+VALID_PUBLISH_STATUSES = {
+    "draft",
+    "final_review_pending",
+    "publishable",
+    "needs_video_fix",
+    "rejected",
+}
 POSTGRES_INVALID_TEXT_REPRESENTATION = "22P02"
 
 
@@ -23,7 +35,9 @@ def _import_psycopg():
         import psycopg
         from psycopg.rows import dict_row
     except ImportError as exc:  # pragma: no cover - depends on optional db extra
-        raise DatabaseUnavailable("Install qsign-translator[db] to use Postgres") from exc
+        raise DatabaseUnavailable(
+            "Install qsign-translator[db] to use Postgres"
+        ) from exc
     return psycopg, dict_row
 
 
@@ -40,14 +54,20 @@ def connect() -> Iterator[Any]:
     if not settings.database_url:
         raise DatabaseUnavailable("DATABASE_URL is not configured")
     psycopg, dict_row = _import_psycopg()
-    with psycopg.connect(settings.database_url, row_factory=dict_row, connect_timeout=3) as conn:
+    with psycopg.connect(
+        settings.database_url, row_factory=dict_row, connect_timeout=3
+    ) as conn:
         yield conn
 
 
 def readiness() -> dict[str, Any]:
     settings = get_settings()
     if not settings.database_url:
-        return {"configured": False, "ok": False, "reason": "DATABASE_URL is not configured"}
+        return {
+            "configured": False,
+            "ok": False,
+            "reason": "DATABASE_URL is not configured",
+        }
     try:
         with connect() as conn:
             with conn.cursor() as cur:
@@ -364,7 +384,9 @@ def update_review_status(job_id: str, review_status: str) -> dict[str, Any] | No
     return _stringify_id(row)
 
 
-def list_feedback_events(job_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+def list_feedback_events(
+    job_id: str | None = None, limit: int = 50
+) -> list[dict[str, Any]]:
     with connect() as conn:
         with conn.cursor() as cur:
             if job_id:
@@ -393,7 +415,10 @@ def list_feedback_events(job_id: str | None = None, limit: int = 50) -> list[dic
                     """,
                     (limit,),
                 )
-            return [_stringify_id(row, extra_uuid_fields=("job_id",)) for row in cur.fetchall()]
+            return [
+                _stringify_id(row, extra_uuid_fields=("job_id",))
+                for row in cur.fetchall()
+            ]
 
 
 def record_feedback(job_id: str, feedback_type: str, note: str | None = None) -> str:
@@ -423,7 +448,9 @@ def record_feedback(job_id: str, feedback_type: str, note: str | None = None) ->
     return str(row["id"])
 
 
-def list_review_sessions(job_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+def list_review_sessions(
+    job_id: str | None = None, limit: int = 50
+) -> list[dict[str, Any]]:
     with connect() as conn:
         with conn.cursor() as cur:
             if job_id:
@@ -480,7 +507,10 @@ def list_review_sessions(job_id: str | None = None, limit: int = 50) -> list[dic
                     """,
                     (limit,),
                 )
-            return [_stringify_id(row, extra_uuid_fields=("job_id",)) for row in cur.fetchall()]
+            return [
+                _stringify_id(row, extra_uuid_fields=("job_id",))
+                for row in cur.fetchall()
+            ]
 
 
 def create_review_session(
@@ -698,7 +728,9 @@ def update_publish_status(
     return _stringify_id(row)
 
 
-def list_audit_events(job_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
+def list_audit_events(
+    job_id: str | None = None, limit: int = 100
+) -> list[dict[str, Any]]:
     with connect() as conn:
         with conn.cursor() as cur:
             if job_id:
@@ -727,7 +759,10 @@ def list_audit_events(job_id: str | None = None, limit: int = 100) -> list[dict[
                     """,
                     (limit,),
                 )
-            return [_stringify_id(row, extra_uuid_fields=("job_id",)) for row in cur.fetchall()]
+            return [
+                _stringify_id(row, extra_uuid_fields=("job_id",))
+                for row in cur.fetchall()
+            ]
 
 
 def _record_audit_event(
@@ -747,7 +782,9 @@ def _record_audit_event(
     )
 
 
-def _stringify_id(row: dict[str, Any], extra_uuid_fields: tuple[str, ...] = ()) -> dict[str, Any]:
+def _stringify_id(
+    row: dict[str, Any], extra_uuid_fields: tuple[str, ...] = ()
+) -> dict[str, Any]:
     result = dict(row)
     result["id"] = str(result["id"])
     for field in extra_uuid_fields:

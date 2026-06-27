@@ -15,8 +15,18 @@ class PreviewVideoTests(unittest.TestCase):
             "id": "job-1",
             "input_text": "привет помощь",
             "units": [
-                {"position": 1, "kind": "gloss", "source_token": "привет", "gloss": "HELLO"},
-                {"position": 2, "kind": "gloss", "source_token": "помощь", "gloss": "HELP"},
+                {
+                    "position": 1,
+                    "kind": "gloss",
+                    "source_token": "привет",
+                    "gloss": "HELLO",
+                },
+                {
+                    "position": 2,
+                    "kind": "gloss",
+                    "source_token": "помощь",
+                    "gloss": "HELP",
+                },
             ],
         }
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -35,26 +45,41 @@ class PreviewVideoTests(unittest.TestCase):
                 return mock.Mock(returncode=0)
 
             with (
-                mock.patch("qsign_translator.preview_video.shutil.which", return_value="/usr/bin/ffmpeg"),
-                mock.patch("qsign_translator.preview_video.subprocess.run", side_effect=fake_run),
+                mock.patch(
+                    "qsign_translator.preview_video.shutil.which",
+                    return_value="/usr/bin/ffmpeg",
+                ),
+                mock.patch(
+                    "qsign_translator.preview_video.subprocess.run",
+                    side_effect=fake_run,
+                ),
             ):
-                artifact = build_review_video(job, static_root=static_root, output_root=output_root)
+                artifact = build_review_video(
+                    job, static_root=static_root, output_root=output_root
+                )
                 self.assertEqual(artifact.kind, "review_storyboard")
                 self.assertEqual(artifact.unit_count, 2)
                 self.assertTrue(artifact.path.exists())
                 self.assertGreater(artifact.path.stat().st_size, 0)
 
     def test_build_review_video_requires_ffmpeg(self) -> None:
-        job = {"id": "job-1", "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}]}
+        job = {
+            "id": "job-1",
+            "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}],
+        }
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
             static_root = tmp_root / "static"
             asset_dir = static_root / "assets"
             asset_dir.mkdir(parents=True, exist_ok=True)
             (asset_dir / "signing-avatar.png").write_bytes(b"fake-png")
-            with mock.patch("qsign_translator.preview_video.shutil.which", return_value=None):
+            with mock.patch(
+                "qsign_translator.preview_video.shutil.which", return_value=None
+            ):
                 with self.assertRaises(PreviewVideoUnavailable):
-                    build_review_video(job, static_root=static_root, output_root=tmp_root / "out")
+                    build_review_video(
+                        job, static_root=static_root, output_root=tmp_root / "out"
+                    )
 
 
 if __name__ == "__main__":

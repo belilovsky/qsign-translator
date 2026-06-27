@@ -27,7 +27,9 @@ try:
     from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel, Field
 except ImportError as exc:  # pragma: no cover - import guard for optional API extra
-    raise RuntimeError("Install qsign-translator[api] to run the FastAPI service") from exc
+    raise RuntimeError(
+        "Install qsign-translator[api] to run the FastAPI service"
+    ) from exc
 
 import json
 
@@ -161,7 +163,10 @@ def ready(request: Request, response: Response) -> dict[str, object] | Response:
         response.status_code = 503
     if request.method == "HEAD":
         return Response(status_code=200)
-    return {"status": "ok" if ok or not settings.database_url else "degraded", "database": database}
+    return {
+        "status": "ok" if ok or not settings.database_url else "degraded",
+        "database": database,
+    }
 
 
 @app.post("/v1/translate/text")
@@ -187,7 +192,9 @@ def _plan_response(text: str, input_type: str) -> dict[str, object]:
 
 @app.post("/v1/transcribe/audio")
 async def transcribe_audio(request: Request) -> dict[str, object]:
-    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    content_type = (
+        request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    )
     suffix = SUPPORTED_AUDIO_TYPES.get(content_type)
     if not suffix:
         raise HTTPException(status_code=415, detail="Unsupported audio type")
@@ -197,7 +204,9 @@ async def transcribe_audio(request: Request) -> dict[str, object]:
         try:
             declared_length = int(content_length)
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid content length") from exc
+            raise HTTPException(
+                status_code=400, detail="Invalid content length"
+            ) from exc
         if declared_length > MAX_AUDIO_BYTES:
             raise HTTPException(status_code=413, detail="Audio file is too large")
 
@@ -242,7 +251,9 @@ def sources(limit: int = 100) -> dict[str, object]:
     try:
         rows = db.list_sources(limit=max(1, min(limit, 500)))
     except db.DatabaseUnavailable as exc:
-        registry_path = Path(__file__).resolve().parents[2] / "data" / "source_registry.json"
+        registry_path = (
+            Path(__file__).resolve().parents[2] / "data" / "source_registry.json"
+        )
         if not registry_path.exists():
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         rows = json.loads(registry_path.read_text(encoding="utf-8"))["sources"]
@@ -287,8 +298,12 @@ def translation_job_render_plan(job_id: str) -> dict[str, object]:
 
 
 @app.get("/v1/jobs/{job_id}/review-video", response_model=None)
-@app.head("/v1/jobs/{job_id}/review-video", response_model=None, include_in_schema=False)
-def translation_job_review_video(job_id: str, request: Request) -> FileResponse | Response:
+@app.head(
+    "/v1/jobs/{job_id}/review-video", response_model=None, include_in_schema=False
+)
+def translation_job_review_video(
+    job_id: str, request: Request
+) -> FileResponse | Response:
     try:
         job = db.get_translation_job(job_id)
     except db.DatabaseUnavailable as exc:
@@ -320,8 +335,12 @@ def translation_job_review_video(job_id: str, request: Request) -> FileResponse 
 
 
 @app.get("/v1/jobs/{job_id}/rendered-video", response_model=None)
-@app.head("/v1/jobs/{job_id}/rendered-video", response_model=None, include_in_schema=False)
-def translation_job_rendered_video(job_id: str, request: Request) -> FileResponse | Response:
+@app.head(
+    "/v1/jobs/{job_id}/rendered-video", response_model=None, include_in_schema=False
+)
+def translation_job_rendered_video(
+    job_id: str, request: Request
+) -> FileResponse | Response:
     try:
         job = db.get_translation_job(job_id)
     except db.DatabaseUnavailable as exc:
@@ -365,11 +384,16 @@ def ai_video_batch_brief(payload: BatchAIVideoBriefRequest) -> dict[str, object]
             if not job:
                 missing_ids.append(job_id)
                 continue
-            jobs_with_render_plans.append((job, build_job_render_plan(job, settings.asset_root)))
+            jobs_with_render_plans.append(
+                (job, build_job_render_plan(job, settings.asset_root))
+            )
     except db.DatabaseUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     if missing_ids:
-        raise HTTPException(status_code=404, detail=f"Translation jobs not found: {', '.join(missing_ids)}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Translation jobs not found: {', '.join(missing_ids)}",
+        )
     return build_ai_video_batch_brief(jobs_with_render_plans, title=payload.title)
 
 
@@ -393,7 +417,9 @@ def review_jobs(
 
 
 @app.patch("/v1/review/jobs/{job_id}")
-def review_job(job_id: str, payload: ReviewStatusRequest, request: Request) -> dict[str, object]:
+def review_job(
+    job_id: str, payload: ReviewStatusRequest, request: Request
+) -> dict[str, object]:
     require_review_access(request)
     try:
         job = db.update_review_status(job_id, payload.review_status)
@@ -407,7 +433,9 @@ def review_job(job_id: str, payload: ReviewStatusRequest, request: Request) -> d
 
 
 @app.get("/v1/review/feedback")
-def review_feedback(request: Request, job_id: str | None = None, limit: int = 50) -> dict[str, object]:
+def review_feedback(
+    request: Request, job_id: str | None = None, limit: int = 50
+) -> dict[str, object]:
     require_review_access(request)
     try:
         items = db.list_feedback_events(job_id=job_id, limit=max(1, min(limit, 200)))
@@ -417,7 +445,9 @@ def review_feedback(request: Request, job_id: str | None = None, limit: int = 50
 
 
 @app.get("/v1/review/audit")
-def review_audit(request: Request, job_id: str | None = None, limit: int = 100) -> dict[str, object]:
+def review_audit(
+    request: Request, job_id: str | None = None, limit: int = 100
+) -> dict[str, object]:
     require_review_access(request)
     try:
         items = db.list_audit_events(job_id=job_id, limit=max(1, min(limit, 300)))
@@ -427,7 +457,9 @@ def review_audit(request: Request, job_id: str | None = None, limit: int = 100) 
 
 
 @app.get("/v1/review/sessions")
-def review_sessions(request: Request, job_id: str | None = None, limit: int = 50) -> dict[str, object]:
+def review_sessions(
+    request: Request, job_id: str | None = None, limit: int = 50
+) -> dict[str, object]:
     require_review_access(request)
     try:
         items = db.list_review_sessions(job_id=job_id, limit=max(1, min(limit, 200)))
@@ -437,7 +469,9 @@ def review_sessions(request: Request, job_id: str | None = None, limit: int = 50
 
 
 @app.post("/v1/review/sessions")
-def create_review_session(payload: ReviewSessionRequest, request: Request) -> dict[str, object]:
+def create_review_session(
+    payload: ReviewSessionRequest, request: Request
+) -> dict[str, object]:
     require_review_access(request)
     try:
         job = db.get_translation_job(payload.job_id)
@@ -464,7 +498,9 @@ def create_review_session(payload: ReviewSessionRequest, request: Request) -> di
             updated_job = db.update_review_status(payload.job_id, payload.review_status)
             if not updated_job:
                 raise HTTPException(status_code=404, detail="Translation job not found")
-            current_review_status = str(updated_job.get("review_status") or current_review_status)
+            current_review_status = str(
+                updated_job.get("review_status") or current_review_status
+            )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except db.DatabaseUnavailable as exc:
@@ -480,7 +516,9 @@ def create_review_session(payload: ReviewSessionRequest, request: Request) -> di
 @app.post("/v1/review/jobs/{job_id}/rendered-video")
 async def upload_rendered_video(job_id: str, request: Request) -> dict[str, object]:
     require_review_access(request)
-    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    content_type = (
+        request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    )
     if content_type not in SUPPORTED_RENDERED_VIDEO_TYPES:
         raise HTTPException(status_code=415, detail="Unsupported rendered video type")
     content_length = request.headers.get("content-length")
@@ -488,7 +526,9 @@ async def upload_rendered_video(job_id: str, request: Request) -> dict[str, obje
         try:
             declared_length = int(content_length)
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid content length") from exc
+            raise HTTPException(
+                status_code=400, detail="Invalid content length"
+            ) from exc
         if declared_length > MAX_RENDERED_VIDEO_BYTES:
             raise HTTPException(status_code=413, detail="Rendered video is too large")
     try:
@@ -527,7 +567,9 @@ async def upload_rendered_video(job_id: str, request: Request) -> dict[str, obje
 
 
 @app.patch("/v1/review/jobs/{job_id}/publish-status")
-def update_job_publish_status(job_id: str, payload: PublishStatusRequest, request: Request) -> dict[str, object]:
+def update_job_publish_status(
+    job_id: str, payload: PublishStatusRequest, request: Request
+) -> dict[str, object]:
     require_review_access(request)
     try:
         job = db.update_publish_status(

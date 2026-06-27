@@ -28,7 +28,9 @@ def default_video_spec(language: str) -> dict[str, object]:
     }
 
 
-def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object]) -> dict[str, object]:
+def build_ai_video_brief(
+    job: dict[str, object], render_plan: dict[str, object]
+) -> dict[str, object]:
     units = list(job.get("units") or [])
     language = str(job.get("detected_language") or "unknown")
     review_status = str(job.get("review_status") or "pending_signer_review")
@@ -37,9 +39,13 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
     publish_gate = dict(render_plan.get("publish_gate") or {})
     resolved_segments = int(summary.get("resolved_segments") or 0)
     missing_segments = int(summary.get("missing_segments") or 0)
-    pipeline_status = str(render_plan.get("pipeline_status") or "awaiting_signer_review")
+    pipeline_status = str(
+        render_plan.get("pipeline_status") or "awaiting_signer_review"
+    )
     duration_seconds = max(3.0, len(units) * 1.4)
-    unit_briefs = [_build_unit_brief(index, unit) for index, unit in enumerate(units, start=1)]
+    unit_briefs = [
+        _build_unit_brief(index, unit) for index, unit in enumerate(units, start=1)
+    ]
     master_prompt = _build_master_prompt(
         language=language,
         review_status=review_status,
@@ -101,7 +107,9 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
             "Do not publish or distribute as final output while pipeline blockers remain active.",
         ],
     }
-    brief["batch_render"] = _build_batch_render_structure([brief], title=str(job.get("input_text") or "Single-scene batch"))
+    brief["batch_render"] = _build_batch_render_structure(
+        [brief], title=str(job.get("input_text") or "Single-scene batch")
+    )
     brief["render_contract"] = _build_single_render_contract(brief)
     brief["exports"] = _build_export_formats(brief)
     return brief
@@ -112,11 +120,19 @@ def build_ai_video_batch_brief(
     *,
     title: str | None = None,
 ) -> dict[str, object]:
-    scene_briefs = [build_ai_video_brief(job, render_plan) for job, render_plan in jobs_with_render_plans]
+    scene_briefs = [
+        build_ai_video_brief(job, render_plan)
+        for job, render_plan in jobs_with_render_plans
+    ]
     if not scene_briefs:
         raise ValueError("At least one job is required for batch brief")
     batch_title = title or "QSign batch render"
-    languages = _ordered_unique([str(scene.get("summary", {}).get("language_route") or "unknown") for scene in scene_briefs])
+    languages = _ordered_unique(
+        [
+            str(scene.get("summary", {}).get("language_route") or "unknown")
+            for scene in scene_briefs
+        ]
+    )
     video_spec = default_video_spec(languages[0] if len(languages) == 1 else "mixed")
     batch_render = _build_batch_render_structure(scene_briefs, title=batch_title)
     batch_brief = {
@@ -330,11 +346,11 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
         "",
         "Scene order:",
         *[
-                (
-                    f"{scene.get('scene_number')}. job={scene.get('job_id')} | {scene.get('input_text')} | "
-                    f"{scene.get('language_route')} | {scene.get('duration_seconds')}s | "
-                    f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')}"
-                )
+            (
+                f"{scene.get('scene_number')}. job={scene.get('job_id')} | {scene.get('input_text')} | "
+                f"{scene.get('language_route')} | {scene.get('duration_seconds')}s | "
+                f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')}"
+            )
             for scene in batch.get("scenes") or []
         ],
         "",
@@ -368,7 +384,9 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
     }
 
 
-def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, title: str) -> dict[str, object]:
+def _build_batch_render_structure(
+    scene_briefs: list[dict[str, object]], *, title: str
+) -> dict[str, object]:
     scenes: list[dict[str, object]] = []
     cursor_seconds = 0.0
     resolved_total = 0
@@ -392,7 +410,11 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
         fallback_units += int(summary.get("fallback_units") or 0)
         review_status = str(summary.get("review_status") or "pending_signer_review")
         review_statuses.append(review_status)
-        scene_publishable = review_status == "approved" and missing == 0 and int(summary.get("fallback_units") or 0) == 0
+        scene_publishable = (
+            review_status == "approved"
+            and missing == 0
+            and int(summary.get("fallback_units") or 0) == 0
+        )
         if scene_publishable:
             publishable_scene_count += 1
         else:
@@ -537,7 +559,12 @@ def _ordered_unique(values: list[str]) -> list[str]:
 
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.now(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def _count_fallback_units(units: list[VideoUnitBrief]) -> int:

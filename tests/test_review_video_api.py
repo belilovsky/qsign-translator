@@ -16,7 +16,9 @@ else:
     import_error = None
 
 
-@unittest.skipIf(TestClient is None, f"API dependencies are not installed: {import_error!r}")
+@unittest.skipIf(
+    TestClient is None, f"API dependencies are not installed: {import_error!r}"
+)
 class ReviewVideoApiTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
@@ -25,11 +27,23 @@ class ReviewVideoApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             video_path = Path(tmp_dir) / "review.mp4"
             video_path.write_bytes(b"fake-mp4")
-            job = {"id": "job-1", "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}]}
-            artifact = mock.Mock(path=video_path, duration_seconds=3.0, unit_count=1, kind="review_storyboard")
+            job = {
+                "id": "job-1",
+                "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}],
+            }
+            artifact = mock.Mock(
+                path=video_path,
+                duration_seconds=3.0,
+                unit_count=1,
+                kind="review_storyboard",
+            )
             with (
-                mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
-                mock.patch("qsign_translator.api.build_review_video", return_value=artifact),
+                mock.patch(
+                    "qsign_translator.api.db.get_translation_job", return_value=job
+                ),
+                mock.patch(
+                    "qsign_translator.api.build_review_video", return_value=artifact
+                ),
             ):
                 response = self.client.get("/v1/jobs/job-1/review-video")
 
@@ -42,11 +56,23 @@ class ReviewVideoApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             video_path = Path(tmp_dir) / "review.mp4"
             video_path.write_bytes(b"fake-mp4")
-            job = {"id": "job-1", "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}]}
-            artifact = mock.Mock(path=video_path, duration_seconds=3.0, unit_count=1, kind="review_storyboard")
+            job = {
+                "id": "job-1",
+                "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}],
+            }
+            artifact = mock.Mock(
+                path=video_path,
+                duration_seconds=3.0,
+                unit_count=1,
+                kind="review_storyboard",
+            )
             with (
-                mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
-                mock.patch("qsign_translator.api.build_review_video", return_value=artifact),
+                mock.patch(
+                    "qsign_translator.api.db.get_translation_job", return_value=job
+                ),
+                mock.patch(
+                    "qsign_translator.api.build_review_video", return_value=artifact
+                ),
             ):
                 response = self.client.head("/v1/jobs/job-1/review-video")
 
@@ -57,12 +83,16 @@ class ReviewVideoApiTests(unittest.TestCase):
         self.assertEqual(response.content, b"")
 
     def test_review_video_returns_not_found_for_missing_job(self) -> None:
-        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
+        with mock.patch(
+            "qsign_translator.api.db.get_translation_job", return_value=None
+        ):
             response = self.client.get("/v1/jobs/missing/review-video")
         self.assertEqual(response.status_code, 404)
 
     def test_review_video_head_returns_not_found_for_invalid_job_id(self) -> None:
-        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
+        with mock.patch(
+            "qsign_translator.api.db.get_translation_job", return_value=None
+        ):
             response = self.client.head("/v1/jobs/not-a-uuid/review-video")
         self.assertEqual(response.status_code, 404)
 
@@ -70,9 +100,15 @@ class ReviewVideoApiTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             video_path = Path(tmp_dir) / "job-1.mp4"
             video_path.write_bytes(b"uploaded-mp4")
-            job = {"id": "job-1", "output_status": "ready", "output_uri": "/v1/jobs/job-1/rendered-video"}
+            job = {
+                "id": "job-1",
+                "output_status": "ready",
+                "output_uri": "/v1/jobs/job-1/rendered-video",
+            }
             with (
-                mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
+                mock.patch(
+                    "qsign_translator.api.db.get_translation_job", return_value=job
+                ),
                 mock.patch("qsign_translator.api.UPLOADED_RENDER_ROOT", Path(tmp_dir)),
             ):
                 response = self.client.get("/v1/jobs/job-1/rendered-video")
@@ -83,7 +119,9 @@ class ReviewVideoApiTests(unittest.TestCase):
 
     def test_rendered_video_returns_not_found_when_missing(self) -> None:
         job = {"id": "job-1", "output_status": "not_rendered", "output_uri": None}
-        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=job):
+        with mock.patch(
+            "qsign_translator.api.db.get_translation_job", return_value=job
+        ):
             response = self.client.get("/v1/jobs/job-1/rendered-video")
         self.assertEqual(response.status_code, 404)
 

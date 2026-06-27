@@ -36,7 +36,9 @@ def resolve_segments(plan: SignPlan, clip_root: Path) -> list[VideoSegment]:
             continue
         path = clip_root / f"{unit.clip_id}.mp4"
         if path.exists():
-            segments.append(VideoSegment(gloss=unit.gloss, clip_id=unit.clip_id, path=path))
+            segments.append(
+                VideoSegment(gloss=unit.gloss, clip_id=unit.clip_id, path=path)
+            )
     return segments
 
 
@@ -111,8 +113,10 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
         adapter_status = "partial_assets"
     else:
         adapter_status = "awaiting_assets"
-    publish_ready = publish_status == "publishable" and review_status == "approved" and (
-        has_uploaded_render or (total_units > 0 and missing_count == 0)
+    publish_ready = (
+        publish_status == "publishable"
+        and review_status == "approved"
+        and (has_uploaded_render or (total_units > 0 and missing_count == 0))
     )
     renderable_ratio = round(resolved_count / total_units, 3) if total_units else 0.0
     blockers: list[str] = []
@@ -124,7 +128,11 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
         blockers.append("empty_sign_plan")
     if not has_uploaded_render:
         blockers.append("render_output_missing")
-    if has_uploaded_render and publish_status == "publishable" and review_status == "approved":
+    if (
+        has_uploaded_render
+        and publish_status == "publishable"
+        and review_status == "approved"
+    ):
         pipeline_status = "ready_for_publish"
     elif has_uploaded_render and publish_status == "needs_video_fix":
         pipeline_status = "uploaded_video_needs_fix"

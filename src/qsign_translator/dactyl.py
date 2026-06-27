@@ -57,4 +57,3 @@ def spell_token(token: str) -> list[str]:
             if sign:
                 signs.append(sign)
     return signs
-

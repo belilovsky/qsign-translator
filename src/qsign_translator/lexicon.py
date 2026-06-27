@@ -36,4 +36,3 @@ def default_lexicon_path() -> Path:
 
 def load_default_lexicon() -> Lexicon:
     return load_lexicon(default_lexicon_path())
-

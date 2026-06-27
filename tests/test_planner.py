@@ -24,7 +24,9 @@ class SignPlannerTests(unittest.TestCase):
         plan = self.planner.plan("Привет меня зовут Александр")
         glosses = [unit.gloss for unit in plan.units]
         self.assertIn("ME NAME", glosses)
-        self.assertEqual(len([unit for unit in plan.units if unit.source_token == "меня зовут"]), 1)
+        self.assertEqual(
+            len([unit for unit in plan.units if unit.source_token == "меня зовут"]), 1
+        )
 
     def test_russian_polite_greeting_phrase_lookup(self) -> None:
         plan = self.planner.plan("Добрый день")
@@ -50,7 +52,9 @@ class SignPlannerTests(unittest.TestCase):
 
     def test_russian_alias_forms_reuse_reviewed_entries(self) -> None:
         plan = self.planner.plan("Мне нужно помочь")
-        self.assertEqual([unit.kind for unit in plan.units], ["gloss", "gloss", "gloss"])
+        self.assertEqual(
+            [unit.kind for unit in plan.units], ["gloss", "gloss", "gloss"]
+        )
         self.assertEqual([unit.gloss for unit in plan.units], ["ME", "NEED", "HELP"])
 
     def test_common_gratitude_phrase_is_collapsed(self) -> None:
@@ -71,12 +75,16 @@ class SignPlannerTests(unittest.TestCase):
     def test_u_menya_phrase_and_pain_alias_reduce_noise(self) -> None:
         plan = self.planner.plan("У меня болит голова")
         self.assertEqual(plan.fallback_count, 0)
-        self.assertEqual([unit.gloss for unit in plan.units], ["ME", "БОЛЕТЬ", "ГОЛОВА"])
+        self.assertEqual(
+            [unit.gloss for unit in plan.units], ["ME", "БОЛЕТЬ", "ГОЛОВА"]
+        )
 
     def test_child_case_alias_and_nonsemantic_preposition_omit(self) -> None:
         plan = self.planner.plan("Нужна школа для ребенка")
         self.assertEqual(plan.fallback_count, 0)
-        self.assertEqual([unit.gloss for unit in plan.units], ["NEED", "ШКОЛА", "РЕБЕНОК"])
+        self.assertEqual(
+            [unit.gloss for unit in plan.units], ["NEED", "ШКОЛА", "РЕБЕНОК"]
+        )
 
     def test_plan_has_warning(self) -> None:
         data = self.planner.plan("Спасибо").to_dict()
@@ -109,18 +117,29 @@ class SignPlannerTests(unittest.TestCase):
         self.assertEqual(trace["summary"]["token_count"], 2)
         self.assertEqual(trace["summary"]["unit_count"], 2)
         self.assertEqual(trace["summary"]["fallback_units"], 1)
-        self.assertEqual(trace["summary"]["review_gate"], "native_signer_review_required")
-        self.assertEqual([stage["id"] for stage in trace["stages"]], [
-            "input",
-            "language",
-            "normalization",
-            "planning",
-            "review",
-            "output",
-        ])
+        self.assertEqual(
+            trace["summary"]["review_gate"], "native_signer_review_required"
+        )
+        self.assertEqual(
+            [stage["id"] for stage in trace["stages"]],
+            [
+                "input",
+                "language",
+                "normalization",
+                "planning",
+                "review",
+                "output",
+            ],
+        )
         self.assertEqual(trace["stages"][0]["summary"], "16 символов, 2 токена.")
-        self.assertEqual(trace["stages"][3]["summary"], "Найдено 1, требует замены 1, всего 2 единицы.")
-        self.assertEqual(trace["stages"][5]["summary"], "Видео-аватар пока не собран. Сейчас доступен только прозрачный черновик плана.")
+        self.assertEqual(
+            trace["stages"][3]["summary"],
+            "Найдено 1, требует замены 1, всего 2 единицы.",
+        )
+        self.assertEqual(
+            trace["stages"][5]["summary"],
+            "Видео-аватар пока не собран. Сейчас доступен только прозрачный черновик плана.",
+        )
 
     def test_unit_decisions_explain_matches_and_fallbacks(self) -> None:
         data = self.planner.plan("Привет Александр").to_dict()

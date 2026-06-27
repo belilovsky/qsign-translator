@@ -35,7 +35,20 @@ def normalize_for_lookup(token: str) -> str:
     token = token.lower().replace("ё", "е")
     if token in RU_ALIAS_MAP:
         return RU_ALIAS_MAP[token]
-    ru_suffixes = ("ами", "ями", "ого", "ему", "ыми", "ими", "ах", "ях", "ом", "ем", "ой", "ей")
+    ru_suffixes = (
+        "ами",
+        "ями",
+        "ого",
+        "ему",
+        "ыми",
+        "ими",
+        "ах",
+        "ях",
+        "ом",
+        "ем",
+        "ой",
+        "ей",
+    )
     for suffix in ru_suffixes:
         if len(token) > len(suffix) + 3 and token.endswith(suffix):
             return token[: -len(suffix)]

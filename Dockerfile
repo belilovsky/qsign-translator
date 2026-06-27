@@ -16,4 +16,8 @@ RUN python -m pip install --no-cache-dir --upgrade pip \
 
 EXPOSE 8080
 
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -f http://localhost:8080/health || exit 1
 CMD ["python", "-m", "uvicorn", "qsign_translator.api:app", "--host", "0.0.0.0", "--port", "8080"]

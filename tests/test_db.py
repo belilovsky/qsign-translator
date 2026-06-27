@@ -116,7 +116,9 @@ class DatabaseTests(unittest.TestCase):
         connection = FakeConnection(cursor)
 
         with mock.patch("qsign_translator.db.connect", return_value=connection):
-            rows = db.list_translation_jobs(review_status="pending_signer_review", limit=10)
+            rows = db.list_translation_jobs(
+                review_status="pending_signer_review", limit=10
+            )
 
         self.assertEqual(rows[0]["id"], "job-1")
         self.assertEqual(cursor.calls[0][1], ("pending_signer_review", 10))
@@ -228,7 +230,10 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(row["id"], "job-1")
         self.assertTrue(connection.committed)
         self.assertIn("UPDATE translation_jobs", cursor.calls[0][0])
-        self.assertEqual(cursor.calls[0][1], ("/v1/jobs/job-1/rendered-video", "ready", "external_upload", "job-1"))
+        self.assertEqual(
+            cursor.calls[0][1],
+            ("/v1/jobs/job-1/rendered-video", "ready", "external_upload", "job-1"),
+        )
 
     def test_update_publish_status_rejects_unknown_status(self) -> None:
         with self.assertRaises(ValueError):
@@ -239,7 +244,9 @@ class DatabaseTests(unittest.TestCase):
         connection = FakeConnection(cursor)
 
         with mock.patch("qsign_translator.db.connect", return_value=connection):
-            row = db.update_publish_status("job-1", publish_status="publishable", note="final video approved")
+            row = db.update_publish_status(
+                "job-1", publish_status="publishable", note="final video approved"
+            )
 
         self.assertEqual(row["id"], "job-1")
         self.assertTrue(connection.committed)

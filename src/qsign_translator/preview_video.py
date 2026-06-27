@@ -107,7 +107,10 @@ def _job_signature(job: dict[str, object]) -> str:
         str(job.get("input_text") or ""),
         str(job.get("review_status") or ""),
         str(job.get("updated_at") or ""),
-        *(f"{unit.get('position')}|{unit.get('kind')}|{unit.get('source_token')}|{unit.get('gloss')}" for unit in units),
+        *(
+            f"{unit.get('position')}|{unit.get('kind')}|{unit.get('source_token')}|{unit.get('gloss')}"
+            for unit in units
+        ),
     ]
     digest = hashlib.sha1("\n".join(payload).encode("utf-8")).hexdigest()
     return digest[:12]

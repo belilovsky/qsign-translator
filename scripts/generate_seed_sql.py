@@ -19,8 +19,12 @@ def sql_array(values: list[str]) -> str:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
-    source_registry = json.loads((root / "data" / "source_registry.json").read_text(encoding="utf-8"))
-    lexicon = json.loads((root / "data" / "sample_lexicon.json").read_text(encoding="utf-8"))
+    source_registry = json.loads(
+        (root / "data" / "source_registry.json").read_text(encoding="utf-8")
+    )
+    lexicon = json.loads(
+        (root / "data" / "sample_lexicon.json").read_text(encoding="utf-8")
+    )
 
     print("BEGIN;")
     for source in source_registry["sources"]:

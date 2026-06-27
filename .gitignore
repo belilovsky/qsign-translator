@@ -14,3 +14,10 @@ experiments/*
 !experiments/README.md
 .DS_Store
 .mcp.json
+
+# Added by audit fix
+.env
+.env.*
+node_modules/
+.next/
+*.log

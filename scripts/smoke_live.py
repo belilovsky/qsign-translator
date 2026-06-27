@@ -52,18 +52,29 @@ def _record(results: list[SmokeResult], name: str, ok: bool, detail: str) -> Non
     results.append(SmokeResult(name=name, ok=ok, detail=detail))
 
 
-def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[SmokeResult]:
+def run_smoke(
+    base_url: str, review_token: str | None, timeout: int
+) -> list[SmokeResult]:
     results: list[SmokeResult] = []
 
     try:
         status, payload, _ = _request(base_url, "/health", timeout=timeout)
-        _record(results, "health", status == 200 and payload.get("status") == "ok", f"{status} {payload}")
+        _record(
+            results,
+            "health",
+            status == 200 and payload.get("status") == "ok",
+            f"{status} {payload}",
+        )
     except (HTTPError, URLError, TimeoutError) as exc:
         _record(results, "health", False, str(exc))
 
     try:
         status, payload, _ = _request(base_url, "/health/ready", timeout=timeout)
-        ok = status == 200 and payload.get("status") == "ok" and payload.get("database", {}).get("ok")
+        ok = (
+            status == 200
+            and payload.get("status") == "ok"
+            and payload.get("database", {}).get("ok")
+        )
         _record(results, "ready", bool(ok), f"{status} {payload}")
     except (HTTPError, URLError, TimeoutError) as exc:
         _record(results, "ready", False, str(exc))
@@ -71,7 +82,12 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
     try:
         status, payload, _ = _request(base_url, "/openapi.json", timeout=timeout)
         version = payload.get("info", {}).get("version")
-        _record(results, "openapi", status == 200 and version == "0.2.0", f"{status} version={version}")
+        _record(
+            results,
+            "openapi",
+            status == 200 and version == "0.2.0",
+            f"{status} version={version}",
+        )
     except (HTTPError, URLError, TimeoutError) as exc:
         _record(results, "openapi", False, str(exc))
 
@@ -92,7 +108,11 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             job_id = str(metadata.get("job_id") or "")
             if job_id:
                 job_ids.append(job_id)
-            ok = status == 200 and metadata.get("persisted") is True and metadata.get("output_status") == "not_rendered"
+            ok = (
+                status == 200
+                and metadata.get("persisted") is True
+                and metadata.get("output_status") == "not_rendered"
+            )
             _record(results, name, bool(ok), f"{status} job_id={job_id or '-'}")
         except (HTTPError, URLError, TimeoutError) as exc:
             _record(results, name, False, str(exc))
@@ -100,9 +120,16 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
     if job_ids:
         job_id = job_ids[0]
         try:
-            status, payload, _ = _request(base_url, f"/v1/jobs/{job_id}/render-plan", timeout=timeout)
+            status, payload, _ = _request(
+                base_url, f"/v1/jobs/{job_id}/render-plan", timeout=timeout
+            )
             summary = payload.get("summary", {})
-            _record(results, "render_plan", status == 200 and "total_units" in summary, f"{status} {summary}")
+            _record(
+                results,
+                "render_plan",
+                status == 200 and "total_units" in summary,
+                f"{status} {summary}",
+            )
         except (HTTPError, URLError, TimeoutError) as exc:
             _record(results, "render_plan", False, str(exc))
 
@@ -114,14 +141,25 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 timeout=timeout,
             )
             preview_kind = headers.get("x-qsign-preview-kind", "")
-            _record(results, "review_video_head", status == 200 and bool(preview_kind), f"{status} {preview_kind}")
+            _record(
+                results,
+                "review_video_head",
+                status == 200 and bool(preview_kind),
+                f"{status} {preview_kind}",
+            )
         except (HTTPError, URLError, TimeoutError) as exc:
             _record(results, "review_video_head", False, str(exc))
 
         try:
-            status, payload, _ = _request(base_url, f"/v1/jobs/{job_id}/ai-video-brief", timeout=timeout)
+            status, payload, _ = _request(
+                base_url, f"/v1/jobs/{job_id}/ai-video-brief", timeout=timeout
+            )
             exports = sorted((payload.get("exports") or {}).keys())
-            ok = status == 200 and {"universal_prompt", "json_payload", "batch_storyboard"}.issubset(exports)
+            ok = status == 200 and {
+                "universal_prompt",
+                "json_payload",
+                "batch_storyboard",
+            }.issubset(exports)
             _record(results, "ai_video_brief", ok, f"{status} exports={exports}")
         except (HTTPError, URLError, TimeoutError) as exc:
             _record(results, "ai_video_brief", False, str(exc))
@@ -138,7 +176,12 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             scene_count = payload.get("summary", {}).get("scene_count")
             exports = sorted((payload.get("exports") or {}).keys())
             ok = status == 200 and scene_count == 2 and "operator_runbook" in exports
-            _record(results, "ai_video_batch_brief", ok, f"{status} scenes={scene_count} exports={exports}")
+            _record(
+                results,
+                "ai_video_batch_brief",
+                ok,
+                f"{status} scenes={scene_count} exports={exports}",
+            )
         except (HTTPError, URLError, TimeoutError) as exc:
             _record(results, "ai_video_batch_brief", False, str(exc))
 
@@ -146,7 +189,9 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
         _request(base_url, "/v1/review/jobs", timeout=timeout)
         _record(results, "review_without_token", False, "unexpected 200")
     except HTTPError as exc:
-        _record(results, "review_without_token", exc.code in {403, 503}, f"HTTP {exc.code}")
+        _record(
+            results, "review_without_token", exc.code in {403, 503}, f"HTTP {exc.code}"
+        )
     except (URLError, TimeoutError) as exc:
         _record(results, "review_without_token", False, str(exc))
 
@@ -154,7 +199,12 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
         _request(base_url, "/v1/review/sessions", timeout=timeout)
         _record(results, "review_sessions_without_token", False, "unexpected 200")
     except HTTPError as exc:
-        _record(results, "review_sessions_without_token", exc.code in {403, 503}, f"HTTP {exc.code}")
+        _record(
+            results,
+            "review_sessions_without_token",
+            exc.code in {403, 503},
+            f"HTTP {exc.code}",
+        )
     except (URLError, TimeoutError) as exc:
         _record(results, "review_sessions_without_token", False, str(exc))
 
@@ -166,7 +216,12 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 headers={"x-qsign-review-token": review_token},
                 timeout=timeout,
             )
-            _record(results, "review_with_token", status == 200 and "count" in payload, f"{status} count={payload.get('count')}")
+            _record(
+                results,
+                "review_with_token",
+                status == 200 and "count" in payload,
+                f"{status} count={payload.get('count')}",
+            )
         except (HTTPError, URLError, TimeoutError) as exc:
             _record(results, "review_with_token", False, str(exc))
 
@@ -180,7 +235,12 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                     timeout=timeout,
                 )
                 items = payload.get("items") or []
-                _record(results, "review_audit_with_token", status == 200 and isinstance(items, list), f"{status} items={len(items)}")
+                _record(
+                    results,
+                    "review_audit_with_token",
+                    status == 200 and isinstance(items, list),
+                    f"{status} items={len(items)}",
+                )
             except (HTTPError, URLError, TimeoutError) as exc:
                 _record(results, "review_audit_with_token", False, str(exc))
 
@@ -216,7 +276,9 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             _record(results, f"invalid_id:{path}", False, str(exc))
 
     try:
-        _request(base_url, "/v1/jobs/not-a-uuid/review-video", method="HEAD", timeout=timeout)
+        _request(
+            base_url, "/v1/jobs/not-a-uuid/review-video", method="HEAD", timeout=timeout
+        )
         _record(results, "invalid_id:review-video", False, "unexpected 200")
     except HTTPError as exc:
         _record(results, "invalid_id:review-video", exc.code == 404, f"HTTP {exc.code}")
@@ -227,10 +289,20 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Smoke-test a deployed QSign instance.")
-    parser.add_argument("--base-url", default="https://qsign.qdev.run", help="Public base URL")
-    parser.add_argument("--review-token", default=None, help="Optional review token for protected queue smoke")
-    parser.add_argument("--timeout", type=int, default=20, help="Request timeout in seconds")
+    parser = argparse.ArgumentParser(
+        description="Smoke-test a deployed QSign instance."
+    )
+    parser.add_argument(
+        "--base-url", default="https://qsign.qdev.run", help="Public base URL"
+    )
+    parser.add_argument(
+        "--review-token",
+        default=None,
+        help="Optional review token for protected queue smoke",
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=20, help="Request timeout in seconds"
+    )
     args = parser.parse_args()
 
     results = run_smoke(args.base_url, args.review_token, args.timeout)

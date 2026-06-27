@@ -25,7 +25,9 @@ class FasterWhisperAsr:
         try:
             from faster_whisper import WhisperModel
         except ImportError as exc:
-            raise AsrUnavailable("Install qsign-translator[asr] to use faster-whisper") from exc
+            raise AsrUnavailable(
+                "Install qsign-translator[asr] to use faster-whisper"
+            ) from exc
 
         self.model = WhisperModel(model_name, device=device)
 
@@ -37,4 +39,3 @@ class FasterWhisperAsr:
             language=getattr(info, "language", None),
             confidence=getattr(info, "language_probability", None),
         )
-

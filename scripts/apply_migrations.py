@@ -9,7 +9,9 @@ def require_psycopg():
     try:
         import psycopg
     except ImportError as exc:  # pragma: no cover - optional operational script
-        raise SystemExit("Install psycopg to apply migrations: python -m pip install psycopg[binary]") from exc
+        raise SystemExit(
+            "Install psycopg to apply migrations: python -m pip install psycopg[binary]"
+        ) from exc
     return psycopg
 
 

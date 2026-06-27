@@ -9,7 +9,12 @@ from qsign_translator import SignPlanner
 from qsign_translator.lexicon import load_default_lexicon
 
 
-FIXTURE_PATH = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "phrase_coverage_cases.json"
+FIXTURE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "tests"
+    / "fixtures"
+    / "phrase_coverage_cases.json"
+)
 
 
 def main() -> int:

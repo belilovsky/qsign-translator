@@ -23,4 +23,3 @@ def detect_language(text: str) -> str:
     if ratio >= 0.08:
         return "kk"
     return "mixed"
-

@@ -10,7 +10,9 @@ def require_psycopg():
     try:
         import psycopg
     except ImportError as exc:  # pragma: no cover - optional operational script
-        raise SystemExit("Install psycopg to seed the database: python -m pip install psycopg[binary]") from exc
+        raise SystemExit(
+            "Install psycopg to seed the database: python -m pip install psycopg[binary]"
+        ) from exc
     return psycopg
 
 
@@ -21,8 +23,12 @@ def main() -> int:
         return 2
 
     root = Path(__file__).resolve().parents[1]
-    source_registry = json.loads((root / "data" / "source_registry.json").read_text(encoding="utf-8"))
-    lexicon = json.loads((root / "data" / "sample_lexicon.json").read_text(encoding="utf-8"))
+    source_registry = json.loads(
+        (root / "data" / "source_registry.json").read_text(encoding="utf-8")
+    )
+    lexicon = json.loads(
+        (root / "data" / "sample_lexicon.json").read_text(encoding="utf-8")
+    )
     psycopg = require_psycopg()
 
     with psycopg.connect(database_url) as conn:
@@ -80,4 +86,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

@@ -59,4 +59,3 @@ def detect_risk_domains(text: str) -> list[str]:
         if any(re.search(re.escape(pattern), normalized) for pattern in patterns):
             domains.append(domain)
     return domains
-
