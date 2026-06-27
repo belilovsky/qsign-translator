@@ -96,12 +96,15 @@ def merge_entries(base_entries: list[dict[str, object]], imported_entries: list[
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     lexicon_path = root / "data" / "sample_lexicon.json"
+    curated_path = root / "data" / "curated_overrides.json"
     if not ARCHIVE_GLOSS_PATH.exists():
         raise SystemExit(f"Missing archive gloss list: {ARCHIVE_GLOSS_PATH}")
     if not ARCHIVE_ANNOTATIONS_PATH.exists():
         raise SystemExit(f"Missing archive annotations: {ARCHIVE_ANNOTATIONS_PATH}")
+    if not curated_path.exists():
+        raise SystemExit(f"Missing curated overrides file: {curated_path}")
 
-    base_entries = load_base_entries(lexicon_path)
+    base_entries = load_base_entries(curated_path)
     imported_entries = build_slovo_entries(ARCHIVE_GLOSS_PATH, ARCHIVE_ANNOTATIONS_PATH)
     merged_entries = merge_entries(base_entries, imported_entries)
     payload = {"entries": merged_entries}
@@ -109,7 +112,7 @@ def main() -> int:
     print(
         json.dumps(
             {
-                "base_entries": len(base_entries),
+                "curated_entries": len(base_entries),
                 "imported_entries": len(imported_entries),
                 "merged_entries": len(merged_entries),
                 "output_path": str(lexicon_path),

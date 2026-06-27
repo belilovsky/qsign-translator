@@ -214,6 +214,13 @@ The bundled check script stays dependency-light and covers:
 - Seed helper: `scripts/seed_db.py`
 - Runtime lexicon rebuild: `python3 scripts/build_runtime_lexicon.py`
 
+The runtime lexicon is generated from two layers:
+
+- `data/curated_overrides.json` for reviewed manual phrases, aliases, and KK entries;
+- archived `Slovo` gloss assets for wider RU coverage.
+
+This keeps product-approved overrides separate from the larger imported corpus.
+
 ## Common Commands
 
 If you prefer shorter commands, the repository also ships with a small

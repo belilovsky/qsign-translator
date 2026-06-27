@@ -1,0 +1,172 @@
+{
+  "entries": [
+    {
+      "token": "бе",
+      "gloss": "QUESTION_NMM",
+      "language": "kk",
+      "source": "seed:manual_nonmanual",
+      "confidence": 0.42,
+      "clip_id": null
+    },
+    {
+      "token": "керек",
+      "gloss": "NEED",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.6,
+      "clip_id": "krsl_need"
+    },
+    {
+      "token": "көмек",
+      "gloss": "HELP",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.62,
+      "clip_id": "krsl_help"
+    },
+    {
+      "token": "маған",
+      "gloss": "ME",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_me"
+    },
+    {
+      "token": "рахмет",
+      "gloss": "THANK_YOU",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.62,
+      "clip_id": "krsl_thank_you"
+    },
+    {
+      "token": "сәлеметсіз",
+      "gloss": "HELLO_FORMAL",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.62,
+      "clip_id": "krsl_hello_formal"
+    },
+    {
+      "token": "адрес",
+      "gloss": "АДРЕС/УЛИЦА",
+      "language": "ru",
+      "source": "seed:slovo_alias",
+      "confidence": 0.58,
+      "clip_id": "e68a8adf-867c-4358-8706-350b0d2b8244"
+    },
+    {
+      "token": "большое",
+      "gloss": "БОЛЬШОЙ",
+      "language": "ru",
+      "source": "seed:slovo_alias",
+      "confidence": 0.58,
+      "clip_id": "b321281f-6cfc-4132-a1c5-31365224ebd6"
+    },
+    {
+      "token": "добрый день",
+      "gloss": "HELLO_FORMAL",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.72,
+      "clip_id": "rsl_hello_formal"
+    },
+    {
+      "token": "для",
+      "gloss": "OMIT",
+      "language": "ru",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "и",
+      "gloss": "OMIT",
+      "language": "ru",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "меня",
+      "gloss": "ME",
+      "language": "ru",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "rsl_me"
+    },
+    {
+      "token": "меня зовут",
+      "gloss": "ME NAME",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.58,
+      "clip_id": null
+    },
+    {
+      "token": "зовут",
+      "gloss": "NAME",
+      "language": "ru",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "rsl_name"
+    },
+    {
+      "token": "нужна",
+      "gloss": "NEED",
+      "language": "ru",
+      "source": "seed:manual",
+      "confidence": 0.68,
+      "clip_id": "rsl_need"
+    },
+    {
+      "token": "помощь",
+      "gloss": "HELP",
+      "language": "ru",
+      "source": "seed:manual",
+      "confidence": 0.74,
+      "clip_id": "rsl_help"
+    },
+    {
+      "token": "привет",
+      "gloss": "HELLO",
+      "language": "ru",
+      "source": "seed:manual",
+      "confidence": 0.8,
+      "clip_id": "rsl_hello"
+    },
+    {
+      "token": "спасибо",
+      "gloss": "THANK_YOU",
+      "language": "ru",
+      "source": "seed:manual",
+      "confidence": 0.8,
+      "clip_id": "rsl_thank_you"
+    },
+    {
+      "token": "спасибо большое",
+      "gloss": "THANK_YOU",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.78,
+      "clip_id": "rsl_thank_you"
+    },
+    {
+      "token": "у меня",
+      "gloss": "ME",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.58,
+      "clip_id": "rsl_me"
+    },
+    {
+      "token": "здравствуйте",
+      "gloss": "HELLO_FORMAL",
+      "language": "ru",
+      "source": "seed:manual",
+      "confidence": 0.78,
+      "clip_id": "rsl_hello_formal"
+    }
+  ]
+}

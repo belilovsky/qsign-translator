@@ -30,6 +30,9 @@ The project is intentionally honest about what exists today:
 - Deterministic RU/KZ text-to-sign-plan prototype.
 - Runtime lexicon rebuilt from the archived Slovo gloss list plus reviewed seed
   entries, which materially improves Russian draft coverage.
+- Curated overrides now live in `data/curated_overrides.json`, so reviewed
+  manual phrases and aliases are maintained separately from the imported RU
+  corpus.
 - Phrase lookup, token lookup, and dactyl fallback.
 - Optional ASR adapter interface.
 - Persisted translation jobs when Postgres is configured.
@@ -95,6 +98,8 @@ Recent validation passed with:
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
 - working single-job and batch AI-video export modes.
+- deterministic runtime lexicon rebuild from curated overrides plus archived
+  Slovo assets.
 - live footer attribution now points back to `qdev.run` in a muted, non-promotional style.
 - package metadata, FastAPI OpenAPI metadata, and visible UI version are aligned
   at `0.2.0`.

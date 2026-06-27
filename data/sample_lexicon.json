@@ -49,62 +49,6 @@
       "clip_id": "krsl_hello_formal"
     },
     {
-      "token": "адрес",
-      "gloss": "АДРЕС/УЛИЦА",
-      "language": "ru",
-      "source": "seed:slovo_alias",
-      "confidence": 0.58,
-      "clip_id": "e68a8adf-867c-4358-8706-350b0d2b8244"
-    },
-    {
-      "token": "большое",
-      "gloss": "БОЛЬШОЙ",
-      "language": "ru",
-      "source": "seed:slovo_alias",
-      "confidence": 0.58,
-      "clip_id": "b321281f-6cfc-4132-a1c5-31365224ebd6"
-    },
-    {
-      "token": "добрый день",
-      "gloss": "HELLO_FORMAL",
-      "language": "ru",
-      "source": "seed:manual_phrase",
-      "confidence": 0.72,
-      "clip_id": "rsl_hello_formal"
-    },
-    {
-      "token": "и",
-      "gloss": "OMIT",
-      "language": "ru",
-      "source": "seed:manual_nonsemantic",
-      "confidence": 0.3,
-      "clip_id": null
-    },
-    {
-      "token": "для",
-      "gloss": "OMIT",
-      "language": "ru",
-      "source": "seed:manual_nonsemantic",
-      "confidence": 0.3,
-      "clip_id": null
-    },
-    {
-      "token": "спасибо большое",
-      "gloss": "THANK_YOU",
-      "language": "ru",
-      "source": "seed:manual_phrase",
-      "confidence": 0.78,
-      "clip_id": "rsl_thank_you"
-    },
-    {
-      "token": "у меня",
-      "gloss": "ME",
-      "language": "ru",
-      "source": "seed:manual_phrase",
-      "confidence": 0.58,
-      "clip_id": "rsl_me"
-    },
-    {
       "token": "10",
       "gloss": "10",
       "language": "ru",
@@ -199,6 +143,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "b49ba509-db61-40e6-b614-6d573a877913"
+    },
+    {
+      "token": "адрес",
+      "gloss": "АДРЕС/УЛИЦА",
+      "language": "ru",
+      "source": "seed:slovo_alias",
+      "confidence": 0.58,
+      "clip_id": "e68a8adf-867c-4358-8706-350b0d2b8244"
     },
     {
       "token": "адрес/улица",
@@ -455,6 +407,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "5d4d95ef-6b23-4bef-b575-3167a30d40c8"
+    },
+    {
+      "token": "большое",
+      "gloss": "БОЛЬШОЙ",
+      "language": "ru",
+      "source": "seed:slovo_alias",
+      "confidence": 0.58,
+      "clip_id": "b321281f-6cfc-4132-a1c5-31365224ebd6"
     },
     {
       "token": "большой",
@@ -1705,6 +1665,14 @@
       "clip_id": "4506d31e-978f-42e9-8fca-e42e5ab5ecfb"
     },
     {
+      "token": "для",
+      "gloss": "OMIT",
+      "language": "ru",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
       "token": "до",
       "gloss": "ДО",
       "language": "ru",
@@ -1735,6 +1703,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "3490403e-ecf5-405c-9c9a-bac83abcdb20"
+    },
+    {
+      "token": "добрый день",
+      "gloss": "HELLO_FORMAL",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.72,
+      "clip_id": "rsl_hello_formal"
     },
     {
       "token": "доверять",
@@ -2415,6 +2391,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "2bcb4952-d465-4275-bc68-139d3032ff45"
+    },
+    {
+      "token": "и",
+      "gloss": "OMIT",
+      "language": "ru",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
     },
     {
       "token": "игра",
@@ -6473,6 +6457,14 @@
       "clip_id": "rsl_thank_you"
     },
     {
+      "token": "спасибо большое",
+      "gloss": "THANK_YOU",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.78,
+      "clip_id": "rsl_thank_you"
+    },
+    {
       "token": "спать",
       "gloss": "СПАТЬ",
       "language": "ru",
@@ -6935,6 +6927,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "6253d131-3861-458f-9ea3-3fad66186d2a"
+    },
+    {
+      "token": "у меня",
+      "gloss": "ME",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.58,
+      "clip_id": "rsl_me"
     },
     {
       "token": "уверенный",
