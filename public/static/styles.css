@@ -1892,6 +1892,17 @@ tr:last-child td {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+}
+
+.review-form-actions > * {
+  min-width: 0;
+}
+
+.review-form-actions .small-status {
+  height: auto;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 .review-session-card {
@@ -1899,12 +1910,25 @@ tr:last-child td {
 }
 
 .review-upload-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.78fr);
   align-items: end;
 }
 
 .review-upload-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   margin-top: 0;
+}
+
+.review-upload-actions .small-status {
+  min-width: 0;
+  white-space: normal;
+}
+
+.review-upload-actions .secondary-button {
+  width: auto;
+  max-width: 150px;
 }
 
 .inline-link {
@@ -2275,6 +2299,8 @@ tr:last-child td {
 
   .timeline-actions {
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
     justify-content: stretch;
   }
 
@@ -2283,9 +2309,15 @@ tr:last-child td {
     width: 100%;
   }
 
+  .view-mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
   .review-card-head,
   .review-actions,
-  .panel-heading.result-heading {
+  .panel-heading.result-heading,
+  .timeline-panel .panel-heading {
     display: grid;
   }
 
@@ -2308,6 +2340,7 @@ tr:last-child td {
   .view-mode-toggle button {
     flex: 1;
     min-width: 0;
+    font-size: 11px;
   }
 
   .unit-inspector-grid {
