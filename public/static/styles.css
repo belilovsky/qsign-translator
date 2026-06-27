@@ -1645,6 +1645,27 @@ tr:last-child td {
   gap: 10px;
 }
 
+.review-subsection {
+  display: grid;
+  gap: 10px;
+}
+
+.review-subsection + .review-subsection {
+  margin-top: 6px;
+}
+
+.review-subsection-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.review-subsection-head h3 {
+  font-size: 13px;
+}
+
 .review-session-form {
   display: grid;
   gap: 10px;
@@ -1812,6 +1833,15 @@ tr:last-child td {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.45;
+}
+
+.review-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .review-detail-summary,

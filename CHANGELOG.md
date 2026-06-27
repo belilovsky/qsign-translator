@@ -23,6 +23,10 @@ All notable QSign Translator changes are summarized here.
   updates.
 - Tightened video readiness so uploaded output still requires explicit final
   reviewer approval before the job becomes publishable.
+- Added stricter AI-video render-contract exports for single-job and batch
+  handoff packages.
+- Refined reviewer UI structure so plan units, sessions, feedback, and audit
+  history are easier to scan with timestamps and section counts.
 - Added live footer attribution to `qdev.run`.
 - Aligned package, FastAPI OpenAPI, and visible UI version metadata.
 - Hid `HEAD` monitor routes from OpenAPI to avoid duplicate operation IDs.

@@ -67,6 +67,7 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
             "duration_seconds": round(duration_seconds, 2),
             "resolved_segments": resolved_segments,
             "missing_segments": missing_segments,
+            "fallback_units": _count_fallback_units(unit_briefs),
             "pipeline_status": pipeline_status,
             "publish_blockers": list(publish_gate.get("blockers") or []),
             "target_output_kind": "avatar_video_prompt_package",
@@ -99,6 +100,7 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
         ],
     }
     brief["batch_render"] = _build_batch_render_structure([brief], title=str(job.get("input_text") or "Single-scene batch"))
+    brief["render_contract"] = _build_single_render_contract(brief)
     brief["exports"] = _build_export_formats(brief)
     return brief
 
@@ -121,12 +123,15 @@ def build_ai_video_batch_brief(
             "title": batch_title,
             "scene_count": batch_render["scene_count"],
             "total_units": batch_render["total_units"],
+            "fallback_units": batch_render["fallback_units"],
             "duration_seconds": batch_render["duration_seconds"],
             "languages": languages,
             "review_statuses": batch_render["review_statuses"],
             "risk_domains": batch_render["risk_domains"],
             "resolved_segments": batch_render["resolved_segments"],
             "missing_segments": batch_render["missing_segments"],
+            "publishable_scene_count": batch_render["publishable_scene_count"],
+            "review_required_scene_count": batch_render["review_required_scene_count"],
             "target_output_kind": "avatar_video_batch_prompt_package",
         },
         "video_spec": video_spec,
@@ -346,6 +351,10 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
             "label": "JSON payload",
             "text": json.dumps(brief, ensure_ascii=False, indent=2),
         },
+        "render_contract": {
+            "label": "Render contract",
+            "text": _render_contract_text(dict(brief.get("render_contract") or {})),
+        },
         "batch_storyboard": {
             "label": "Batch storyboard",
             "text": "\n".join(scene_lines),
@@ -361,6 +370,9 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
     risk_domains: list[str] = []
     review_statuses: list[str] = []
     total_units = 0
+    fallback_units = 0
+    publishable_scene_count = 0
+    review_required_scene_count = 0
     hold_seconds = 0.4
     for index, brief in enumerate(scene_briefs, start=1):
         summary = dict(brief.get("summary") or {})
@@ -371,8 +383,14 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
         resolved_total += resolved
         missing_total += missing
         total_units += len(units)
+        fallback_units += int(summary.get("fallback_units") or 0)
         review_status = str(summary.get("review_status") or "pending_signer_review")
         review_statuses.append(review_status)
+        scene_publishable = review_status == "approved" and missing == 0 and int(summary.get("fallback_units") or 0) == 0
+        if scene_publishable:
+            publishable_scene_count += 1
+        else:
+            review_required_scene_count += 1
         for domain in summary.get("risk_domains") or []:
             domain_value = str(domain)
             if domain_value not in risk_domains:
@@ -389,6 +407,8 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
                 "end_time_seconds": round(cursor_seconds + duration, 2),
                 "resolved_segments": resolved,
                 "missing_segments": missing,
+                "fallback_units": int(summary.get("fallback_units") or 0),
+                "scene_publishable": scene_publishable,
                 "units": units,
             }
         )
@@ -399,10 +419,13 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
         "title": title,
         "scene_count": len(scenes),
         "total_units": total_units,
+        "fallback_units": fallback_units,
         "duration_seconds": round(cursor_seconds, 2),
         "transition_style": "hard_cut_with_0.4s_hold",
         "resolved_segments": resolved_total,
         "missing_segments": missing_total,
+        "publishable_scene_count": publishable_scene_count,
+        "review_required_scene_count": review_required_scene_count,
         "risk_domains": risk_domains,
         "review_statuses": _ordered_unique(review_statuses),
         "scenes": scenes,
@@ -481,6 +504,10 @@ def _build_batch_export_formats(
             "label": "JSON payload",
             "text": json.dumps(batch_brief, ensure_ascii=False, indent=2),
         },
+        "render_contract": {
+            "label": "Render contract",
+            "text": _batch_render_contract_text(batch_brief),
+        },
         "scene_prompts": {
             "label": "Scene prompts",
             "text": "\n\n".join(
@@ -499,3 +526,101 @@ def _ordered_unique(values: list[str]) -> list[str]:
         if value not in result:
             result.append(value)
     return result
+
+
+def _count_fallback_units(units: list[VideoUnitBrief]) -> int:
+    return sum(1 for unit in units if unit.kind != "gloss" or not unit.clip_id)
+
+
+def _build_single_render_contract(brief: dict[str, object]) -> dict[str, object]:
+    summary = dict(brief.get("summary") or {})
+    blockers = list(summary.get("publish_blockers") or [])
+    units = list(brief.get("units") or [])
+    return {
+        "contract_version": "qsign-render-contract/v1",
+        "job_id": brief.get("job_id") or "",
+        "target_filename": f"{brief.get('job_id') or 'qsign-job'}-draft.mp4",
+        "duration_seconds": summary.get("duration_seconds"),
+        "language_route": summary.get("language_route"),
+        "review_status": summary.get("review_status"),
+        "pipeline_status": summary.get("pipeline_status"),
+        "fallback_units": summary.get("fallback_units"),
+        "publish_blockers": blockers,
+        "must_hold_for_review": bool(blockers),
+        "unit_order": [
+            {
+                "position": unit.get("position"),
+                "source_token": unit.get("source_token"),
+                "kind": unit.get("kind"),
+                "instruction": unit.get("instruction"),
+            }
+            for unit in units
+        ],
+        "acceptance": [
+            "one signer only",
+            "both hands visible in every frame",
+            "captions match the source text",
+            "fallback units remain explicit and are not improvised",
+            "result stays in draft state while publish blockers remain",
+        ],
+    }
+
+
+def _render_contract_text(contract: dict[str, object]) -> str:
+    unit_order = contract.get("unit_order") or []
+    lines = [
+        "QSign render contract",
+        f"job_id: {contract.get('job_id') or '-'}",
+        f"target_filename: {contract.get('target_filename') or '-'}",
+        f"route: {contract.get('language_route') or '-'}",
+        f"duration_seconds: {contract.get('duration_seconds') or '-'}",
+        f"review_status: {contract.get('review_status') or '-'}",
+        f"pipeline_status: {contract.get('pipeline_status') or '-'}",
+        f"fallback_units: {contract.get('fallback_units') or 0}",
+        f"must_hold_for_review: {'yes' if contract.get('must_hold_for_review') else 'no'}",
+        f"publish_blockers: {', '.join(contract.get('publish_blockers') or []) or 'none'}",
+        "",
+        "UNIT ORDER",
+        *[
+            f"- {unit.get('position')}. {unit.get('source_token')} | {unit.get('kind')} | {unit.get('instruction')}"
+            for unit in unit_order
+        ],
+        "",
+        "ACCEPTANCE",
+        *[f"- {item}" for item in contract.get("acceptance") or []],
+    ]
+    return "\n".join(lines)
+
+
+def _batch_render_contract_text(batch_brief: dict[str, object]) -> str:
+    summary = dict(batch_brief.get("summary") or {})
+    batch = dict(batch_brief.get("batch_render") or {})
+    lines = [
+        "QSign batch render contract",
+        f"title: {summary.get('title') or '-'}",
+        f"scene_count: {summary.get('scene_count') or 0}",
+        f"publishable_scene_count: {summary.get('publishable_scene_count') or 0}",
+        f"review_required_scene_count: {summary.get('review_required_scene_count') or 0}",
+        f"fallback_units: {summary.get('fallback_units') or 0}",
+        f"duration_seconds: {summary.get('duration_seconds') or 0}",
+        "",
+        "SCENE CONTRACT",
+    ]
+    for scene in batch.get("scenes") or []:
+        lines.append(
+            f"- scene {scene.get('scene_number')}: publishable={'yes' if scene.get('scene_publishable') else 'no'} | "
+            f"fallback_units={scene.get('fallback_units') or 0} | "
+            f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')} | "
+            f"text={scene.get('input_text')}"
+        )
+    lines.extend(
+        [
+            "",
+            "GLOBAL ACCEPTANCE",
+            "- keep one signer and one camera setup across the full batch",
+            "- keep per-scene boundaries visible and do not merge phrases",
+            "- stop before publication when any scene still needs review",
+            "- return one merged mp4 and scene timestamps for QA",
+        ]
+    )
+    return "\n".join(lines)

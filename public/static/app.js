@@ -118,9 +118,13 @@ const reviewJobs = document.querySelector("#reviewJobs");
 const reviewQueueStatus = document.querySelector("#reviewQueueStatus");
 const reviewDetailSummary = document.querySelector("#reviewDetailSummary");
 const reviewUnitList = document.querySelector("#reviewUnitList");
+const reviewUnitsMeta = document.querySelector("#reviewUnitsMeta");
 const reviewSessionList = document.querySelector("#reviewSessionList");
+const reviewSessionsMeta = document.querySelector("#reviewSessionsMeta");
 const reviewFeedbackList = document.querySelector("#reviewFeedbackList");
+const reviewFeedbackMeta = document.querySelector("#reviewFeedbackMeta");
 const reviewAuditList = document.querySelector("#reviewAuditList");
+const reviewAuditMeta = document.querySelector("#reviewAuditMeta");
 const reviewStatusActionButtons = Array.from(document.querySelectorAll("[data-review-status-action]"));
 const reviewSessionForm = document.querySelector("#reviewSessionForm");
 const reviewerRoleInput = document.querySelector("#reviewerRoleInput");
@@ -1325,6 +1329,19 @@ function formatReviewerRole(role) {
   return String(role || "ревьюер");
 }
 
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function formatPublishStatus(status) {
   if (status === "draft") return "черновик";
   if (status === "final_review_pending") return "ждет финальной проверки";
@@ -1342,6 +1359,31 @@ function formatAuditEventType(type) {
   if (type === "rendered_video_attached") return "прикреплено финальное видео";
   if (type === "publish_status_updated") return "обновлен publish status";
   return String(type || "событие");
+}
+
+function formatAuditDetailKey(key) {
+  const labels = {
+    input_type: "вход",
+    language: "язык",
+    reviewer_language: "язык ревью",
+    blocking_issue: "блокирующая проблема",
+    meaning_score: "смысл",
+    understandability_score: "понятность",
+    output_uri: "ссылка",
+    render_adapter: "рендер",
+    review_status: "review status",
+    publish_status: "publish status",
+    feedback_type: "feedback",
+    has_note: "есть заметка",
+    note: "комментарий",
+  };
+  return labels[key] || String(key || "поле");
+}
+
+function formatAuditDetailValue(value) {
+  if (typeof value === "boolean") return value ? "да" : "нет";
+  if (value == null || value === "") return "—";
+  return String(value);
 }
 
 function formatPlanLanguage(language) {
@@ -1481,7 +1523,12 @@ function renderReviewJobs(items) {
     const status = appendTextElement(head, "span", `review-pill ${pill.tone}`, pill.label);
     status.title = String(item.review_status || "");
     card.append(head);
-    appendTextElement(card, "p", "", `${formatPlanLanguage(item.detected_language)} · ${formatOutputStatus(item.output_status)}.`);
+    appendTextElement(
+      card,
+      "p",
+      "",
+      `${formatPlanLanguage(item.detected_language)} · ${formatOutputStatus(item.output_status)} · ${formatPublishStatus(item.publish_status)}.`
+    );
     appendTextElement(card, "p", "", `Замены: ${Number(item.fallback_count || 0)} · неизвестно: ${Number(item.unknown_token_count || 0)}.`);
     card.addEventListener("click", () => selectReviewJob(item.id));
     card.addEventListener("keydown", (event) => {
@@ -1519,6 +1566,10 @@ function renderReviewDetail(job, feedbackItems = []) {
     reviewPublishStatus.textContent = state.reviewToken
       ? "Финальное решение можно сохранить после выбора записи."
       : "Финальное решение доступно после ввода review token.";
+    reviewUnitsMeta.textContent = "0 единиц";
+    reviewSessionsMeta.textContent = "0 сессий";
+    reviewFeedbackMeta.textContent = "0 отзывов";
+    reviewAuditMeta.textContent = "0 событий";
     return;
   }
   appendTextElement(reviewDetailSummary, "strong", "", String(job.input_text || "Без текста"));
@@ -1562,12 +1613,17 @@ function renderReviewDetail(job, feedbackItems = []) {
       reviewUploadStatus.textContent = "Загрузите внешний mp4 после рендера.";
     }
   }
+  const latestPublishNote = (state.reviewAuditEvents || []).find((item) => item.event_type === "publish_status_updated")?.detail?.note;
   reviewPublishStatusInput.value = String(job.publish_status || "draft");
-  reviewPublishStatus.textContent = "Финальное решение сохраняется отдельно от review status.";
+  reviewPublishNoteInput.value = typeof latestPublishNote === "string" ? latestPublishNote : "";
+  reviewPublishStatus.textContent = latestPublishNote
+    ? "Последний комментарий к публикации подставлен в форму."
+    : "Финальное решение сохраняется отдельно от review status.";
   syncReviewActionButtons();
   reviewSessionStatus.textContent = "Сохраните решение носителя или оператора по этой записи.";
 
   const units = job.units || [];
+  reviewUnitsMeta.textContent = `${units.length} ${units.length === 1 ? "единица" : "единиц"}`;
   if (!units.length) {
     const emptyUnits = document.createElement("div");
     emptyUnits.className = "review-empty-state";
@@ -1587,7 +1643,10 @@ function renderReviewDetail(job, feedbackItems = []) {
 
   renderReviewSessions(state.reviewSessions);
   renderReviewAudit(state.reviewAuditEvents);
+  reviewSessionsMeta.textContent = `${state.reviewSessions.length} ${state.reviewSessions.length === 1 ? "сессия" : "сессий"}`;
+  reviewAuditMeta.textContent = `${state.reviewAuditEvents.length} ${state.reviewAuditEvents.length === 1 ? "событие" : "событий"}`;
 
+  reviewFeedbackMeta.textContent = `${feedbackItems.length} ${feedbackItems.length === 1 ? "отзыв" : "отзывов"}`;
   if (!feedbackItems.length) {
     const emptyFeedback = document.createElement("div");
     emptyFeedback.className = "review-empty-state";
@@ -1599,6 +1658,10 @@ function renderReviewDetail(job, feedbackItems = []) {
       const card = document.createElement("article");
       card.className = "review-feedback-card";
       appendTextElement(card, "strong", "", formatStatus(item.feedback_type));
+      const meta = document.createElement("div");
+      meta.className = "review-card-meta";
+      appendTextElement(meta, "span", "", formatDateTime(item.created_at) || "время не указано");
+      card.append(meta);
       appendTextElement(card, "p", "", item.note || "Без дополнительной заметки.");
       reviewFeedbackList.append(card);
     });
@@ -1619,12 +1682,18 @@ function renderReviewAudit(items) {
     const card = document.createElement("article");
     card.className = "review-feedback-card review-session-card";
     appendTextElement(card, "strong", "", `${formatAuditEventType(item.event_type)} · ${formatReviewerRole(item.actor_role)}`);
-    const detail = item.detail && typeof item.detail === "object" ? Object.entries(item.detail).slice(0, 4) : [];
+    const meta = document.createElement("div");
+    meta.className = "review-card-meta";
+    appendTextElement(meta, "span", "", formatDateTime(item.created_at) || "время не указано");
+    card.append(meta);
+    const detail = item.detail && typeof item.detail === "object" ? Object.entries(item.detail).slice(0, 5) : [];
     appendTextElement(
       card,
       "p",
       "",
-      detail.length ? detail.map(([key, value]) => `${key}: ${String(value)}`).join(" · ") : "Без деталей."
+      detail.length
+        ? detail.map(([key, value]) => `${formatAuditDetailKey(key)}: ${formatAuditDetailValue(value)}`).join(" · ")
+        : "Без деталей."
     );
     reviewAuditList.append(card);
   });
@@ -1653,6 +1722,10 @@ function renderReviewSessions(items) {
     if (Number.isFinite(Number(item.meaning_score))) details.push(`смысл ${item.meaning_score}/5`);
     if (Number.isFinite(Number(item.understandability_score))) details.push(`понятность ${item.understandability_score}/5`);
     if (item.blocking_issue) details.push("есть блокирующая проблема");
+    const meta = document.createElement("div");
+    meta.className = "review-card-meta";
+    appendTextElement(meta, "span", "", formatDateTime(item.created_at) || "время не указано");
+    card.append(meta);
     appendTextElement(card, "p", "", details.join(" · ") || "Без оценок.");
     appendTextElement(card, "p", "", item.notes || "Без заметки.");
     reviewSessionList.append(card);

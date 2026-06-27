@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260627c" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260627e" />
   </head>
   <body>
     <div class="app-shell">
@@ -249,6 +249,7 @@
               <div class="segmented-control export-modes" role="group" aria-label="Формат экспорта brief">
                 <button type="button" class="mode-button active" id="aiBriefModeUniversal" data-brief-mode="universal_prompt" aria-pressed="true">Universal</button>
                 <button type="button" class="mode-button" id="aiBriefModeOperator" data-brief-mode="operator_handoff" aria-pressed="false">Operator</button>
+                <button type="button" class="mode-button" id="aiBriefModeContract" data-brief-mode="render_contract" aria-pressed="false">Contract</button>
                 <button type="button" class="mode-button" id="aiBriefModeJson" data-brief-mode="json_payload" aria-pressed="false">JSON</button>
                 <button type="button" class="mode-button" id="aiBriefModeBatch" data-brief-mode="batch_storyboard" aria-pressed="false">Batch</button>
               </div>
@@ -428,10 +429,34 @@
                   <textarea id="reviewPublishNoteInput" rows="2" maxlength="2000" placeholder="Почему видео можно публиковать или что в нем нужно исправить"></textarea>
                 </label>
               </form>
-              <div class="review-unit-list" id="reviewUnitList"></div>
-              <div class="review-feedback-list" id="reviewSessionList"></div>
-              <div class="review-feedback-list" id="reviewFeedbackList"></div>
-              <div class="review-feedback-list" id="reviewAuditList"></div>
+              <section class="review-subsection" aria-labelledby="reviewUnitsTitle">
+                <div class="review-subsection-head">
+                  <h3 id="reviewUnitsTitle">План жестов</h3>
+                  <span class="small-status" id="reviewUnitsMeta">0 единиц</span>
+                </div>
+                <div class="review-unit-list" id="reviewUnitList"></div>
+              </section>
+              <section class="review-subsection" aria-labelledby="reviewSessionsTitle">
+                <div class="review-subsection-head">
+                  <h3 id="reviewSessionsTitle">Сессии ревью</h3>
+                  <span class="small-status" id="reviewSessionsMeta">0 сессий</span>
+                </div>
+                <div class="review-feedback-list" id="reviewSessionList"></div>
+              </section>
+              <section class="review-subsection" aria-labelledby="reviewFeedbackTitle">
+                <div class="review-subsection-head">
+                  <h3 id="reviewFeedbackTitle">Пользовательский feedback</h3>
+                  <span class="small-status" id="reviewFeedbackMeta">0 отзывов</span>
+                </div>
+                <div class="review-feedback-list" id="reviewFeedbackList"></div>
+              </section>
+              <section class="review-subsection" aria-labelledby="reviewAuditTitle">
+                <div class="review-subsection-head">
+                  <h3 id="reviewAuditTitle">Журнал действий</h3>
+                  <span class="small-status" id="reviewAuditMeta">0 событий</span>
+                </div>
+                <div class="review-feedback-list" id="reviewAuditList"></div>
+              </section>
             </section>
           </div>
         </div>
@@ -448,6 +473,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260627d" defer></script>
+    <script src="/static/app.js?v=20260627e" defer></script>
   </body>
 </html>

@@ -80,6 +80,10 @@ curl -fsS -X POST "$BASE/v1/ai-video-batch-brief" -H 'content-type: application/
   -d "{\"job_ids\":[\"$JOB1\",\"$JOB2\"],\"title\":\"Smoke batch\"}" | jq '.format_version, .summary.scene_count, (.exports | keys)'
 ```
 
+For operator handoff, prefer the explicit `render_contract` or
+`operator_runbook` exports over improvising your own scene order or acceptance
+criteria.
+
 Verify the review API only with an explicit operator token:
 
 ```bash

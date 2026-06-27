@@ -45,6 +45,7 @@ The project is intentionally honest about what exists today:
 - Review-video draft mp4 generation for saved jobs.
 - AI-video brief export for one saved phrase.
 - Batch AI-video brief export for multiple saved phrases.
+- Stricter render-contract export for external video operators.
 - Responsive public UI with result trace, coverage counters, and export modes.
 - Separate reviewer route in the same frontend shell, with token-gated queue and
   details view.
@@ -109,6 +110,10 @@ Recent validation passed with:
   for publication.
 - reviewer tooling now exposes a lightweight audit trail and final
   publish-status controls for the saved job lifecycle.
+- reviewer UI now separates plan units, saved review sessions, user feedback,
+  and audit history into clearer sections with counts and timestamps.
+- AI-video handoff now includes an explicit render contract so operators get a
+  stricter acceptance checklist, output naming, and unit-order contract.
 
 ## Readiness Rating
 

@@ -148,6 +148,10 @@ a stricter batch package for multi-phrase rendering: ordered scenes, timeline
 offsets, assembly rules, and exports for operator runbooks or downstream
 automation.
 
+Single-job AI-video briefs now also include a stricter `render contract`
+export: target filename, publish blockers, exact unit order, and acceptance
+checks that keep external video generation aligned with reviewer expectations.
+
 Example:
 
 ```bash
