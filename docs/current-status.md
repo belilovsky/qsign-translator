@@ -122,6 +122,10 @@ Recent validation passed with:
   and audit history into clearer sections with counts and timestamps.
 - AI-video handoff now includes an explicit render contract so operators get a
   stricter acceptance checklist, output naming, and unit-order contract.
+- AI-video brief now explicitly blocks generic sign-avatar generation whenever
+  signer approval, lexical coverage, or clip-backed assets are incomplete, so
+  external video tools are not asked to fake fluent sign language from fallback
+  tokens.
 
 ## Readiness Rating
 
@@ -141,6 +145,8 @@ This repository is publishable as a prototype, but not as a finished
 sign-language production stack.
 
 - No real signer-avatar generation pipeline is wired in yet.
+- Generic text-to-video models are still not treated as trusted sign-language
+  renderers; unresolved jobs now deliberately downgrade to review-only packages.
 - No production clip library is bundled in the repository.
 - No native-signer validation has happened yet.
 - ASR quality on real RU/KZ production audio is not benchmarked here.

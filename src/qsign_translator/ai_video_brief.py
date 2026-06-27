@@ -15,6 +15,14 @@ class VideoUnitBrief:
     instruction: str
 
 
+@dataclass(frozen=True)
+class RenderReadiness:
+    status: str
+    mode: str
+    generic_avatar_allowed: bool
+    blockers: list[str]
+
+
 def default_video_spec(language: str) -> dict[str, object]:
     return {
         "resolution": "1280x720",
@@ -28,9 +36,7 @@ def default_video_spec(language: str) -> dict[str, object]:
     }
 
 
-def build_ai_video_brief(
-    job: dict[str, object], render_plan: dict[str, object]
-) -> dict[str, object]:
+def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object]) -> dict[str, object]:
     units = list(job.get("units") or [])
     language = str(job.get("detected_language") or "unknown")
     review_status = str(job.get("review_status") or "pending_signer_review")
@@ -42,6 +48,13 @@ def build_ai_video_brief(
     pipeline_status = str(render_plan.get("pipeline_status") or "awaiting_signer_review")
     duration_seconds = max(3.0, len(units) * 1.4)
     unit_briefs = [_build_unit_brief(index, unit) for index, unit in enumerate(units, start=1)]
+    publish_blockers = list(publish_gate.get("blockers") or [])
+    render_readiness = _evaluate_render_readiness(
+        review_status=review_status,
+        units=unit_briefs,
+        missing_segments=missing_segments,
+        publish_blockers=publish_blockers,
+    )
     master_prompt = _build_master_prompt(
         language=language,
         review_status=review_status,
@@ -49,6 +62,7 @@ def build_ai_video_brief(
         duration_seconds=duration_seconds,
         units=unit_briefs,
         input_text=str(job.get("input_text") or ""),
+        render_readiness=render_readiness,
     )
     negative_prompt = _build_negative_prompt()
     operator_task = _build_operator_task(
@@ -58,6 +72,7 @@ def build_ai_video_brief(
         units=unit_briefs,
         missing_segments=missing_segments,
         resolved_segments=resolved_segments,
+        render_readiness=render_readiness,
     )
     brief = {
         "job_id": str(job.get("id") or ""),
@@ -73,8 +88,16 @@ def build_ai_video_brief(
             "missing_segments": missing_segments,
             "fallback_units": _count_fallback_units(unit_briefs),
             "pipeline_status": pipeline_status,
-            "publish_blockers": list(publish_gate.get("blockers") or []),
-            "target_output_kind": "avatar_video_prompt_package",
+            "publish_blockers": publish_blockers,
+            "render_readiness": render_readiness.status,
+            "render_mode": render_readiness.mode,
+            "generic_avatar_allowed": render_readiness.generic_avatar_allowed,
+            "render_blockers": render_readiness.blockers,
+            "target_output_kind": (
+                "avatar_video_prompt_package"
+                if render_readiness.generic_avatar_allowed
+                else "review_operator_package"
+            ),
         },
         "video_spec": default_video_spec(language),
         "units": [
@@ -103,9 +126,7 @@ def build_ai_video_brief(
             "Do not publish or distribute as final output while pipeline blockers remain active.",
         ],
     }
-    brief["batch_render"] = _build_batch_render_structure(
-        [brief], title=str(job.get("input_text") or "Single-scene batch")
-    )
+    brief["batch_render"] = _build_batch_render_structure([brief], title=str(job.get("input_text") or "Single-scene batch"))
     brief["render_contract"] = _build_single_render_contract(brief)
     brief["exports"] = _build_export_formats(brief)
     return brief
@@ -116,15 +137,11 @@ def build_ai_video_batch_brief(
     *,
     title: str | None = None,
 ) -> dict[str, object]:
-    scene_briefs = [
-        build_ai_video_brief(job, render_plan) for job, render_plan in jobs_with_render_plans
-    ]
+    scene_briefs = [build_ai_video_brief(job, render_plan) for job, render_plan in jobs_with_render_plans]
     if not scene_briefs:
         raise ValueError("At least one job is required for batch brief")
     batch_title = title or "QSign batch render"
-    languages = _ordered_unique(
-        [str(scene.get("summary", {}).get("language_route") or "unknown") for scene in scene_briefs]
-    )
+    languages = _ordered_unique([str(scene.get("summary", {}).get("language_route") or "unknown") for scene in scene_briefs])
     video_spec = default_video_spec(languages[0] if len(languages) == 1 else "mixed")
     batch_render = _build_batch_render_structure(scene_briefs, title=batch_title)
     batch_brief = {
@@ -162,9 +179,7 @@ def _build_unit_brief(position: int, unit: dict[str, object]) -> VideoUnitBrief:
     elif kind == "dactyl":
         instruction = f"Finger-spell '{source_token}' clearly and slowly."
     else:
-        instruction = (
-            f"Show a cautious placeholder beat for '{source_token}' and keep subtitle visible."
-        )
+        instruction = f"Show a cautious placeholder beat for '{source_token}' and keep subtitle visible."
     return VideoUnitBrief(
         position=position,
         source_token=source_token,
@@ -205,6 +220,7 @@ def _build_master_prompt(
     duration_seconds: float,
     units: list[VideoUnitBrief],
     input_text: str,
+    render_readiness: RenderReadiness,
 ) -> str:
     unit_lines = "\n".join(
         f"{unit.position}. token='{unit.source_token}' | kind={unit.kind} | gloss='{unit.gloss}' | instruction={unit.instruction}"
@@ -215,6 +231,24 @@ def _build_master_prompt(
         if risk_domains
         else "No high-risk domain flag in this draft, but still treat the result as review-only."
     )
+    if not render_readiness.generic_avatar_allowed:
+        blocker_lines = "\n".join(f"- {blocker}" for blocker in render_readiness.blockers)
+        return (
+            "This package is NOT approved for autonomous sign-avatar generation.\n"
+            f"Source text: {input_text}\n"
+            f"Target signing route: {_sign_language_label(language)}.\n"
+            f"Review status: {review_status}. Keep the job in review-only state.\n"
+            f"Pipeline status: {pipeline_status_from_review(review_status, units)}.\n"
+            f"Planned duration reference: about {duration_seconds:.1f} seconds.\n"
+            f"{risk_clause}\n"
+            "Blockers:\n"
+            f"{blocker_lines}\n"
+            "Do not fabricate fluent sign language, do not expose gloss strings, and do not finger-spell raw internal tokens on screen.\n"
+            "Allowed output for a generic video model: a neutral review placeholder only. Keep one calm presenter in frame, preserve readable source-language captions, "
+            "show no semantic signing beyond a static ready pose, and leave timing for later human or clip-backed replacement.\n"
+            "Planned unit sequence for reviewer context only:\n"
+            f"{unit_lines}"
+        )
     return (
         "Generate a single clean sign-language draft video for human review.\n"
         f"Source text: {input_text}\n"
@@ -229,8 +263,8 @@ def _build_master_prompt(
         f"{risk_clause}\n"
         "Sign sequence:\n"
         f"{unit_lines}\n"
-        "If a unit is marked dactyl, finger-spell it clearly instead of inventing a lexical sign. "
-        "If a unit is uncertain, keep the subtitle and use a restrained placeholder motion rather than hallucinating a fluent sign."
+        "Use the listed sequence exactly, keep the signer front-facing, and never show internal gloss codes or token labels in the visible output.\n"
+        "If a unit is uncertain, stop the render path and return the package for review instead of hallucinating a fluent sign."
     )
 
 
@@ -250,7 +284,13 @@ def _build_operator_task(
     units: list[VideoUnitBrief],
     missing_segments: int,
     resolved_segments: int,
+    render_readiness: RenderReadiness,
 ) -> str:
+    route_line = (
+        "- Generic sign-avatar generation is allowed for this package because every unit is clip-backed, approved, and free of active blockers."
+        if render_readiness.generic_avatar_allowed
+        else "- Generic sign-avatar generation is NOT allowed for this package. Route it to human review or asset completion first."
+    )
     return (
         "Task for the video generator or operator:\n"
         f"- Produce one {language} draft signer video from the provided sign plan.\n"
@@ -258,7 +298,9 @@ def _build_operator_task(
         f"- Respect review status: {review_status}.\n"
         f"- Clip-backed coverage available internally: {resolved_segments}; missing lexical coverage: {missing_segments}.\n"
         f"- High-risk domains: {', '.join(risk_domains) if risk_domains else 'none flagged'}.\n"
-        "- Unknown terms must remain dactyl or visibly marked fallback, never be improvised as fluent native signs.\n"
+        f"{route_line}\n"
+        "- Unknown terms must never be improvised as fluent native signs.\n"
+        "- Never show raw gloss strings, internal dactyl tokens, or transliteration artifacts in captions or overlays.\n"
         "- Final delivery should be one reviewable mp4 plus the exact source captions.\n"
         "- If blockers remain, keep the package in draft state and route it back to reviewer operations."
     )
@@ -287,6 +329,9 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
         f"resolution: {video_spec.get('resolution') or '-'}",
         f"fps: {video_spec.get('fps') or '-'}",
         f"review_status: {summary.get('review_status') or '-'}",
+        f"render_readiness: {summary.get('render_readiness') or '-'}",
+        f"render_mode: {summary.get('render_mode') or '-'}",
+        f"generic_avatar_allowed: {'yes' if summary.get('generic_avatar_allowed') else 'no'}",
         f"risk_domains: {', '.join(summary.get('risk_domains') or []) or 'none'}",
         "",
         "MASTER PROMPT",
@@ -314,6 +359,8 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
         f"Route: {summary.get('language_route') or '-'}",
         f"Target duration: {summary.get('duration_seconds') or '-'} seconds",
         f"Review status: {summary.get('review_status') or '-'}",
+        f"Render readiness: {summary.get('render_readiness') or '-'}",
+        f"Render mode: {summary.get('render_mode') or '-'}",
         "",
         str(prompts.get("operator_task") or ""),
         "",
@@ -340,11 +387,11 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
         "",
         "Scene order:",
         *[
-            (
-                f"{scene.get('scene_number')}. job={scene.get('job_id')} | {scene.get('input_text')} | "
-                f"{scene.get('language_route')} | {scene.get('duration_seconds')}s | "
-                f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')}"
-            )
+                (
+                    f"{scene.get('scene_number')}. job={scene.get('job_id')} | {scene.get('input_text')} | "
+                    f"{scene.get('language_route')} | {scene.get('duration_seconds')}s | "
+                    f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')}"
+                )
             for scene in batch.get("scenes") or []
         ],
         "",
@@ -378,9 +425,7 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
     }
 
 
-def _build_batch_render_structure(
-    scene_briefs: list[dict[str, object]], *, title: str
-) -> dict[str, object]:
+def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, title: str) -> dict[str, object]:
     scenes: list[dict[str, object]] = []
     cursor_seconds = 0.0
     resolved_total = 0
@@ -404,11 +449,7 @@ def _build_batch_render_structure(
         fallback_units += int(summary.get("fallback_units") or 0)
         review_status = str(summary.get("review_status") or "pending_signer_review")
         review_statuses.append(review_status)
-        scene_publishable = (
-            review_status == "approved"
-            and missing == 0
-            and int(summary.get("fallback_units") or 0) == 0
-        )
+        scene_publishable = bool(summary.get("generic_avatar_allowed"))
         if scene_publishable:
             publishable_scene_count += 1
         else:
@@ -560,6 +601,31 @@ def _count_fallback_units(units: list[VideoUnitBrief]) -> int:
     return sum(1 for unit in units if unit.kind != "gloss" or not unit.clip_id)
 
 
+def _evaluate_render_readiness(
+    *,
+    review_status: str,
+    units: list[VideoUnitBrief],
+    missing_segments: int,
+    publish_blockers: list[str],
+) -> RenderReadiness:
+    blockers: list[str] = []
+    if review_status != "approved":
+        blockers.append("review status is not approved by signer")
+    if missing_segments > 0:
+        blockers.append(f"{missing_segments} segments still have no lexical coverage")
+    fallback_units = _count_fallback_units(units)
+    if fallback_units:
+        blockers.append(f"{fallback_units} units still depend on fallback or missing clip assets")
+    if publish_blockers:
+        blockers.extend(f"publish gate: {blocker}" for blocker in publish_blockers)
+    return RenderReadiness(
+        status="strict_ready" if not blockers else "blocked",
+        mode="strict_avatar_prompt" if not blockers else "review_operator_only",
+        generic_avatar_allowed=not blockers,
+        blockers=blockers,
+    )
+
+
 def _build_single_render_contract(brief: dict[str, object]) -> dict[str, object]:
     summary = dict(brief.get("summary") or {})
     blockers = list(summary.get("publish_blockers") or [])
@@ -573,8 +639,12 @@ def _build_single_render_contract(brief: dict[str, object]) -> dict[str, object]
         "review_status": summary.get("review_status"),
         "pipeline_status": summary.get("pipeline_status"),
         "fallback_units": summary.get("fallback_units"),
+        "render_readiness": summary.get("render_readiness"),
+        "render_mode": summary.get("render_mode"),
+        "generic_avatar_allowed": summary.get("generic_avatar_allowed"),
+        "render_blockers": summary.get("render_blockers"),
         "publish_blockers": blockers,
-        "must_hold_for_review": bool(blockers),
+        "must_hold_for_review": bool(summary.get("render_blockers") or blockers),
         "unit_order": [
             {
                 "position": unit.get("position"),
@@ -588,6 +658,7 @@ def _build_single_render_contract(brief: dict[str, object]) -> dict[str, object]
             "one signer only",
             "both hands visible in every frame",
             "captions match the source text",
+            "no visible internal gloss strings or dactyl token codes",
             "fallback units remain explicit and are not improvised",
             "result stays in draft state while publish blockers remain",
         ],
@@ -605,7 +676,11 @@ def _render_contract_text(contract: dict[str, object]) -> str:
         f"review_status: {contract.get('review_status') or '-'}",
         f"pipeline_status: {contract.get('pipeline_status') or '-'}",
         f"fallback_units: {contract.get('fallback_units') or 0}",
+        f"render_readiness: {contract.get('render_readiness') or '-'}",
+        f"render_mode: {contract.get('render_mode') or '-'}",
+        f"generic_avatar_allowed: {'yes' if contract.get('generic_avatar_allowed') else 'no'}",
         f"must_hold_for_review: {'yes' if contract.get('must_hold_for_review') else 'no'}",
+        f"render_blockers: {', '.join(contract.get('render_blockers') or []) or 'none'}",
         f"publish_blockers: {', '.join(contract.get('publish_blockers') or []) or 'none'}",
         "",
         "UNIT ORDER",

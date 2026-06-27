@@ -84,6 +84,10 @@ For operator handoff, prefer the explicit `render_contract` or
 `operator_runbook` exports over improvising your own scene order or acceptance
 criteria.
 
+If `summary.generic_avatar_allowed` is `false`, do not forward the package into
+free-form text-to-video sign synthesis. Treat it as a review/operator package
+only and resolve signer approval, lexical gaps, or missing assets first.
+
 Verify the review API only with an explicit operator token:
 
 ```bash
