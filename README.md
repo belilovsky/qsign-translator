@@ -154,6 +154,17 @@ Fast sanity check:
 ./scripts/check.sh
 ```
 
+Live deployment smoke:
+
+```bash
+python3 scripts/smoke_live.py --base-url https://qsign.qdev.run
+```
+
+The live smoke creates temporary test jobs and verifies health, readiness,
+OpenAPI version, translation persistence, render-plan output, review-video
+headers, AI-video handoff exports, batch handoff exports, protected review
+access, and invalid job-id handling.
+
 Fresh-clone contributor path:
 
 ```bash
@@ -189,6 +200,8 @@ make api
 
 ## Repository Guide
 
+- [ROADMAP.md](ROADMAP.md): readiness score, phases, and exit criteria
+- [CHANGELOG.md](CHANGELOG.md): release-level change summary
 - [docs/current-status.md](docs/current-status.md): current prototype scope and known limits
 - [docs/architecture.md](docs/architecture.md): system shape and data flow
 - [docs/infrastructure.md](docs/infrastructure.md): storage and service layout

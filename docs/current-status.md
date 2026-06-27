@@ -65,7 +65,7 @@ Protected review endpoints remain available for operator use, but require
 The current repository state has been exercised through:
 
 - unit and API tests via `./scripts/check.sh`;
-- live API smoke against a deployed instance;
+- live API smoke against a deployed instance via `scripts/smoke_live.py`;
 - browser smoke at desktop and mobile widths;
 - batch-brief checks with multiple saved jobs;
 - review-video checks through both `GET` and `HEAD`.
@@ -83,6 +83,18 @@ Recent validation passed with:
 - OpenAPI generation is warning-free while `HEAD` monitor routes remain active.
 - invalid external job identifiers are handled as missing records instead of
   surfacing database tracebacks.
+
+## Readiness Rating
+
+Current engineering/operator prototype applicability: **99/100**.
+
+This score applies to the prototype as a transparent tool for text-to-plan,
+review queues, draft preview, and AI-video handoff. It does not mean the system
+is a certified or autonomous sign-language translator.
+
+Current standalone translation-product readiness remains below production
+level until native-signer validation, broader lexicon coverage, evaluation
+benchmarks, and a real video/avatar backend are complete.
 
 ## Known Limits
 

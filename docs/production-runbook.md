@@ -47,6 +47,16 @@ supervisor or container restart flow.
 
 ## Smoke
 
+Preferred automated live smoke:
+
+```bash
+python3 scripts/smoke_live.py --base-url https://your-public-host.example
+```
+
+This creates temporary test jobs and checks the public API path from outside
+the deploy host. Use the optional `--review-token` flag only from a secure
+operator machine.
+
 Verify readiness first:
 
 ```bash
