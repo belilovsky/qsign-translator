@@ -38,6 +38,7 @@ class AIVideoBriefApiTests(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["job_id"], "job-1")
         self.assertEqual(data["summary"]["language_route"], "ru")
+        self.assertEqual(data["summary"]["render_readiness"], "blocked")
         self.assertIn("master_prompt", data["prompts"])
         self.assertIn("negative_prompt", data["prompts"])
         self.assertIn("exports", data)
