@@ -407,9 +407,31 @@
                   </div>
                 </div>
               </form>
+              <form class="review-session-form review-publish-form" id="reviewPublishForm">
+                <div class="review-form-grid review-upload-grid">
+                  <label class="review-form-field">
+                    <span>Финальное решение</span>
+                    <select id="reviewPublishStatusInput">
+                      <option value="final_review_pending">Ждет финальной проверки</option>
+                      <option value="publishable">Можно публиковать</option>
+                      <option value="needs_video_fix">Нужна правка видео</option>
+                      <option value="rejected">Отклонено</option>
+                    </select>
+                  </label>
+                  <div class="review-form-actions review-upload-actions">
+                    <span class="small-status" id="reviewPublishStatus">Финальное решение сохраняется отдельно от review status.</span>
+                    <button class="secondary-button compact" id="reviewPublishSubmitButton" type="submit">Сохранить решение</button>
+                  </div>
+                </div>
+                <label class="review-form-field review-form-notes">
+                  <span>Комментарий к финальному видео</span>
+                  <textarea id="reviewPublishNoteInput" rows="2" maxlength="2000" placeholder="Почему видео можно публиковать или что в нем нужно исправить"></textarea>
+                </label>
+              </form>
               <div class="review-unit-list" id="reviewUnitList"></div>
               <div class="review-feedback-list" id="reviewSessionList"></div>
               <div class="review-feedback-list" id="reviewFeedbackList"></div>
+              <div class="review-feedback-list" id="reviewAuditList"></div>
             </section>
           </div>
         </div>
@@ -426,6 +448,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260627c" defer></script>
+    <script src="/static/app.js?v=20260627d" defer></script>
   </body>
 </html>

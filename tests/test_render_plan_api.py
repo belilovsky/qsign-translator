@@ -80,6 +80,7 @@ class RenderPlanApiTests(unittest.TestCase):
                 "id": "job-1",
                 "status": "review_required",
                 "review_status": "approved",
+                "publish_status": "publishable",
                 "output_kind": "sign_plan_preview",
                 "output_status": "ready",
                 "output_uri": "/v1/jobs/job-1/rendered-video",
@@ -101,10 +102,10 @@ class RenderPlanApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["pipeline_status"], "render_uploaded_ready_for_publish")
+        self.assertEqual(data["pipeline_status"], "ready_for_publish")
         self.assertTrue(data["adapter"]["uploaded_render_available"])
         self.assertTrue(data["publish_gate"]["ready"])
-        self.assertEqual(data["publish_gate"]["next_step"], "publish_or_manual_final_qc")
+        self.assertEqual(data["publish_gate"]["next_step"], "publishable_now")
 
 
 if __name__ == "__main__":

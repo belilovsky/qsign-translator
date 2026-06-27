@@ -17,12 +17,19 @@ All notable QSign Translator changes are summarized here.
   AI-video handoff payloads.
 - Added protected `mp4` upload flow for attaching externally rendered final
   videos back to saved jobs, plus a dedicated served route for uploaded output.
+- Added persisted publish-state decisions and per-job audit events for the
+  reviewer workflow.
+- Added protected review endpoints for audit inspection and publish-status
+  updates.
+- Tightened video readiness so uploaded output still requires explicit final
+  reviewer approval before the job becomes publishable.
 - Added live footer attribution to `qdev.run`.
 - Aligned package, FastAPI OpenAPI, and visible UI version metadata.
 - Hid `HEAD` monitor routes from OpenAPI to avoid duplicate operation IDs.
 - Hardened job endpoints so invalid external IDs return missing-record
   responses instead of database tracebacks.
-- Added `scripts/smoke_live.py` for live deployment verification.
+- Expanded `scripts/smoke_live.py` so secure runs can also verify audit and
+  publish-state review flows.
 
 ## 0.1.0 - Initial public prototype
 

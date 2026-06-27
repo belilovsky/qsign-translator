@@ -76,6 +76,11 @@ class ReviewSessionRequest(BaseModel):
     blocking_issue: bool = False
 
 
+class PublishStatusRequest(BaseModel):
+    publish_status: str = Field(min_length=1, max_length=40)
+    note: str | None = Field(default=None, max_length=2000)
+
+
 class BatchAIVideoBriefRequest(BaseModel):
     job_ids: list[str] = Field(min_length=1, max_length=20)
     title: str | None = Field(default=None, min_length=1, max_length=120)
@@ -411,6 +416,16 @@ def review_feedback(request: Request, job_id: str | None = None, limit: int = 50
     return {"items": items, "count": len(items)}
 
 
+@app.get("/v1/review/audit")
+def review_audit(request: Request, job_id: str | None = None, limit: int = 100) -> dict[str, object]:
+    require_review_access(request)
+    try:
+        items = db.list_audit_events(job_id=job_id, limit=max(1, min(limit, 300)))
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"items": items, "count": len(items)}
+
+
 @app.get("/v1/review/sessions")
 def review_sessions(request: Request, job_id: str | None = None, limit: int = 50) -> dict[str, object]:
     require_review_access(request)
@@ -509,6 +524,25 @@ async def upload_rendered_video(job_id: str, request: Request) -> dict[str, obje
         "render_adapter": updated_job.get("render_adapter"),
         "size_bytes": output_path.stat().st_size,
     }
+
+
+@app.patch("/v1/review/jobs/{job_id}/publish-status")
+def update_job_publish_status(job_id: str, payload: PublishStatusRequest, request: Request) -> dict[str, object]:
+    require_review_access(request)
+    try:
+        job = db.update_publish_status(
+            job_id,
+            publish_status=payload.publish_status,
+            actor_role="reviewer",
+            note=payload.note,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if not job:
+        raise HTTPException(status_code=404, detail="Translation job not found")
+    return job
 
 
 def require_review_access(request: Request) -> None:

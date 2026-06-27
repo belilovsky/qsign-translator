@@ -312,6 +312,38 @@ class ApiTests(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 404)
 
+    def test_review_audit_endpoint_lists_events(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch(
+                "qsign_translator.api.db.list_audit_events",
+                return_value=[{"id": "audit-1", "job_id": "job-1", "event_type": "job_created"}],
+            ),
+        ):
+            response = self.client.get(
+                "/v1/review/audit?job_id=job-1",
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+        self.assertEqual(response.json()["items"][0]["event_type"], "job_created")
+
+    def test_review_publish_status_endpoint_updates_state(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch(
+                "qsign_translator.api.db.update_publish_status",
+                return_value={"id": "job-1", "publish_status": "publishable"},
+            ),
+        ):
+            response = self.client.patch(
+                "/v1/review/jobs/job-1/publish-status",
+                json={"publish_status": "publishable", "note": "ok"},
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["publish_status"], "publishable")
+
 
 if __name__ == "__main__":
     unittest.main()

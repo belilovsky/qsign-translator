@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import json
 from typing import Any, Iterator
 
 from .planner import SignPlan
@@ -13,6 +14,7 @@ class DatabaseUnavailable(RuntimeError):
 
 VALID_FEEDBACK_TYPES = {"good", "wrong_sign", "unclear_sign", "missing_sign", "offensive"}
 VALID_REVIEW_STATUSES = {"pending_signer_review", "approved", "rejected", "needs_edit"}
+VALID_PUBLISH_STATUSES = {"draft", "final_review_pending", "publishable", "needs_video_fix", "rejected"}
 POSTGRES_INVALID_TEXT_REPRESENTATION = "22P02"
 
 
@@ -173,6 +175,13 @@ def record_translation_job(plan: SignPlan, input_type: str = "text") -> str:
                         unit.clip_id,
                     ),
                 )
+            _record_audit_event(
+                cur,
+                job_id=job_id,
+                event_type="job_created",
+                actor_role="system",
+                detail={"input_type": input_type, "language": plan.language},
+            )
         conn.commit()
     return job_id
 
@@ -194,11 +203,13 @@ def get_translation_job(job_id: str) -> dict[str, Any] | None:
                         confidence,
                         warnings,
                         review_status,
+                        publish_status,
                         risk_domains,
                         source_ids,
                         fallback_count,
                         unknown_token_count,
                         output_uri,
+                        render_adapter,
                         created_at,
                         updated_at
                     FROM translation_jobs
@@ -258,6 +269,7 @@ def list_translation_jobs(
                         confidence,
                         warnings,
                         review_status,
+                        publish_status,
                         risk_domains,
                         source_ids,
                         fallback_count,
@@ -285,6 +297,7 @@ def list_translation_jobs(
                         confidence,
                         warnings,
                         review_status,
+                        publish_status,
                         risk_domains,
                         source_ids,
                         fallback_count,
@@ -322,6 +335,7 @@ def update_review_status(job_id: str, review_status: str) -> dict[str, Any] | No
                         confidence,
                         warnings,
                         review_status,
+                        publish_status,
                         risk_domains,
                         source_ids,
                         fallback_count,
@@ -336,6 +350,14 @@ def update_review_status(job_id: str, review_status: str) -> dict[str, Any] | No
                     return None
                 raise
             row = cur.fetchone()
+            if row:
+                _record_audit_event(
+                    cur,
+                    job_id=job_id,
+                    event_type="review_status_updated",
+                    actor_role="reviewer",
+                    detail={"review_status": review_status},
+                )
         conn.commit()
     if not row:
         return None
@@ -390,6 +412,13 @@ def record_feedback(job_id: str, feedback_type: str, note: str | None = None) ->
             row = cur.fetchone()
             if not row:
                 raise DatabaseUnavailable("feedback event was not created")
+            _record_audit_event(
+                cur,
+                job_id=job_id,
+                event_type="feedback_recorded",
+                actor_role="user",
+                detail={"feedback_type": feedback_type, "has_note": bool(note)},
+            )
         conn.commit()
     return str(row["id"])
 
@@ -525,6 +554,19 @@ def create_review_session(
                     return None
                 raise
             row = cur.fetchone()
+            if row:
+                _record_audit_event(
+                    cur,
+                    job_id=job_id,
+                    event_type="review_session_created",
+                    actor_role=reviewer_role,
+                    detail={
+                        "reviewer_language": reviewer_language,
+                        "blocking_issue": blocking_issue,
+                        "meaning_score": meaning_score,
+                        "understandability_score": understandability_score,
+                    },
+                )
         conn.commit()
     if not row:
         return None
@@ -557,6 +599,7 @@ def attach_rendered_video(
                         confidence,
                         warnings,
                         review_status,
+                        publish_status,
                         risk_domains,
                         source_ids,
                         fallback_count,
@@ -573,10 +616,135 @@ def attach_rendered_video(
                     return None
                 raise
             row = cur.fetchone()
+            if row:
+                cur.execute(
+                    """
+                    UPDATE translation_jobs
+                    SET publish_status = %s
+                    WHERE id = %s
+                    """,
+                    ("final_review_pending", job_id),
+                )
+                row["publish_status"] = "final_review_pending"
+                _record_audit_event(
+                    cur,
+                    job_id=job_id,
+                    event_type="rendered_video_attached",
+                    actor_role="operator",
+                    detail={"output_uri": output_uri, "render_adapter": render_adapter},
+                )
         conn.commit()
     if not row:
         return None
     return _stringify_id(row)
+
+
+def update_publish_status(
+    job_id: str,
+    *,
+    publish_status: str,
+    actor_role: str = "reviewer",
+    note: str | None = None,
+) -> dict[str, Any] | None:
+    if publish_status not in VALID_PUBLISH_STATUSES:
+        raise ValueError("Unsupported publish status")
+    with connect() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    UPDATE translation_jobs
+                    SET publish_status = %s, updated_at = now()
+                    WHERE id = %s
+                    RETURNING
+                        id,
+                        input_type,
+                        input_text,
+                        detected_language,
+                        status,
+                        output_kind,
+                        output_status,
+                        confidence,
+                        warnings,
+                        review_status,
+                        publish_status,
+                        risk_domains,
+                        source_ids,
+                        fallback_count,
+                        unknown_token_count,
+                        output_uri,
+                        render_adapter,
+                        created_at,
+                        updated_at
+                    """,
+                    (publish_status, job_id),
+                )
+            except Exception as exc:
+                if _is_invalid_text_representation(exc):
+                    return None
+                raise
+            row = cur.fetchone()
+            if row:
+                _record_audit_event(
+                    cur,
+                    job_id=job_id,
+                    event_type="publish_status_updated",
+                    actor_role=actor_role,
+                    detail={"publish_status": publish_status, "note": note or ""},
+                )
+        conn.commit()
+    if not row:
+        return None
+    return _stringify_id(row)
+
+
+def list_audit_events(job_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            if job_id:
+                try:
+                    cur.execute(
+                        """
+                        SELECT id, job_id, event_type, actor_role, detail, created_at
+                        FROM audit_events
+                        WHERE job_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        (job_id, limit),
+                    )
+                except Exception as exc:
+                    if _is_invalid_text_representation(exc):
+                        return []
+                    raise
+            else:
+                cur.execute(
+                    """
+                    SELECT id, job_id, event_type, actor_role, detail, created_at
+                    FROM audit_events
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+            return [_stringify_id(row, extra_uuid_fields=("job_id",)) for row in cur.fetchall()]
+
+
+def _record_audit_event(
+    cur: Any,
+    *,
+    job_id: str,
+    event_type: str,
+    actor_role: str,
+    detail: dict[str, Any] | None = None,
+) -> None:
+    cur.execute(
+        """
+        INSERT INTO audit_events (job_id, event_type, actor_role, detail)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (job_id, event_type, actor_role, json.dumps(detail or {}, ensure_ascii=False)),
+    )
 
 
 def _stringify_id(row: dict[str, Any], extra_uuid_fields: tuple[str, ...] = ()) -> dict[str, Any]:

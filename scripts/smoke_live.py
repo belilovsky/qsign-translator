@@ -170,6 +170,38 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
         except (HTTPError, URLError, TimeoutError) as exc:
             _record(results, "review_with_token", False, str(exc))
 
+        if job_ids:
+            job_id = job_ids[0]
+            try:
+                status, payload, _ = _request(
+                    base_url,
+                    f"/v1/review/audit?job_id={job_id}",
+                    headers={"x-qsign-review-token": review_token},
+                    timeout=timeout,
+                )
+                items = payload.get("items") or []
+                _record(results, "review_audit_with_token", status == 200 and isinstance(items, list), f"{status} items={len(items)}")
+            except (HTTPError, URLError, TimeoutError) as exc:
+                _record(results, "review_audit_with_token", False, str(exc))
+
+            try:
+                status, payload, _ = _request(
+                    base_url,
+                    f"/v1/review/jobs/{job_id}/publish-status",
+                    method="PATCH",
+                    headers={"x-qsign-review-token": review_token},
+                    payload={"publish_status": "draft", "note": "smoke keep draft"},
+                    timeout=timeout,
+                )
+                _record(
+                    results,
+                    "review_publish_status_with_token",
+                    status == 200 and payload.get("publish_status") == "draft",
+                    f"{status} publish_status={payload.get('publish_status')}",
+                )
+            except (HTTPError, URLError, TimeoutError) as exc:
+                _record(results, "review_publish_status_with_token", False, str(exc))
+
     for path in [
         "/v1/jobs/not-a-uuid/render-plan",
         "/v1/jobs/not-a-uuid/ai-video-brief",

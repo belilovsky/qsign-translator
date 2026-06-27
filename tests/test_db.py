@@ -76,7 +76,7 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual(job_id, "job-1")
         self.assertTrue(connection.committed)
-        self.assertEqual(len(cursor.calls), 1 + len(plan.units))
+        self.assertEqual(len(cursor.calls), 2 + len(plan.units))
         job_params = cursor.calls[0][1]
         self.assertEqual(job_params[0], "text")
         self.assertEqual(job_params[2], "ru")
@@ -103,7 +103,7 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual(feedback_id, "job-1")
         self.assertTrue(connection.committed)
-        self.assertEqual(len(cursor.calls), 1)
+        self.assertEqual(len(cursor.calls), 2)
         self.assertIn("INSERT INTO feedback_events", cursor.calls[0][0])
         self.assertEqual(cursor.calls[0][1], ("job-1", "good", None))
 
@@ -229,6 +229,32 @@ class DatabaseTests(unittest.TestCase):
         self.assertTrue(connection.committed)
         self.assertIn("UPDATE translation_jobs", cursor.calls[0][0])
         self.assertEqual(cursor.calls[0][1], ("/v1/jobs/job-1/rendered-video", "ready", "external_upload", "job-1"))
+
+    def test_update_publish_status_rejects_unknown_status(self) -> None:
+        with self.assertRaises(ValueError):
+            db.update_publish_status("job-1", publish_status="bad")
+
+    def test_update_publish_status_writes_allowed_status(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            row = db.update_publish_status("job-1", publish_status="publishable", note="final video approved")
+
+        self.assertEqual(row["id"], "job-1")
+        self.assertTrue(connection.committed)
+        self.assertIn("UPDATE translation_jobs", cursor.calls[0][0])
+        self.assertEqual(cursor.calls[0][1], ("publishable", "job-1"))
+
+    def test_list_audit_events_filters_by_job(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            rows = db.list_audit_events(job_id="job-1", limit=10)
+
+        self.assertEqual(rows[0]["job_id"], "job-1")
+        self.assertEqual(cursor.calls[0][1], ("job-1", 10))
 
 
 if __name__ == "__main__":

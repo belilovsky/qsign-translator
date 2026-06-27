@@ -37,6 +37,10 @@ The project is intentionally honest about what exists today:
 - Persisted review-session API for signer, linguist, and operator validation.
 - Protected upload flow for attaching an externally rendered `mp4` back to a
   saved job.
+- Publish-state contract for final reviewer approval after a rendered video is
+  attached.
+- Per-job audit trail for job creation, review changes, feedback, uploaded
+  video events, and publish decisions.
 - Render-plan manifest for future clip or avatar assembly.
 - Review-video draft mp4 generation for saved jobs.
 - AI-video brief export for one saved phrase.
@@ -62,7 +66,9 @@ The project is intentionally honest about what exists today:
 - `POST /v1/feedback`
 - `GET /v1/review/sessions`
 - `POST /v1/review/sessions`
+- `GET /v1/review/audit`
 - `POST /v1/review/jobs/{job_id}/rendered-video`
+- `PATCH /v1/review/jobs/{job_id}/publish-status`
 - `GET /health`
 - `GET /health/ready`
 
@@ -81,7 +87,7 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 64 automated tests green;
+- 69 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
@@ -98,6 +104,11 @@ Recent validation passed with:
   next operational step instead of only raw asset counts.
 - reviewer UI now supports attaching an externally rendered final `mp4`, and
   saved jobs can expose that uploaded video through a dedicated route.
+- uploaded final videos now move the job into `final_review_pending`, while a
+  separate publish-state decision determines whether the result is truly ready
+  for publication.
+- reviewer tooling now exposes a lightweight audit trail and final
+  publish-status controls for the saved job lifecycle.
 
 ## Readiness Rating
 
@@ -123,6 +134,8 @@ sign-language production stack.
 - High-risk domains still require human interpreter fallback.
 - Batch render currently produces a strict handoff contract, not a render queue
   or worker-backed final video job.
+- Publish-state approval is still an operator contract. There is no downstream
+  CMS or auto-publish target connected yet.
 
 ## Open-Source Notes
 

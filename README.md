@@ -116,6 +116,18 @@ Operators can also attach an externally rendered `mp4` back to a saved job
 through the protected review API. This closes the loop between sign-plan
 generation, human review, external video rendering, and final publish gating.
 
+The same protected review surface now also exposes a small publication control
+contract:
+
+- `GET /v1/review/audit` returns the per-job audit trail;
+- `PATCH /v1/review/jobs/{job_id}/publish-status` records the final reviewer
+  decision (`draft`, `final_review_pending`, `publishable`,
+  `needs_video_fix`, `rejected`).
+
+This keeps the handoff honest: an uploaded final `mp4` does not become
+"publishable" automatically. A reviewer still has to mark the saved job as
+ready for publication.
+
 API responses follow the same rule: `metadata.output_status=not_rendered`
 means the result is a reviewable plan, not a generated video.
 
@@ -171,7 +183,7 @@ python3 scripts/smoke_live.py --base-url https://qsign.qdev.run
 The live smoke creates temporary test jobs and verifies health, readiness,
 OpenAPI version, translation persistence, render-plan output, review-video
 headers, AI-video handoff exports, batch handoff exports, protected review
-access, and invalid job-id handling.
+access, optional audit/publish-state review flows, and invalid job-id handling.
 
 Fresh-clone contributor path:
 

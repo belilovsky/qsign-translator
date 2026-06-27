@@ -26,6 +26,7 @@ const state = {
   reviewJobs: [],
   reviewFeedback: [],
   reviewSessions: [],
+  reviewAuditEvents: [],
   selectedReviewJobId: "",
   reviewFilter: "",
 };
@@ -119,6 +120,7 @@ const reviewDetailSummary = document.querySelector("#reviewDetailSummary");
 const reviewUnitList = document.querySelector("#reviewUnitList");
 const reviewSessionList = document.querySelector("#reviewSessionList");
 const reviewFeedbackList = document.querySelector("#reviewFeedbackList");
+const reviewAuditList = document.querySelector("#reviewAuditList");
 const reviewStatusActionButtons = Array.from(document.querySelectorAll("[data-review-status-action]"));
 const reviewSessionForm = document.querySelector("#reviewSessionForm");
 const reviewerRoleInput = document.querySelector("#reviewerRoleInput");
@@ -134,6 +136,11 @@ const reviewUploadForm = document.querySelector("#reviewUploadForm");
 const reviewRenderedVideoInput = document.querySelector("#reviewRenderedVideoInput");
 const reviewUploadStatus = document.querySelector("#reviewUploadStatus");
 const reviewUploadSubmitButton = document.querySelector("#reviewUploadSubmitButton");
+const reviewPublishForm = document.querySelector("#reviewPublishForm");
+const reviewPublishStatusInput = document.querySelector("#reviewPublishStatusInput");
+const reviewPublishNoteInput = document.querySelector("#reviewPublishNoteInput");
+const reviewPublishStatus = document.querySelector("#reviewPublishStatus");
+const reviewPublishSubmitButton = document.querySelector("#reviewPublishSubmitButton");
 
 const warningLabels = {
   prototype_sign_plan_not_professional_interpretation: "Черновик не заменяет профессиональный перевод.",
@@ -1298,6 +1305,9 @@ function formatPipelineStatus(status) {
   if (status === "approved_but_asset_incomplete") return "одобрено, но не хватает ассетов";
   if (status === "approved_pending_render") return "одобрено, можно запускать сборку";
   if (status === "awaiting_signer_review") return "ждет проверки носителем";
+  if (status === "render_uploaded_pending_review") return "видео загружено, ждет финальной проверки";
+  if (status === "ready_for_publish") return "готово к публикации";
+  if (status === "uploaded_video_needs_fix") return "загруженное видео требует правки";
   return String(status || "не задан");
 }
 
@@ -1313,6 +1323,25 @@ function formatReviewerRole(role) {
   if (role === "linguist") return "лингвист";
   if (role === "operator") return "оператор";
   return String(role || "ревьюер");
+}
+
+function formatPublishStatus(status) {
+  if (status === "draft") return "черновик";
+  if (status === "final_review_pending") return "ждет финальной проверки";
+  if (status === "publishable") return "можно публиковать";
+  if (status === "needs_video_fix") return "нужна правка видео";
+  if (status === "rejected") return "отклонено";
+  return String(status || "не задан");
+}
+
+function formatAuditEventType(type) {
+  if (type === "job_created") return "создана запись";
+  if (type === "review_status_updated") return "обновлен review status";
+  if (type === "review_session_created") return "сохранена сессия ревью";
+  if (type === "feedback_recorded") return "получен пользовательский feedback";
+  if (type === "rendered_video_attached") return "прикреплено финальное видео";
+  if (type === "publish_status_updated") return "обновлен publish status";
+  return String(type || "событие");
 }
 
 function formatPlanLanguage(language) {
@@ -1418,6 +1447,9 @@ function syncReviewActionButtons() {
   reviewSessionNotesInput.disabled = disabled;
   reviewRenderedVideoInput.disabled = disabled;
   reviewUploadSubmitButton.disabled = disabled;
+  reviewPublishStatusInput.disabled = disabled;
+  reviewPublishNoteInput.disabled = disabled;
+  reviewPublishSubmitButton.disabled = disabled;
 }
 
 function renderReviewJobs(items) {
@@ -1466,6 +1498,7 @@ function renderReviewDetail(job, feedbackItems = []) {
   clearNode(reviewUnitList);
   clearNode(reviewSessionList);
   clearNode(reviewFeedbackList);
+  clearNode(reviewAuditList);
   syncReviewActionButtons();
   if (!job) {
     appendTextElement(reviewDetailSummary, "strong", "", "Выберите запись");
@@ -1483,6 +1516,9 @@ function renderReviewDetail(job, feedbackItems = []) {
     reviewUploadStatus.textContent = state.reviewToken
       ? "Видео можно прикрепить после выбора записи."
       : "Загрузка видео доступна после ввода review token.";
+    reviewPublishStatus.textContent = state.reviewToken
+      ? "Финальное решение можно сохранить после выбора записи."
+      : "Финальное решение доступно после ввода review token.";
     return;
   }
   appendTextElement(reviewDetailSummary, "strong", "", String(job.input_text || "Без текста"));
@@ -1491,6 +1527,7 @@ function renderReviewDetail(job, feedbackItems = []) {
   [
     ["Язык", formatPlanLanguage(job.detected_language)],
     ["Статус ревью", formatReviewStatus(job.review_status)],
+    ["Публикация", formatPublishStatus(job.publish_status)],
     ["Вывод", formatOutputStatus(job.output_status)],
     ["Замены", `${Number(job.fallback_count || 0)} / неизвестно ${Number(job.unknown_token_count || 0)}`],
   ].forEach(([label, value]) => {
@@ -1525,6 +1562,8 @@ function renderReviewDetail(job, feedbackItems = []) {
       reviewUploadStatus.textContent = "Загрузите внешний mp4 после рендера.";
     }
   }
+  reviewPublishStatusInput.value = String(job.publish_status || "draft");
+  reviewPublishStatus.textContent = "Финальное решение сохраняется отдельно от review status.";
   syncReviewActionButtons();
   reviewSessionStatus.textContent = "Сохраните решение носителя или оператора по этой записи.";
 
@@ -1547,6 +1586,7 @@ function renderReviewDetail(job, feedbackItems = []) {
   }
 
   renderReviewSessions(state.reviewSessions);
+  renderReviewAudit(state.reviewAuditEvents);
 
   if (!feedbackItems.length) {
     const emptyFeedback = document.createElement("div");
@@ -1563,6 +1603,31 @@ function renderReviewDetail(job, feedbackItems = []) {
       reviewFeedbackList.append(card);
     });
   }
+}
+
+function renderReviewAudit(items) {
+  clearNode(reviewAuditList);
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "review-empty-state";
+    appendTextElement(empty, "strong", "", "История пока пуста");
+    appendTextElement(empty, "p", "", "После действий по записи здесь появится понятный журнал событий.");
+    reviewAuditList.append(empty);
+    return;
+  }
+  items.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "review-feedback-card review-session-card";
+    appendTextElement(card, "strong", "", `${formatAuditEventType(item.event_type)} · ${formatReviewerRole(item.actor_role)}`);
+    const detail = item.detail && typeof item.detail === "object" ? Object.entries(item.detail).slice(0, 4) : [];
+    appendTextElement(
+      card,
+      "p",
+      "",
+      detail.length ? detail.map(([key, value]) => `${key}: ${String(value)}`).join(" · ") : "Без деталей."
+    );
+    reviewAuditList.append(card);
+  });
 }
 
 function renderReviewSessions(items) {
@@ -1605,6 +1670,7 @@ async function loadReviewDashboard() {
   if (!state.reviewToken) {
     state.reviewJobs = [];
     state.reviewSessions = [];
+    state.reviewAuditEvents = [];
     state.selectedReviewJobId = "";
     renderReviewSummary([]);
     renderReviewJobs([]);
@@ -1635,6 +1701,7 @@ async function loadReviewDashboard() {
   } catch (error) {
     state.reviewJobs = [];
     state.reviewSessions = [];
+    state.reviewAuditEvents = [];
     state.selectedReviewJobId = "";
     renderReviewSummary([]);
     renderReviewJobs([]);
@@ -1654,16 +1721,20 @@ async function selectReviewJob(jobId, refreshList = true) {
   reviewUploadStatus.textContent = state.selectedReviewJobId
     ? "Загрузите внешний mp4 после рендера."
     : "Видео можно прикрепить после выбора записи.";
+  reviewPublishStatus.textContent = state.selectedReviewJobId
+    ? "Сохраните финальное решение по видео."
+    : "Финальное решение можно сохранить после выбора записи.";
   if (refreshList) renderReviewJobs(state.reviewJobs);
   if (!state.selectedReviewJobId) {
     renderReviewDetail(null);
     return;
   }
   try {
-    const [jobResponse, feedbackResponse, sessionsResponse, renderPlanResponse] = await Promise.all([
+    const [jobResponse, feedbackResponse, sessionsResponse, auditResponse, renderPlanResponse] = await Promise.all([
       fetch(`/v1/jobs/${state.selectedReviewJobId}`, { headers: reviewHeaders() }),
       fetch(`/v1/review/feedback?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
       fetch(`/v1/review/sessions?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
+      fetch(`/v1/review/audit?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
       fetch(`/v1/jobs/${state.selectedReviewJobId}/render-plan`, { headers: reviewHeaders() }),
     ]);
     if (!jobResponse.ok) {
@@ -1673,13 +1744,16 @@ async function selectReviewJob(jobId, refreshList = true) {
     const job = await jobResponse.json();
     const feedbackData = feedbackResponse.ok ? await feedbackResponse.json() : { items: [] };
     const sessionsData = sessionsResponse.ok ? await sessionsResponse.json() : { items: [] };
+    const auditData = auditResponse.ok ? await auditResponse.json() : { items: [] };
     state.lastRenderPlan = renderPlanResponse.ok ? await renderPlanResponse.json() : null;
     state.reviewFeedback = feedbackData.items || [];
     state.reviewSessions = sessionsData.items || [];
+    state.reviewAuditEvents = auditData.items || [];
     renderReviewJobs(state.reviewJobs);
     renderReviewDetail(job, state.reviewFeedback);
   } catch (error) {
     state.reviewSessions = [];
+    state.reviewAuditEvents = [];
     state.lastRenderPlan = null;
     renderReviewDetail(null);
     reviewStatusBanner.textContent = `Не удалось открыть запись: ${String(error.message || error)}`;
@@ -1791,6 +1865,35 @@ async function uploadRenderedVideo() {
     await loadReviewDashboard();
   } catch (error) {
     reviewUploadStatus.textContent = `Видео не прикреплено: ${String(error.message || error)}`;
+  } finally {
+    syncReviewActionButtons();
+  }
+}
+
+async function savePublishDecision() {
+  if (!state.selectedReviewJobId || !state.reviewToken) return;
+  reviewPublishStatus.textContent = "Сохраняем финальное решение...";
+  reviewPublishSubmitButton.disabled = true;
+  try {
+    const response = await fetch(`/v1/review/jobs/${state.selectedReviewJobId}/publish-status`, {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        ...reviewHeaders(),
+      },
+      body: JSON.stringify({
+        publish_status: String(reviewPublishStatusInput.value || "").trim(),
+        note: String(reviewPublishNoteInput.value || "").trim() || null,
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
+    }
+    reviewPublishStatus.textContent = "Финальное решение сохранено.";
+    await loadReviewDashboard();
+  } catch (error) {
+    reviewPublishStatus.textContent = `Финальное решение не сохранено: ${String(error.message || error)}`;
   } finally {
     syncReviewActionButtons();
   }
@@ -1920,6 +2023,11 @@ reviewSessionForm.addEventListener("submit", (event) => {
 reviewUploadForm.addEventListener("submit", (event) => {
   event.preventDefault();
   uploadRenderedVideo();
+});
+
+reviewPublishForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  savePublishDecision();
 });
 
 copyAIBriefButton.addEventListener("click", async () => {

@@ -86,6 +86,7 @@ Verify the review API only with an explicit operator token:
 BASE=https://your-public-host.example
 TOKEN='set-me-from-secure-env'
 curl -fsS "$BASE/v1/review/jobs" -H "x-qsign-review-token: $TOKEN"
+curl -fsS "$BASE/v1/review/audit?job_id=$JOB1" -H "x-qsign-review-token: $TOKEN" | jq '.items | length'
 ```
 
 Attach a rendered `mp4` back to a saved job:
@@ -99,7 +100,20 @@ curl -fsS -X POST "$BASE/v1/review/jobs/$JOB/rendered-video" \
   -H 'content-type: video/mp4' \
   --data-binary @final-reviewable.mp4
 curl -fsSI "$BASE/v1/jobs/$JOB/rendered-video" | grep -Ei 'content-type|x-qsign-render'
+curl -fsS -X PATCH "$BASE/v1/review/jobs/$JOB/publish-status" \
+  -H "x-qsign-review-token: $TOKEN" \
+  -H 'content-type: application/json' \
+  -d '{"publish_status":"publishable","note":"final video approved"}' | jq '.publish_status'
 ```
+
+The recommended reviewer state flow is:
+
+1. translation job is created as `publish_status=draft`;
+2. reviewer uploads a final rendered `mp4`;
+3. system moves the job to `final_review_pending`;
+4. reviewer explicitly marks it as `publishable`, `needs_video_fix`, or
+   `rejected`;
+5. downstream publishing should only happen from `publishable`.
 
 ## Rollback
 
