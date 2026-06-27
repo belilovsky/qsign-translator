@@ -1,0 +1,12 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    uses: belilovsky/ecosystem/.github/workflows/ci-python.yml@main
+    secrets: inherit
+
