@@ -1,38 +1,41 @@
-# Code of Conduct
+# Contributor Covenant Code of Conduct
 
-## Our Standard
+## Our Pledge
 
-We want this repository to feel rigorous, honest, and welcoming.
+We as members, contributors, and leaders pledge to make participation in our
+community a harassment-free experience for everyone, regardless of age, body
+size, visible or invisible disability, ethnicity, sex characteristics, gender
+identity and expression, level of experience, education, socio-economic status,
+nationality, personal appearance, race, religion, or sexual identity
+and orientation.
 
-Examples of behavior that help:
+## Our Standards
 
-- asking precise, respectful questions
-- sharing context when reporting bugs or limitations
-- improving docs, tests, and public-facing honesty
-- being open about uncertainty, limitations, and risk
+Examples of behavior that contributes to a positive environment:
+* Demonstrating empathy and kindness toward other people
+* Being respectful of differing opinions, viewpoints, and experiences
+* Giving and gracefully accepting constructive feedback
+* Accepting responsibility and apologizing to those affected by our mistakes
+* Focusing on what is best not just for us as individuals, but for the overall community
 
 Examples of unacceptable behavior:
+* The use of sexualized language or imagery, and sexual attention or advances
+* Trolling, insulting or derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information without explicit permission
+* Other conduct which could reasonably be considered inappropriate in a professional setting
 
-- harassment, insults, or hostility
-- pressure to overstate quality, safety, or validation status
-- publishing private data, secrets, or personal information
-- dismissing accessibility, signer consent, or licensing concerns
+## Enforcement Responsibilities
 
-## Scope
-
-This code of conduct applies in:
-
-- issues
-- pull requests
-- discussions
-- other public project spaces connected to this repository
+Project maintainers are responsible for clarifying and enforcing our standards.
 
 ## Enforcement
 
-Maintainers may remove, edit, or reject contributions and comments that do not
-fit this standard.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be
+reported to the project team at [conduct@qdev.run](mailto:conduct@qdev.run).
+All complaints will be reviewed and investigated promptly and fairly.
 
-## Project Context
+## Attribution
 
-This repository covers accessibility-related research and prototype work. That
-means we value accuracy, consent, and careful claims as much as code quality.
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org),
+version 2.1.
