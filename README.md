@@ -1,104 +1,136 @@
-# QSign Translator
+# QSign Translator 🧏 — Планировщик жестового языка для русского и казахского языков
+
 ![Status](https://img.shields.io/badge/status-production-green)
-![Python](https://img.shields.io/badge/Python-3776AB?logo=python)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 [![CI](https://github.com/belilovsky/qsign-translator/actions/workflows/ci.yml/badge.svg)](https://github.com/belilovsky/qsign-translator/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
 
-Прототип планировщика жестового языка (РК/РФ) — создание черновиков
-жестовой записи, ревью-воркфлоу и подготовка к видео-рендеру.
+**QSign Translator** — прототип системы перевода текста на русском и казахском языках в план жестовой записи (sign plan). Проект создаёт черновики жестовой записи, поддерживает ревью-воркфлоу с участием носителей языка, формирует AI-брифы для внешних генераторов видео и управляет пайплайном публикации. Ядро продукта узкое и намеренно не включает ASR или генерацию аватаров — эти функции вынесены за адаптеры.
 
-Репозиторий намеренно узкий: ядро продукта, ASR и генерация аватаров — за
-адаптерами:
+Система доступна как CLI-инструмент, браузерный UI и REST API. Встроенный рантайм-лексикон объединяет выверенный seed-набор с архивным глоссарием на основе корпуса «Слово» для русского языка. Для неизвестных слов используется дактильный (пальцевый) алфавит как прозрачный fallback. Проект не позиционируется как сертифицированный переводчик жестового языка — это инструмент для операторов, лингвистов и исследователей, позволяющий ускорить подготовку sign-контента.
 
-```text
-audio / video / text
-  -> ASR adapter
-  -> text normalization
-  -> RU/KZ language routing
-  -> text-to-gloss / sign plan
-  -> reviewable sign plan
-  -> video readiness / render manifest
-  -> future mp4 / avatar output
+Производственная инсталляция развёрнута на **[qsign.qdev.run](https://qsign.qdev.run)**. Серверная часть построена на FastAPI + uvicorn, данные хранятся в PostgreSQL, файловые артефакты — в MinIO (S3-совместимое хранилище). Контейнеризация через Docker Compose обеспечивает воспроизводимость окружения.
+
+---
+
+## Оглавление
+
+- [Возможности](#возможности)
+- [Архитектура](#архитектура)
+- [Технологический стек](#технологический-стек)
+- [Быстрый старт](#быстрый-старт)
+- [Структура проекта](#структура-проекта)
+- [API](#api)
+- [Развёртывание](#развёртывание)
+- [Разработка](#разработка)
+- [Связанные проекты](#связанные-проекты)
+- [Лицензия](#лицензия)
+
+---
+
+## Возможности
+
+| Функция | Описание |
+|---------|----------|
+| **Text-to-Sign-Plan** | Преобразование русского и казахского текста в детерминированный план жестовой записи |
+| **Дактильный fallback** | Прозрачный пальцевый алфавит для неизвестных слов вместо галлюцинаций |
+| **Маршрутизация языков** | Автоматическое определение языка (RU / KZ) и выбор соответствующего лексикона |
+| **CLI-инструмент** | Консольная команда `qsign` для быстрого перевода без запуска сервера |
+| **Браузерный UI** | Веб-интерфейс с просмотром, редактированием и ревью sign-планов |
+| **Ревью-воркфлоу** | Защищённые ревью-сессии с оценками, заметками, блокирующими флагами и статусом |
+| **Review Video** | Генерация MP4-превью черновика через ffmpeg для визуальной верификации |
+| **AI-видео брифы** | Пакетный экспорт промптов, операторских заданий и чек-листов для внешних AI-генераторов |
+| **Render-контракт** | Строгий контракт на рендеринг: имя файла, блокировщики публикации, порядок юнитов |
+| **Публикационный конвейер** | Жизненный цикл: `draft` → `final_review_pending` → `publishable` / `rejected` |
+| **Aудиторский след** | Полная история изменений для каждого задания на перевод |
+| **Интеграция с S3** | Хранение видео-артефактов через MinIO (S3-совместимое хранилище) |
+| **ASR-адаптер** | Опциональный интерфейс для распознавания речи (faster-whisper) |
+
+---
+
+## Архитектура
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        QSign Translator                             │
+│                                                                     │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────────┐  │
+│  │   Browser    │  │    CLI       │  │   External AI Video       │  │
+│  │     UI       │  │  (qsign)     │  │   Generators              │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────┬────────────────┘  │
+│         │                 │                      │                   │
+│         ▼                 ▼                      ▼                   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                    FastAPI (ASGI)                             │   │
+│  │  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐   │   │
+│  │  │ Auth /  │ │ Translate│ │  Review  │ │ AI Video       │   │   │
+│  │  │ Audit   │ │ API      │ │  API     │ │  Brief API     │   │   │
+│  │  └─────────┘ └──────────┘ └──────────┘ └────────────────┘   │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                    Core Pipeline                              │   │
+│  │                                                               │   │
+│  │  Text → Normalize → Lang Detect → Lexicon Lookup →           │   │
+│  │                          ↓                                    │   │
+│  │  ┌────────────────────────────────────┐                      │   │
+│  │  │  Found ? ──yes──→ Gloss mapping    │                      │   │
+│  │  │  No    ─────────→ Dactyl fallback  │                      │   │
+│  │  └────────────────────────────────────┘                      │   │
+│  │                          ↓                                    │   │
+│  │                     Sign Plan                                  │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│         │                                                           │
+│         ▼                                                           │
+│  ┌──────────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │    PostgreSQL 16     │  │    MinIO (S3)     │  │    ffmpeg     │  │
+│  │  - Jobs              │  │  - Video assets   │  │  - Preview    │  │
+│  │  - Review sessions   │  │  - Render output  │  │    MP4 gen    │  │
+│  │  - Audit trail       │  │                   │  │              │  │
+│  └──────────────────────┘  └──────────────────┘  └──────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Requirements
+---
 
-- Python 3.11 or newer
-- Docker Compose for the local Postgres/MinIO stack
-- `ffmpeg` only when testing review-video generation
+## Технологический стек
 
-## Repository Policy
+| Компонент | Технология |
+|-----------|-----------|
+| **Язык** | Python 3.12 |
+| **Веб-фреймворк** | FastAPI 0.115+ |
+| **ASGI-сервер** | Uvicorn 0.30+ |
+| **База данных** | PostgreSQL 16 (через psycopg) |
+| **Объектное хранилище** | MinIO (S3-совместимое) |
+| **Валидация** | Pydantic v2 |
+| **Медиа** | ffmpeg (ревью-видео) |
+| **ASR (опционально)** | faster-whisper |
+| **Контейнеризация** | Docker Compose |
+| **CI/CD** | GitHub Actions |
+| **Тестирование** | pytest, httpx |
+| **Линтер** | Ruff |
 
-This repository is the canonical source of truth for QSign Translator.
+---
 
-- Active local checkout:
-  `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator`
-- Public GitHub repository:
-  `https://github.com/belilovsky/qsign-translator`
-- Archived pre-public working copy:
-  `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator-archive`
+## Быстрый старт
 
-Day-to-day development should happen only in the active checkout and be pushed
-to the public GitHub repository. The archived working copy is kept only as a
-historical fallback and should be treated as read-only.
-
-## What This Repository Does
-
-- Source registry for datasets, models, licenses, and readiness.
-- Deterministic text-to-sign-plan prototype for Russian and Kazakh text.
-- Bundled runtime lexicon now merges a small reviewed seed with an archived
-  Slovo-derived Russian gloss list for broader draft coverage.
-- Dactyl fallback for unknown words.
-- Optional ASR adapter interface; no heavy weights are required for tests.
-- Persisted translation jobs and review/feedback API scaffolding.
-- Render-plan output that reports whether video fragments exist before any
-  player controls are enabled.
-- Review-video output that can render a downloadable mp4 of the current draft
-  even before a true signer-avatar backend is connected.
-- AI-video brief output that packages a provider-ready prompt, negative prompt,
-  operator task, and QA checklist for external video generators.
-
-The current public UI is a transparent draft-and-review tool. It does not claim
-that an avatar video exists when only a sign plan or dactyl fallback is
-available.
-
-## Non-Goals
-
-This repository does not currently promise:
-
-- certified sign-language translation quality
-- native-signer validation completion
-- production-grade signer-avatar rendering
-- safe autonomous use in medical, legal, emergency, or finance settings
-
-## Quick Start
-
-Choose the smallest path that fits what you want to do.
-
-### 1. CLI only
-
-Install the package in editable mode first:
+### 1. CLI (только базовая установка)
 
 ```bash
+git clone https://github.com/belilovsky/qsign-translator.git
+cd qsign-translator
 python3 -m pip install -e ".[test]"
 qsign "Привет, меня зовут Александр"
 qsign "Сәлеметсіз бе, маған көмек керек"
-./scripts/check.sh
 ```
 
-The CLI prints a JSON sign plan. It does not claim to be a correct
-professional interpretation yet; it is a technical spike foundation.
+CLI выводит JSON-план жестовой записи в stdout.
 
-If you prefer not to install the package, the repository also works with
-`PYTHONPATH=src`:
-
-```bash
-PYTHONPATH=src python3 -m qsign_translator --pretty "Привет, меня зовут Александр"
-```
-
-### 2. Browser UI and local API
-
-For the browser UI and API endpoints:
+### 2. Браузерный UI и локальное API
 
 ```bash
 python3 -m pip install -e ".[api,db,test]"
@@ -107,66 +139,9 @@ docker compose up -d postgres minio
 uvicorn qsign_translator.api:app --reload
 ```
 
-Then open the app at `http://127.0.0.1:8000/`.
+После запуска откройте **http://127.0.0.1:8000/**.
 
-The public shell includes a separate reviewer route at `/#/review`. It stays
-read-only until an operator provides `x-qsign-review-token`, and it should not
-claim that saved records, review-video, or AI-video exports exist when a draft
-only lives locally in the browser session.
-
-Protected reviewer APIs now also support persisted review sessions, so native
-signer or linguist checks can be saved with scores, notes, blocking flags, and
-an optional applied `review_status`.
-
-Operators can also attach an externally rendered `mp4` back to a saved job
-through the protected review API. This closes the loop between sign-plan
-generation, human review, external video rendering, and final publish gating.
-
-The same protected review surface now also exposes a small publication control
-contract:
-
-- `GET /v1/review/audit` returns the per-job audit trail;
-- `PATCH /v1/review/jobs/{job_id}/publish-status` records the final reviewer
-  decision (`draft`, `final_review_pending`, `publishable`,
-  `needs_video_fix`, `rejected`).
-
-This keeps the handoff honest: an uploaded final `mp4` does not become
-"publishable" automatically. A reviewer still has to mark the saved job as
-ready for publication.
-
-API responses follow the same rule: `metadata.output_status=not_rendered`
-means the result is a reviewable plan, not a generated video.
-
-When Postgres and `ffmpeg` are available, `GET /v1/jobs/{job_id}/review-video`
-returns an honest review mp4 for the saved draft. This is a verification aid,
-not a professional sign-language interpretation and not a finished avatar
-pipeline.
-
-When a saved job exists, `GET /v1/jobs/{job_id}/ai-video-brief` returns the
-handoff package for external AI-video systems. It is designed for operators and
-generator prompts, not as proof that the generated result is linguistically
-correct without native-signer review. The payload now includes four export
-views out of the box: `Universal prompt`, `Operator handoff`, `JSON
-payload`, and `Batch storyboard`.
-
-`POST /v1/ai-video-batch-brief` accepts a list of saved `job_ids` and returns
-a stricter batch package for multi-phrase rendering: ordered scenes, timeline
-offsets, assembly rules, and exports for operator runbooks or downstream
-automation.
-
-Single-job AI-video briefs now also include a stricter `render contract`
-export: target filename, publish blockers, exact unit order, and acceptance
-checks that keep external video generation aligned with reviewer expectations.
-
-Example:
-
-```bash
-curl -X POST http://127.0.0.1:8000/v1/ai-video-batch-brief \
-  -H 'content-type: application/json' \
-  -d '{"job_ids":["job-uuid-1","job-uuid-2"],"title":"Intro sequence"}'
-```
-
-### 3. Lightweight API-only smoke
+### 3. API-only (минимальный запуск)
 
 ```bash
 python3 -m pip install -e ".[api,db]"
@@ -176,101 +151,161 @@ curl -X POST http://127.0.0.1:8000/v1/translate/text \
   -d '{"text":"Привет, меня зовут Александр"}'
 ```
 
-## Validation
-
-Fast sanity check:
+### 4. Проверка работоспособности
 
 ```bash
-./scripts/check.sh
+./scripts/check.sh                    # Быстрая проверка: компиляция, тесты, CLI smoke
+python3 scripts/smoke_live.py --base-url https://qsign.qdev.run  # Live smoke
+pytest -q                              # Модульные тесты
 ```
 
-Live deployment smoke:
+---
+
+## Структура проекта
+
+```
+qsign-translator/
+├── src/qsign_translator/
+│   ├── __init__.py
+│   ├── __main__.py          # Точка входа python -m
+│   ├── api.py               # FastAPI-приложение и маршруты
+│   ├── cli.py               # CLI-интерфейс (команда qsign)
+│   ├── planner.py           # Ядро: text-to-sign-plan
+│   ├── lexicon.py           # Рантайм-лексикон
+│   ├── dactyl.py            # Дактильный fallback
+│   ├── normalize.py         # Нормализация текста
+│   ├── language.py          # Определение и маршрутизация языка
+│   ├── asr.py               # ASR-адаптер (опционально)
+│   ├── ai_video_brief.py    # Генерация AI-видео брифов
+│   ├── video_plan.py        # План рендеринга видео
+│   ├── preview_video.py     # Генерация ревью-MP4
+│   ├── db.py                # Работа с PostgreSQL и MinIO
+│   ├── settings.py          # Конфигурация через env-переменные
+│   ├── risk.py              # Классификация рисков для доменов
+├── public/
+│   ├── index.html           # SPA-клиент
+│   ├── static/
+│   │   ├── app.js           # Клиентская логика
+│   │   └── styles.css       # Стили
+├── infra/db/migrations/     # SQL-миграции
+├── scripts/                 # Вспомогательные скрипты
+│   ├── check.sh             # Полная проверка проекта
+│   ├── smoke_live.py        # Live smoke-тестирование
+│   ├── build_runtime_lexicon.py  # Сборка лексикона
+│   ├── seed_db.py           # Начальное заполнение БД
+│   └── apply_migrations.py  # Применение миграций
+├── tests/                   # Модульные и интеграционные тесты
+├── docs/                    # Документация
+├── data/                    # Рантайм-данные (лексиконы, оверрайды)
+├── experiments/             # Экспериментальные наработки
+├── docker-compose.yml       # Docker Compose (api + postgres + minio)
+├── Dockerfile               # Docker-образ
+└── pyproject.toml           # Конфигурация пакета
+```
+
+---
+
+## API
+
+| Эндпоинт | Метод | Описание |
+|----------|-------|----------|
+| `GET /health` | GET | Проверка работоспособности сервиса |
+| `POST /v1/translate/text` | POST | Перевод текста в sign-plan |
+| `GET /v1/jobs/{job_id}` | GET | Получение сохранённого задания |
+| `GET /v1/jobs/{job_id}/render-plan` | GET | План рендеринга видео |
+| `GET /v1/jobs/{job_id}/review-video` | GET | Скачивание ревью-MP4 |
+| `GET /v1/jobs/{job_id}/ai-video-brief` | GET | AI-бриф для внешнего генератора |
+| `POST /v1/ai-video-batch-brief` | POST | Пакетный AI-бриф для нескольких заданий |
+| `GET /v1/review/jobs/{job_id}` | GET | Получение ревью-сессии (защищённый) |
+| `PATCH /v1/review/jobs/{job_id}/publish-status` | PATCH | Установка статуса публикации |
+| `GET /v1/review/audit` | GET | Аудиторский след по заданиям |
+
+---
+
+## Развёртывание
+
+### Docker Compose (рекомендованный способ)
 
 ```bash
-python3 scripts/smoke_live.py --base-url https://qsign.qdev.run
+docker compose up -d
 ```
 
-The live smoke creates temporary test jobs and verifies health, readiness,
-OpenAPI version, translation persistence, render-plan output, review-video
-headers, AI-video handoff exports, batch handoff exports, protected review
-access, optional audit/publish-state review flows, and invalid job-id handling.
+Сервисы:
+- **API**: порт 8080 (конфигурируется через `QSIGN_API_PORT`)
+- **PostgreSQL 16**: порт 54329 (внешний), `qsign` database
+- **MinIO**: порт 19000 (S3 API), 19001 (Web UI)
 
-Fresh-clone contributor path:
+### Переменные окружения
+
+Скопируйте `.env.example` в `.env` и настройте:
+
+| Переменная | Описание | По умолчанию |
+|-----------|----------|-------------|
+| `POSTGRES_DB` | Имя БД | `qsign` |
+| `POSTGRES_USER` | Пользователь БД | `qsign` |
+| `POSTGRES_PASSWORD` | Пароль БД | `change-me-local` |
+| `S3_ENDPOINT` | URL MinIO | `http://minio:9000` |
+| `S3_ACCESS_KEY` | Ключ доступа S3 | `qsign-local` |
+| `S3_SECRET_KEY` | Секретный ключ S3 | `change-me-local-minio` |
+| `QSIGN_API_PORT` | Порт API | `8080` |
+
+### Production
+
+Для production-развёртывания используйте отдельный `.env` с надёжными паролями, включите HTTPS через reverse proxy (nginx/Caddy), настройте регулярное резервное копирование PostgreSQL и MinIO.
+
+---
+
+## Разработка
+
+### Установка для разработки
 
 ```bash
-python3 -m pip install -e ".[test]"
-pytest -q
+git clone https://github.com/belilovsky/qsign-translator.git
+cd qsign-translator
+python3 -m venv venv
+source venv/bin/activate
+python3 -m pip install -e ".[api,db,test]"
 ```
 
-The bundled check script stays dependency-light and covers:
-
-- Python compile checks
-- unit and API tests that can run without heavy backends
-- scenario smoke for a curated set of user-facing RU phrase cases
-- JSON fixture validation
-- SQL validation
-- RU/KZ CLI smoke
-
-## Local Infrastructure
-
-- Local API default: `http://127.0.0.1:8000/`
-- Docker Compose ports are documented in [docs/infrastructure.md](docs/infrastructure.md)
-- Initial schema: `infra/db/migrations/001_initial.sql`
-- Seed helper: `scripts/seed_db.py`
-- Runtime lexicon rebuild: `python3 scripts/build_runtime_lexicon.py`
-
-The runtime lexicon is generated from two layers:
-
-- `data/curated_overrides.json` for reviewed manual phrases, aliases, and KK entries;
-- repo-local `data/import_sources/slovo/` assets for wider RU coverage.
-
-This keeps product-approved overrides separate from the larger imported corpus.
-
-## Common Commands
-
-If you prefer shorter commands, the repository also ships with a small
-`Makefile`:
+### Запуск тестов
 
 ```bash
-make install
-make check
-make api
+pytest -q                       # Модульные тесты
+./scripts/check.sh              # Полная проверка
 ```
 
-## Repository Guide
+### Сборка лексикона
 
-- [ROADMAP.md](ROADMAP.md): readiness score, phases, and exit criteria
-- [CHANGELOG.md](CHANGELOG.md): release-level change summary
-- [docs/current-status.md](docs/current-status.md): current prototype scope and known limits
-- [docs/architecture.md](docs/architecture.md): system shape and data flow
-- [docs/infrastructure.md](docs/infrastructure.md): storage and service layout
-- [docs/production-runbook.md](docs/production-runbook.md): generic deploy and smoke flow
-- [docs/open-source-readiness.md](docs/open-source-readiness.md): publication checklist
-- [docs/repository-policy.md](docs/repository-policy.md): canonical repo and archive policy
-- [docs/product-benchmark.md](docs/product-benchmark.md): service benchmark and competitive framing
-- [docs/product-backlog.md](docs/product-backlog.md): prioritized next steps
-- [docs/source-registry.md](docs/source-registry.md): provenance and licensing inventory
+```bash
+python3 scripts/build_runtime_lexicon.py
+```
 
-## Contributing
+Рантайм-лексикон строится из двух источников:
+- `data/curated_overrides.json` — выверенные ручные фразы, алиасы, казахские записи
+- `data/import_sources/slovo/` — архивный корпус для широкого покрытия RU
 
-Small, focused pull requests are easiest to review here. Start with
-[CONTRIBUTING.md](CONTRIBUTING.md)
-for setup, testing, and scope guidance. Repository norms and sensitive-report
-handling live in
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-and
-[SECURITY.md](SECURITY.md).
+### Политика репозитория
 
-## Project Rules
+- Активная разработка ведётся только в canonical checkout
+- Утверждённые оверрайды отделены от импортированного корпуса
+- Никакой сгенерированный sign не считается авторитетным без проверки носителем языка
 
-- Do not treat generated signing as authoritative without native signer review.
-- Every dataset/model must have license and consent status before production use.
-- High-risk domains such as medical, legal, emergency, and finance require human
-  interpreter fallback until validated.
-- Unknown words must degrade transparently to dactyl/subtitles, not hallucinated
-  signs.
+### Правила проекта
 
-## Release Hygiene
+1. Не выдавать сгенерированный перевод за авторитетный без ревью носителем жестового языка
+2. Каждый датасет и модель должны иметь лицензию и статус согласия перед использованием в production
+3. Для высокорисковых доменов (медицина, юриспруденция, экстренные службы, финансы) обязателен человеческий fallback
+4. Неизвестные слова должны прозрачно деградировать до дактиля/субтитров, а не до галлюцинаций
 
-Before publishing a public repository, review
-[docs/open-source-readiness.md](docs/open-source-readiness.md).
+---
+
+## Связанные проекты
+
+- [QazLake](https://github.com/belilovsky/qazlake) — конвейер сбора и обогащения новостного контента
+- [QazCompute](https://github.com/belilovsky/qazcompute) — платформа AI-обогащения (NER, sentiment, classification)
+
+---
+
+## Лицензия
+
+Проект распространяется под лицензией MIT. Подробнее — в файле [LICENSE](LICENSE).
