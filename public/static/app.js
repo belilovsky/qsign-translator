@@ -751,6 +751,7 @@ function renderPlan(plan) {
   subtitleBox.textContent = plan.input_text || "Нет текста";
   const trust = summarizePlanTrust(plan);
   setTrustState(trust.tone, trust.title, trust.text);
+  videoFrame.classList.toggle("blocked-preview", trust.tone === "bad" || trust.tone === "warn");
   resultTranscript.value = plan.input_text || "";
   syncClearButton();
   syncTranscriptState();
@@ -809,6 +810,7 @@ function renderEmptyState() {
   jobMeta.classList.remove("stale");
   clearPreviewVideo();
   setVideoPreviewState(false, "Сначала соберите черновик перевода.");
+  videoFrame.classList.remove("blocked-preview");
   resetPlayback();
   setFullscreen(false);
   resetUploadState();
@@ -869,6 +871,7 @@ function markPlanStale() {
   clearPreviewVideo();
   resetPlayback();
   setVideoPreviewState(false, "Черновик изменился. Пересоберите результат.");
+  videoFrame.classList.remove("blocked-preview");
   setTrustState(
     "neutral",
     "Черновик устарел",
