@@ -13,6 +13,7 @@ class DatabaseUnavailable(RuntimeError):
 
 VALID_FEEDBACK_TYPES = {"good", "wrong_sign", "unclear_sign", "missing_sign", "offensive"}
 VALID_REVIEW_STATUSES = {"pending_signer_review", "approved", "rejected", "needs_edit"}
+POSTGRES_INVALID_TEXT_REPRESENTATION = "22P02"
 
 
 def _import_psycopg():
@@ -22,6 +23,13 @@ def _import_psycopg():
     except ImportError as exc:  # pragma: no cover - depends on optional db extra
         raise DatabaseUnavailable("Install qsign-translator[db] to use Postgres") from exc
     return psycopg, dict_row
+
+
+def _is_invalid_text_representation(exc: Exception) -> bool:
+    return (
+        getattr(exc, "sqlstate", None) == POSTGRES_INVALID_TEXT_REPRESENTATION
+        or exc.__class__.__name__ == "InvalidTextRepresentation"
+    )
 
 
 @contextmanager
@@ -172,31 +180,36 @@ def record_translation_job(plan: SignPlan, input_type: str = "text") -> str:
 def get_translation_job(job_id: str) -> dict[str, Any] | None:
     with connect() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT
-                    id,
-                    input_type,
-                    input_text,
-                    detected_language,
-                    status,
-                    output_kind,
-                    output_status,
-                    confidence,
-                    warnings,
-                    review_status,
-                    risk_domains,
-                    source_ids,
-                    fallback_count,
-                    unknown_token_count,
-                    output_uri,
-                    created_at,
-                    updated_at
-                FROM translation_jobs
-                WHERE id = %s
-                """,
-                (job_id,),
-            )
+            try:
+                cur.execute(
+                    """
+                    SELECT
+                        id,
+                        input_type,
+                        input_text,
+                        detected_language,
+                        status,
+                        output_kind,
+                        output_status,
+                        confidence,
+                        warnings,
+                        review_status,
+                        risk_domains,
+                        source_ids,
+                        fallback_count,
+                        unknown_token_count,
+                        output_uri,
+                        created_at,
+                        updated_at
+                    FROM translation_jobs
+                    WHERE id = %s
+                    """,
+                    (job_id,),
+                )
+            except Exception as exc:
+                if _is_invalid_text_representation(exc):
+                    return None
+                raise
             job = cur.fetchone()
             if not job:
                 return None
@@ -292,31 +305,36 @@ def update_review_status(job_id: str, review_status: str) -> dict[str, Any] | No
         raise ValueError("Unsupported review status")
     with connect() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                UPDATE translation_jobs
-                SET review_status = %s, updated_at = now()
-                WHERE id = %s
-                RETURNING
-                    id,
-                    input_type,
-                    input_text,
-                    detected_language,
-                    status,
-                    output_kind,
-                    output_status,
-                    confidence,
-                    warnings,
-                    review_status,
-                    risk_domains,
-                    source_ids,
-                    fallback_count,
-                    unknown_token_count,
-                    created_at,
-                    updated_at
-                """,
-                (review_status, job_id),
-            )
+            try:
+                cur.execute(
+                    """
+                    UPDATE translation_jobs
+                    SET review_status = %s, updated_at = now()
+                    WHERE id = %s
+                    RETURNING
+                        id,
+                        input_type,
+                        input_text,
+                        detected_language,
+                        status,
+                        output_kind,
+                        output_status,
+                        confidence,
+                        warnings,
+                        review_status,
+                        risk_domains,
+                        source_ids,
+                        fallback_count,
+                        unknown_token_count,
+                        created_at,
+                        updated_at
+                    """,
+                    (review_status, job_id),
+                )
+            except Exception as exc:
+                if _is_invalid_text_representation(exc):
+                    return None
+                raise
             row = cur.fetchone()
         conn.commit()
     if not row:
@@ -328,16 +346,21 @@ def list_feedback_events(job_id: str | None = None, limit: int = 50) -> list[dic
     with connect() as conn:
         with conn.cursor() as cur:
             if job_id:
-                cur.execute(
-                    """
-                    SELECT id, job_id, feedback_type, note, created_at
-                    FROM feedback_events
-                    WHERE job_id = %s
-                    ORDER BY created_at DESC
-                    LIMIT %s
-                    """,
-                    (job_id, limit),
-                )
+                try:
+                    cur.execute(
+                        """
+                        SELECT id, job_id, feedback_type, note, created_at
+                        FROM feedback_events
+                        WHERE job_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        (job_id, limit),
+                    )
+                except Exception as exc:
+                    if _is_invalid_text_representation(exc):
+                        return []
+                    raise
             else:
                 cur.execute(
                     """

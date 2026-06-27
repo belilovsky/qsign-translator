@@ -48,6 +48,16 @@ class FakeConnection:
         self.committed = True
 
 
+class InvalidTextRepresentation(Exception):
+    sqlstate = "22P02"
+
+
+class InvalidUuidCursor(FakeCursor):
+    def execute(self, query: str, params: tuple[object, ...] = ()) -> None:
+        super().execute(query, params)
+        raise InvalidTextRepresentation("invalid uuid")
+
+
 class DatabaseTests(unittest.TestCase):
     def test_readiness_without_database_url_is_explicit(self) -> None:
         with mock.patch.dict(os.environ, {}, clear=True):
@@ -111,6 +121,15 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(rows[0]["id"], "job-1")
         self.assertEqual(cursor.calls[0][1], ("pending_signer_review", 10))
 
+    def test_get_translation_job_treats_invalid_uuid_as_missing(self) -> None:
+        cursor = InvalidUuidCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            row = db.get_translation_job("not-a-uuid")
+
+        self.assertIsNone(row)
+
     def test_update_review_status_writes_allowed_status(self) -> None:
         cursor = FakeCursor()
         connection = FakeConnection(cursor)
@@ -126,6 +145,15 @@ class DatabaseTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             db.update_review_status("job-1", "bad")
 
+    def test_update_review_status_treats_invalid_uuid_as_missing(self) -> None:
+        cursor = InvalidUuidCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            row = db.update_review_status("not-a-uuid", "approved")
+
+        self.assertIsNone(row)
+
     def test_list_feedback_events_filters_by_job(self) -> None:
         cursor = FakeCursor()
         connection = FakeConnection(cursor)
@@ -135,6 +163,15 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual(rows[0]["job_id"], "job-1")
         self.assertEqual(cursor.calls[0][1], ("job-1", 10))
+
+    def test_list_feedback_events_treats_invalid_uuid_as_empty(self) -> None:
+        cursor = InvalidUuidCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            rows = db.list_feedback_events(job_id="not-a-uuid", limit=10)
+
+        self.assertEqual(rows, [])
 
 
 if __name__ == "__main__":

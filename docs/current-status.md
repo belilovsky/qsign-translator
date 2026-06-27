@@ -72,12 +72,17 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 47 automated tests green;
+- 52 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
 - working single-job and batch AI-video export modes.
 - live footer attribution now points back to `qdev.run` in a muted, non-promotional style.
+- package metadata, FastAPI OpenAPI metadata, and visible UI version are aligned
+  at `0.2.0`.
+- OpenAPI generation is warning-free while `HEAD` monitor routes remain active.
+- invalid external job identifiers are handled as missing records instead of
+  surfacing database tracebacks.
 
 ## Known Limits
 

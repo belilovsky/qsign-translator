@@ -5,6 +5,7 @@ import secrets
 import tempfile
 from pathlib import Path
 
+from . import __version__
 from . import db
 from .ai_video_brief import build_ai_video_batch_brief, build_ai_video_brief
 from .asr import AsrUnavailable, FasterWhisperAsr
@@ -63,7 +64,7 @@ class BatchAIVideoBriefRequest(BaseModel):
 
 app = FastAPI(
     title="QSign Translator API",
-    version="0.1.0",
+    version=__version__,
     description="Prototype RU/KZ text-to-sign-plan API with transparent draft output. Not a professional interpretation.",
 )
 
@@ -75,7 +76,8 @@ if STATIC_ROOT.exists():
     app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
 
 
-@app.api_route("/", methods=["GET", "HEAD"], response_model=None)
+@app.get("/", response_model=None, include_in_schema=False)
+@app.head("/", response_model=None, include_in_schema=False)
 def index(request: Request) -> FileResponse | Response:
     index_path = PUBLIC_ROOT / "index.html"
     if not index_path.exists():
@@ -85,7 +87,8 @@ def index(request: Request) -> FileResponse | Response:
     return FileResponse(index_path)
 
 
-@app.api_route("/favicon.ico", methods=["GET", "HEAD"], response_model=None)
+@app.get("/favicon.ico", response_model=None, include_in_schema=False)
+@app.head("/favicon.ico", response_model=None, include_in_schema=False)
 def favicon(request: Request) -> FileResponse | Response:
     icon_path = STATIC_ROOT / "assets" / "qsign-icon.svg"
     if not icon_path.exists():
@@ -95,7 +98,8 @@ def favicon(request: Request) -> FileResponse | Response:
     return FileResponse(icon_path, media_type="image/svg+xml")
 
 
-@app.api_route("/robots.txt", methods=["GET", "HEAD"], response_model=None)
+@app.get("/robots.txt", response_model=None, include_in_schema=False)
+@app.head("/robots.txt", response_model=None, include_in_schema=False)
 def robots(request: Request) -> FileResponse | Response:
     robots_path = PUBLIC_ROOT / "robots.txt"
     if not robots_path.exists():
@@ -105,21 +109,24 @@ def robots(request: Request) -> FileResponse | Response:
     return FileResponse(robots_path, media_type="text/plain; charset=utf-8")
 
 
-@app.api_route("/health", methods=["GET", "HEAD"], response_model=None)
+@app.get("/health", response_model=None)
+@app.head("/health", response_model=None, include_in_schema=False)
 def health(request: Request) -> dict[str, str] | Response:
     if request.method == "HEAD":
         return Response(status_code=200)
     return {"status": "ok"}
 
 
-@app.api_route("/health/live", methods=["GET", "HEAD"], response_model=None)
+@app.get("/health/live", response_model=None)
+@app.head("/health/live", response_model=None, include_in_schema=False)
 def live(request: Request) -> dict[str, str] | Response:
     if request.method == "HEAD":
         return Response(status_code=200)
     return {"status": "ok"}
 
 
-@app.api_route("/health/ready", methods=["GET", "HEAD"], response_model=None)
+@app.get("/health/ready", response_model=None)
+@app.head("/health/ready", response_model=None, include_in_schema=False)
 def ready(request: Request, response: Response) -> dict[str, object] | Response:
     database = db.readiness()
     ok = bool(database.get("ok"))
@@ -254,7 +261,8 @@ def translation_job_render_plan(job_id: str) -> dict[str, object]:
     return build_job_render_plan(job, settings.asset_root)
 
 
-@app.api_route("/v1/jobs/{job_id}/review-video", methods=["GET", "HEAD"], response_model=None)
+@app.get("/v1/jobs/{job_id}/review-video", response_model=None)
+@app.head("/v1/jobs/{job_id}/review-video", response_model=None, include_in_schema=False)
 def translation_job_review_video(job_id: str, request: Request) -> FileResponse | Response:
     try:
         job = db.get_translation_job(job_id)

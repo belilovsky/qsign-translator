@@ -2,5 +2,6 @@
 
 from .planner import SignPlanner
 
-__all__ = ["SignPlanner"]
+__version__ = "0.2.0"
 
+__all__ = ["SignPlanner", "__version__"]

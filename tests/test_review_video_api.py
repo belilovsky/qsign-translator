@@ -61,6 +61,11 @@ class ReviewVideoApiTests(unittest.TestCase):
             response = self.client.get("/v1/jobs/missing/review-video")
         self.assertEqual(response.status_code, 404)
 
+    def test_review_video_head_returns_not_found_for_invalid_job_id(self) -> None:
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
+            response = self.client.head("/v1/jobs/not-a-uuid/review-video")
+        self.assertEqual(response.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

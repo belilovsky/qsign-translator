@@ -20,6 +20,11 @@ class ApiTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
 
+    def test_openapi_exposes_current_package_version(self) -> None:
+        response = self.client.get("/openapi.json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["info"]["version"], "0.2.0")
+
     def test_head_routes_are_monitorable(self) -> None:
         for path in ["/", "/health", "/health/live", "/health/ready"]:
             with self.subTest(path=path):
