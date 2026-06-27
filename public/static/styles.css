@@ -1645,6 +1645,83 @@ tr:last-child td {
   gap: 10px;
 }
 
+.review-session-form {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.review-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.review-form-field {
+  display: grid;
+  gap: 6px;
+}
+
+.review-form-field span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.review-form-field input,
+.review-form-field select,
+.review-form-field textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font: inherit;
+}
+
+.review-form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.review-form-checkbox input {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+}
+
+.review-form-checkbox span {
+  font-size: 12px;
+  text-transform: none;
+}
+
+.review-form-notes {
+  margin-top: 2px;
+}
+
+.review-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.review-session-card {
+  background: #fcfcfb;
+}
+
 .review-job-card {
   display: grid;
   gap: 8px;
@@ -1828,6 +1905,10 @@ tr:last-child td {
     width: 100%;
     grid-column: 1 / -1;
   }
+
+  .review-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
@@ -1944,6 +2025,14 @@ tr:last-child td {
 
   .review-card-head,
   .review-actions {
+    display: grid;
+  }
+
+  .review-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .review-form-actions {
     display: grid;
   }
 

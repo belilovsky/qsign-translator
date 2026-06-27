@@ -25,6 +25,7 @@ const state = {
   reviewToken: "",
   reviewJobs: [],
   reviewFeedback: [],
+  reviewSessions: [],
   selectedReviewJobId: "",
   reviewFilter: "",
 };
@@ -116,8 +117,19 @@ const reviewJobs = document.querySelector("#reviewJobs");
 const reviewQueueStatus = document.querySelector("#reviewQueueStatus");
 const reviewDetailSummary = document.querySelector("#reviewDetailSummary");
 const reviewUnitList = document.querySelector("#reviewUnitList");
+const reviewSessionList = document.querySelector("#reviewSessionList");
 const reviewFeedbackList = document.querySelector("#reviewFeedbackList");
 const reviewStatusActionButtons = Array.from(document.querySelectorAll("[data-review-status-action]"));
+const reviewSessionForm = document.querySelector("#reviewSessionForm");
+const reviewerRoleInput = document.querySelector("#reviewerRoleInput");
+const reviewerLanguageInput = document.querySelector("#reviewerLanguageInput");
+const reviewSessionStatusInput = document.querySelector("#reviewSessionStatusInput");
+const reviewMeaningScoreInput = document.querySelector("#reviewMeaningScoreInput");
+const reviewUnderstandabilityScoreInput = document.querySelector("#reviewUnderstandabilityScoreInput");
+const reviewBlockingIssueInput = document.querySelector("#reviewBlockingIssueInput");
+const reviewSessionNotesInput = document.querySelector("#reviewSessionNotesInput");
+const reviewSessionStatus = document.querySelector("#reviewSessionStatus");
+const reviewSessionSubmitButton = document.querySelector("#reviewSessionSubmitButton");
 
 const warningLabels = {
   prototype_sign_plan_not_professional_interpretation: "Черновик не заменяет профессиональный перевод.",
@@ -928,15 +940,21 @@ async function loadRenderPlan(jobId) {
     const resolved = Number(data?.summary?.resolved_segments ?? 0);
     const missing = Number(data?.summary?.missing_segments ?? 0);
     const publishReady = Boolean(data?.adapter?.publish_ready);
-    const hasPreviewFragments = resolved > 0;
     const outputKind = formatOutputKind(data?.target_output_kind);
+    const blockers = Array.isArray(data?.publish_gate?.blockers)
+      ? data.publish_gate.blockers.map(formatPipelineBlocker)
+      : [];
+    const nextStep = String(data?.publish_gate?.next_step || "").trim();
     renderRenderPlanSummary(
-      `${outputKind}. ${publishReady ? "Можно выпускать после проверки." : "К выпуску пока не готово: нужен полный набор видеофрагментов."}`,
+      `${outputKind}. ${publishReady ? "Можно выпускать после проверки." : "К выпуску пока не готово: нужен следующий операционный шаг."}`,
       [
+        `пайплайн: ${formatPipelineStatus(data?.pipeline_status)}`,
         `готовность: ${adapterStatus}`,
         `есть фрагментов: ${resolved}`,
         `нужно добавить: ${missing}`,
         `выпуск: ${publishReady ? "да" : "нет"}`,
+        blockers.length ? `блокеры: ${blockers.join(", ")}` : "блокеры: нет",
+        nextStep ? `следующий шаг: ${nextStep}` : "следующий шаг: ожидание",
       ]
     );
   } catch {
@@ -1267,7 +1285,30 @@ function formatReviewStatus(status) {
   if (status === "pending_signer_review") return "ожидает проверки";
   if (status === "approved") return "одобрено";
   if (status === "rejected") return "отклонено";
+  if (status === "needs_edit") return "нужна правка";
   return String(status || "не задан");
+}
+
+function formatPipelineStatus(status) {
+  if (status === "ready_for_external_render") return "можно готовить внешний рендер";
+  if (status === "approved_but_asset_incomplete") return "одобрено, но не хватает ассетов";
+  if (status === "approved_pending_render") return "одобрено, можно запускать сборку";
+  if (status === "awaiting_signer_review") return "ждет проверки носителем";
+  return String(status || "не задан");
+}
+
+function formatPipelineBlocker(blocker) {
+  if (blocker === "needs_signer_approval") return "нужна проверка носителем";
+  if (blocker === "missing_render_assets") return "не хватает видеофрагментов";
+  if (blocker === "empty_sign_plan") return "план жестов пуст";
+  return String(blocker || "не задан");
+}
+
+function formatReviewerRole(role) {
+  if (role === "native_signer") return "носитель";
+  if (role === "linguist") return "лингвист";
+  if (role === "operator") return "оператор";
+  return String(role || "ревьюер");
 }
 
 function formatPlanLanguage(language) {
@@ -1363,6 +1404,14 @@ function syncReviewActionButtons() {
   reviewStatusActionButtons.forEach((button) => {
     button.disabled = disabled;
   });
+  reviewSessionSubmitButton.disabled = disabled;
+  reviewerRoleInput.disabled = disabled;
+  reviewerLanguageInput.disabled = disabled;
+  reviewSessionStatusInput.disabled = disabled;
+  reviewMeaningScoreInput.disabled = disabled;
+  reviewUnderstandabilityScoreInput.disabled = disabled;
+  reviewBlockingIssueInput.disabled = disabled;
+  reviewSessionNotesInput.disabled = disabled;
 }
 
 function renderReviewJobs(items) {
@@ -1409,6 +1458,7 @@ function renderReviewJobs(items) {
 function renderReviewDetail(job, feedbackItems = []) {
   clearNode(reviewDetailSummary);
   clearNode(reviewUnitList);
+  clearNode(reviewSessionList);
   clearNode(reviewFeedbackList);
   syncReviewActionButtons();
   if (!job) {
@@ -1421,6 +1471,9 @@ function renderReviewDetail(job, feedbackItems = []) {
         ? "После выбора записи здесь появятся детали, единицы плана и отзывы."
         : "После ввода review token здесь откроются защищенные детали сохраненной записи."
     );
+    reviewSessionStatus.textContent = state.reviewToken
+      ? "Сессию можно сохранить после выбора записи."
+      : "Сессии ревью доступны после ввода review token.";
     return;
   }
   appendTextElement(reviewDetailSummary, "strong", "", String(job.input_text || "Без текста"));
@@ -1440,7 +1493,19 @@ function renderReviewDetail(job, feedbackItems = []) {
   });
   reviewDetailSummary.append(summaryGrid);
   appendTextElement(reviewDetailSummary, "p", "", formatWarnings(job.warnings || []));
+  if (state.lastRenderPlan) {
+    const blockers = Array.isArray(state.lastRenderPlan?.publish_gate?.blockers)
+      ? state.lastRenderPlan.publish_gate.blockers.map(formatPipelineBlocker).join(", ")
+      : "";
+    appendTextElement(
+      reviewDetailSummary,
+      "p",
+      "",
+      `Пайплайн: ${formatPipelineStatus(state.lastRenderPlan.pipeline_status)}.${blockers ? ` Блокеры: ${blockers}.` : ""}`
+    );
+  }
   syncReviewActionButtons();
+  reviewSessionStatus.textContent = "Сохраните решение носителя или оператора по этой записи.";
 
   const units = job.units || [];
   if (!units.length) {
@@ -1460,6 +1525,8 @@ function renderReviewDetail(job, feedbackItems = []) {
     });
   }
 
+  renderReviewSessions(state.reviewSessions);
+
   if (!feedbackItems.length) {
     const emptyFeedback = document.createElement("div");
     emptyFeedback.className = "review-empty-state";
@@ -1477,6 +1544,35 @@ function renderReviewDetail(job, feedbackItems = []) {
   }
 }
 
+function renderReviewSessions(items) {
+  clearNode(reviewSessionList);
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "review-empty-state";
+    appendTextElement(empty, "strong", "", "Сессий ревью пока нет");
+    appendTextElement(empty, "p", "", "Сохраните первую проверку носителя, лингвиста или оператора по этой записи.");
+    reviewSessionList.append(empty);
+    return;
+  }
+  items.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "review-feedback-card review-session-card";
+    appendTextElement(
+      card,
+      "strong",
+      "",
+      `${formatReviewerRole(item.reviewer_role)} · ${formatPlanLanguage(item.reviewer_language)}`
+    );
+    const details = [];
+    if (Number.isFinite(Number(item.meaning_score))) details.push(`смысл ${item.meaning_score}/5`);
+    if (Number.isFinite(Number(item.understandability_score))) details.push(`понятность ${item.understandability_score}/5`);
+    if (item.blocking_issue) details.push("есть блокирующая проблема");
+    appendTextElement(card, "p", "", details.join(" · ") || "Без оценок.");
+    appendTextElement(card, "p", "", item.notes || "Без заметки.");
+    reviewSessionList.append(card);
+  });
+}
+
 async function loadReviewDashboard() {
   saveReviewToken(reviewTokenInput.value);
   state.reviewFilter = reviewStatusFilter.value || "";
@@ -1487,6 +1583,7 @@ async function loadReviewDashboard() {
   reviewQueueStatus.textContent = "проверка";
   if (!state.reviewToken) {
     state.reviewJobs = [];
+    state.reviewSessions = [];
     state.selectedReviewJobId = "";
     renderReviewSummary([]);
     renderReviewJobs([]);
@@ -1516,6 +1613,7 @@ async function loadReviewDashboard() {
     await selectReviewJob(state.selectedReviewJobId, false);
   } catch (error) {
     state.reviewJobs = [];
+    state.reviewSessions = [];
     state.selectedReviewJobId = "";
     renderReviewSummary([]);
     renderReviewJobs([]);
@@ -1528,15 +1626,21 @@ async function loadReviewDashboard() {
 async function selectReviewJob(jobId, refreshList = true) {
   state.selectedReviewJobId = String(jobId || "");
   syncReviewActionButtons();
+  reviewerLanguageInput.value = reviewerLanguageInput.value || "ru";
+  reviewSessionStatus.textContent = state.selectedReviewJobId
+    ? "Сохраните решение носителя или оператора по этой записи."
+    : "Сессию можно сохранить после выбора записи.";
   if (refreshList) renderReviewJobs(state.reviewJobs);
   if (!state.selectedReviewJobId) {
     renderReviewDetail(null);
     return;
   }
   try {
-    const [jobResponse, feedbackResponse] = await Promise.all([
+    const [jobResponse, feedbackResponse, sessionsResponse, renderPlanResponse] = await Promise.all([
       fetch(`/v1/jobs/${state.selectedReviewJobId}`, { headers: reviewHeaders() }),
       fetch(`/v1/review/feedback?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
+      fetch(`/v1/review/sessions?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
+      fetch(`/v1/jobs/${state.selectedReviewJobId}/render-plan`, { headers: reviewHeaders() }),
     ]);
     if (!jobResponse.ok) {
       const detail = await jobResponse.json().catch(() => ({}));
@@ -1544,10 +1648,15 @@ async function selectReviewJob(jobId, refreshList = true) {
     }
     const job = await jobResponse.json();
     const feedbackData = feedbackResponse.ok ? await feedbackResponse.json() : { items: [] };
+    const sessionsData = sessionsResponse.ok ? await sessionsResponse.json() : { items: [] };
+    state.lastRenderPlan = renderPlanResponse.ok ? await renderPlanResponse.json() : null;
     state.reviewFeedback = feedbackData.items || [];
+    state.reviewSessions = sessionsData.items || [];
     renderReviewJobs(state.reviewJobs);
     renderReviewDetail(job, state.reviewFeedback);
   } catch (error) {
+    state.reviewSessions = [];
+    state.lastRenderPlan = null;
     renderReviewDetail(null);
     reviewStatusBanner.textContent = `Не удалось открыть запись: ${String(error.message || error)}`;
   }
@@ -1573,6 +1682,57 @@ async function updateReviewStatus(status) {
     await loadReviewDashboard();
   } catch (error) {
     reviewStatusBanner.textContent = `Статус не обновлен: ${String(error.message || error)}`;
+  }
+}
+
+function parseOptionalScore(value) {
+  const normalized = String(value || "").trim();
+  if (!normalized) return null;
+  const numeric = Number(normalized);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+async function saveReviewSession() {
+  if (!state.selectedReviewJobId || !state.reviewToken) return;
+  const reviewerRole = String(reviewerRoleInput.value || "").trim();
+  const reviewerLanguage = String(reviewerLanguageInput.value || "").trim();
+  if (!reviewerRole || !reviewerLanguage) {
+    reviewSessionStatus.textContent = "Укажите роль и язык ревьюера.";
+    return;
+  }
+  reviewSessionStatus.textContent = "Сохраняем сессию ревью...";
+  reviewSessionSubmitButton.disabled = true;
+  try {
+    const response = await fetch("/v1/review/sessions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...reviewHeaders(),
+      },
+      body: JSON.stringify({
+        job_id: state.selectedReviewJobId,
+        reviewer_role: reviewerRole,
+        reviewer_language: reviewerLanguage,
+        review_status: String(reviewSessionStatusInput.value || "").trim() || null,
+        meaning_score: parseOptionalScore(reviewMeaningScoreInput.value),
+        understandability_score: parseOptionalScore(reviewUnderstandabilityScoreInput.value),
+        blocking_issue: Boolean(reviewBlockingIssueInput.checked),
+        notes: String(reviewSessionNotesInput.value || "").trim() || null,
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
+    }
+    reviewSessionStatus.textContent = "Сессия ревью сохранена.";
+    reviewSessionNotesInput.value = "";
+    reviewBlockingIssueInput.checked = false;
+    reviewSessionStatusInput.value = "";
+    await loadReviewDashboard();
+  } catch (error) {
+    reviewSessionStatus.textContent = `Сессия не сохранена: ${String(error.message || error)}`;
+  } finally {
+    syncReviewActionButtons();
   }
 }
 
@@ -1690,6 +1850,11 @@ reviewStatusActionButtons.forEach((button) => {
   button.addEventListener("click", () => {
     updateReviewStatus(button.dataset.reviewStatusAction);
   });
+});
+
+reviewSessionForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveReviewSession();
 });
 
 copyAIBriefButton.addEventListener("click", async () => {

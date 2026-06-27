@@ -150,6 +150,14 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
     except (URLError, TimeoutError) as exc:
         _record(results, "review_without_token", False, str(exc))
 
+    try:
+        _request(base_url, "/v1/review/sessions", timeout=timeout)
+        _record(results, "review_sessions_without_token", False, "unexpected 200")
+    except HTTPError as exc:
+        _record(results, "review_sessions_without_token", exc.code in {403, 503}, f"HTTP {exc.code}")
+    except (URLError, TimeoutError) as exc:
+        _record(results, "review_sessions_without_token", False, str(exc))
+
     if review_token:
         try:
             status, payload, _ = _request(

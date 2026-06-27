@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260627a" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260627b" />
   </head>
   <body>
     <div class="app-shell">
@@ -339,7 +339,64 @@
                 </div>
               </div>
               <div class="review-detail-summary" id="reviewDetailSummary">Выберите запись слева, чтобы увидеть детали ревью.</div>
+              <form class="review-session-form" id="reviewSessionForm">
+                <div class="review-form-grid">
+                  <label class="review-form-field">
+                    <span>Роль</span>
+                    <input id="reviewerRoleInput" type="text" placeholder="native_signer" maxlength="80" />
+                  </label>
+                  <label class="review-form-field">
+                    <span>Язык</span>
+                    <input id="reviewerLanguageInput" type="text" placeholder="ru" maxlength="20" />
+                  </label>
+                  <label class="review-form-field">
+                    <span>Новый статус</span>
+                    <select id="reviewSessionStatusInput">
+                      <option value="">Не менять</option>
+                      <option value="pending_signer_review">Ожидает проверки</option>
+                      <option value="needs_edit">Нужна правка</option>
+                      <option value="approved">Одобрено</option>
+                      <option value="rejected">Отклонено</option>
+                    </select>
+                  </label>
+                  <label class="review-form-field">
+                    <span>Смысл</span>
+                    <select id="reviewMeaningScoreInput">
+                      <option value="">-</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                    </select>
+                  </label>
+                  <label class="review-form-field">
+                    <span>Понятность</span>
+                    <select id="reviewUnderstandabilityScoreInput">
+                      <option value="">-</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                    </select>
+                  </label>
+                  <label class="review-form-field review-form-checkbox">
+                    <input id="reviewBlockingIssueInput" type="checkbox" />
+                    <span>Есть блокирующая проблема</span>
+                  </label>
+                </div>
+                <label class="review-form-field review-form-notes">
+                  <span>Заметка ревьюера</span>
+                  <textarea id="reviewSessionNotesInput" rows="3" maxlength="2000" placeholder="Что нужно поправить или почему запись можно одобрить"></textarea>
+                </label>
+                <div class="review-form-actions">
+                  <span class="small-status" id="reviewSessionStatus">Сессию можно сохранить после выбора записи.</span>
+                  <button class="secondary-button compact" id="reviewSessionSubmitButton" type="submit">Сохранить сессию</button>
+                </div>
+              </form>
               <div class="review-unit-list" id="reviewUnitList"></div>
+              <div class="review-feedback-list" id="reviewSessionList"></div>
               <div class="review-feedback-list" id="reviewFeedbackList"></div>
             </section>
           </div>
@@ -357,6 +414,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260627a" defer></script>
+    <script src="/static/app.js?v=20260627b" defer></script>
   </body>
 </html>

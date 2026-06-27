@@ -42,6 +42,8 @@ The project is intentionally honest about what exists today:
 - Responsive public UI with result trace, coverage counters, and export modes.
 - Separate reviewer route in the same frontend shell, with token-gated queue and
   details view.
+- Reviewer UI now supports persisted validation sessions with role, language,
+  notes, blocking flags, and lightweight scoring.
 - Honest unsaved-draft states in the UI: no fake saved-job, review-video, or
   AI-video availability when a draft only exists locally.
 
