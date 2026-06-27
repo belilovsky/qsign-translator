@@ -26,6 +26,12 @@ class SignPlannerTests(unittest.TestCase):
         self.assertIn("ME NAME", glosses)
         self.assertEqual(len([unit for unit in plan.units if unit.source_token == "меня зовут"]), 1)
 
+    def test_russian_polite_greeting_phrase_lookup(self) -> None:
+        plan = self.planner.plan("Добрый день")
+        self.assertEqual(len(plan.units), 1)
+        self.assertEqual(plan.units[0].kind, "gloss")
+        self.assertEqual(plan.units[0].gloss, "HELLO_FORMAL")
+
     def test_imported_slovo_token_is_matched(self) -> None:
         plan = self.planner.plan("Короткий")
         self.assertEqual(plan.language, "ru")
@@ -46,6 +52,16 @@ class SignPlannerTests(unittest.TestCase):
         plan = self.planner.plan("Мне нужно помочь")
         self.assertEqual([unit.kind for unit in plan.units], ["gloss", "gloss", "gloss"])
         self.assertEqual([unit.gloss for unit in plan.units], ["ME", "NEED", "HELP"])
+
+    def test_common_gratitude_phrase_is_collapsed(self) -> None:
+        plan = self.planner.plan("Спасибо большое")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual([unit.gloss for unit in plan.units], ["THANK_YOU", "БОЛЬШОЙ"])
+
+    def test_address_alias_and_conjunction_omit_reduce_noise(self) -> None:
+        plan = self.planner.plan("Адрес и работа")
+        self.assertEqual([unit.kind for unit in plan.units], ["gloss", "gloss"])
+        self.assertEqual([unit.gloss for unit in plan.units], ["АДРЕС/УЛИЦА", "РАБОТА"])
 
     def test_plan_has_warning(self) -> None:
         data = self.planner.plan("Спасибо").to_dict()

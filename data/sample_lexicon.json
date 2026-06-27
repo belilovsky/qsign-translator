@@ -49,6 +49,46 @@
       "clip_id": "krsl_hello_formal"
     },
     {
+      "token": "адрес",
+      "gloss": "АДРЕС/УЛИЦА",
+      "language": "ru",
+      "source": "seed:slovo_alias",
+      "confidence": 0.58,
+      "clip_id": "e68a8adf-867c-4358-8706-350b0d2b8244"
+    },
+    {
+      "token": "большое",
+      "gloss": "БОЛЬШОЙ",
+      "language": "ru",
+      "source": "seed:slovo_alias",
+      "confidence": 0.58,
+      "clip_id": "b321281f-6cfc-4132-a1c5-31365224ebd6"
+    },
+    {
+      "token": "добрый день",
+      "gloss": "HELLO_FORMAL",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.72,
+      "clip_id": "rsl_hello_formal"
+    },
+    {
+      "token": "и",
+      "gloss": "OMIT",
+      "language": "ru",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "спасибо большое",
+      "gloss": "THANK_YOU",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.78,
+      "clip_id": "rsl_thank_you"
+    },
+    {
       "token": "10",
       "gloss": "10",
       "language": "ru",
