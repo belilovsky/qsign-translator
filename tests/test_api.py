@@ -209,6 +209,72 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["items"][0]["feedback_type"], "good")
 
+    def test_review_sessions_endpoint_lists_items(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch(
+                "qsign_translator.api.db.list_review_sessions",
+                return_value=[{"id": "session-1", "job_id": "job-1", "reviewer_role": "native_signer"}],
+            ),
+        ):
+            response = self.client.get(
+                "/v1/review/sessions?job_id=job-1",
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+        self.assertEqual(response.json()["items"][0]["reviewer_role"], "native_signer")
+
+    def test_review_sessions_endpoint_creates_session_and_updates_status(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch(
+                "qsign_translator.api.db.get_translation_job",
+                return_value={"id": "job-1", "review_status": "pending_signer_review"},
+            ),
+            mock.patch(
+                "qsign_translator.api.db.create_review_session",
+                return_value={"id": "session-1", "job_id": "job-1", "reviewer_role": "native_signer"},
+            ),
+            mock.patch(
+                "qsign_translator.api.db.update_review_status",
+                return_value={"id": "job-1", "review_status": "approved"},
+            ),
+        ):
+            response = self.client.post(
+                "/v1/review/sessions",
+                json={
+                    "job_id": "job-1",
+                    "reviewer_role": "native_signer",
+                    "reviewer_language": "ru",
+                    "review_status": "approved",
+                    "meaning_score": 5,
+                    "notes": "Approved after native review.",
+                },
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "ok")
+        self.assertEqual(data["review_status"], "approved")
+        self.assertEqual(data["session"]["id"], "session-1")
+
+    def test_review_sessions_endpoint_returns_not_found_for_missing_job(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch("qsign_translator.api.db.get_translation_job", return_value=None),
+        ):
+            response = self.client.post(
+                "/v1/review/sessions",
+                json={
+                    "job_id": "missing",
+                    "reviewer_role": "native_signer",
+                    "reviewer_language": "ru",
+                },
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

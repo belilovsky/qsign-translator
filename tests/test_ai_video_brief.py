@@ -19,6 +19,8 @@ class AIVideoBriefTests(unittest.TestCase):
             ],
         }
         render_plan = {
+            "pipeline_status": "awaiting_signer_review",
+            "publish_gate": {"blockers": ["needs_signer_approval", "missing_render_assets"]},
             "summary": {"resolved_segments": 1, "missing_segments": 1},
         }
 
@@ -28,6 +30,8 @@ class AIVideoBriefTests(unittest.TestCase):
         self.assertEqual(brief["format_version"], "qsign-ai-video-brief/v1")
         self.assertEqual(brief["summary"]["resolved_segments"], 1)
         self.assertEqual(brief["summary"]["missing_segments"], 1)
+        self.assertEqual(brief["summary"]["pipeline_status"], "awaiting_signer_review")
+        self.assertIn("needs_signer_approval", brief["summary"]["publish_blockers"])
         self.assertEqual(brief["video_spec"]["fps"], 25)
         self.assertEqual(brief["units"][1]["kind"], "dactyl")
         self.assertIn("Finger-spell", brief["units"][1]["instruction"])
@@ -44,6 +48,7 @@ class AIVideoBriefTests(unittest.TestCase):
         self.assertIn("batch_render", brief)
         self.assertEqual(brief["batch_render"]["scene_count"], 1)
         self.assertIn("Batch storyboard", brief["exports"]["batch_storyboard"]["text"])
+        self.assertIn("Do not publish or distribute as final output", brief["qa_checklist"][-1])
 
     def test_builds_batch_brief_for_multiple_jobs(self) -> None:
         jobs_with_render_plans = [

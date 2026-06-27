@@ -108,6 +108,10 @@ read-only until an operator provides `x-qsign-review-token`, and it should not
 claim that saved records, review-video, or AI-video exports exist when a draft
 only lives locally in the browser session.
 
+Protected reviewer APIs now also support persisted review sessions, so native
+signer or linguist checks can be saved with scores, notes, blocking flags, and
+an optional applied `review_status`.
+
 API responses follow the same rule: `metadata.output_status=not_rendered`
 means the result is a reviewable plan, not a generated video.
 

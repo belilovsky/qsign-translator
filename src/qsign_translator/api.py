@@ -57,6 +57,22 @@ class ReviewStatusRequest(BaseModel):
     review_status: str = Field(min_length=1, max_length=40)
 
 
+class ReviewSessionRequest(BaseModel):
+    job_id: str = Field(min_length=1, max_length=80)
+    reviewer_role: str = Field(min_length=1, max_length=80)
+    reviewer_language: str = Field(min_length=1, max_length=20)
+    review_status: str | None = Field(default=None, min_length=1, max_length=40)
+    meaning_score: int | None = Field(default=None, ge=1, le=5)
+    sign_choice_score: int | None = Field(default=None, ge=1, le=5)
+    grammar_score: int | None = Field(default=None, ge=1, le=5)
+    nonmanual_score: int | None = Field(default=None, ge=1, le=5)
+    fingerspelling_score: int | None = Field(default=None, ge=1, le=5)
+    timing_score: int | None = Field(default=None, ge=1, le=5)
+    understandability_score: int | None = Field(default=None, ge=1, le=5)
+    notes: str | None = Field(default=None, max_length=2000)
+    blocking_issue: bool = False
+
+
 class BatchAIVideoBriefRequest(BaseModel):
     job_ids: list[str] = Field(min_length=1, max_length=20)
     title: str | None = Field(default=None, min_length=1, max_length=120)
@@ -365,6 +381,57 @@ def review_feedback(request: Request, job_id: str | None = None, limit: int = 50
     except db.DatabaseUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"items": items, "count": len(items)}
+
+
+@app.get("/v1/review/sessions")
+def review_sessions(request: Request, job_id: str | None = None, limit: int = 50) -> dict[str, object]:
+    require_review_access(request)
+    try:
+        items = db.list_review_sessions(job_id=job_id, limit=max(1, min(limit, 200)))
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"items": items, "count": len(items)}
+
+
+@app.post("/v1/review/sessions")
+def create_review_session(payload: ReviewSessionRequest, request: Request) -> dict[str, object]:
+    require_review_access(request)
+    try:
+        job = db.get_translation_job(payload.job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Translation job not found")
+        session = db.create_review_session(
+            job_id=payload.job_id,
+            reviewer_role=payload.reviewer_role,
+            reviewer_language=payload.reviewer_language,
+            meaning_score=payload.meaning_score,
+            sign_choice_score=payload.sign_choice_score,
+            grammar_score=payload.grammar_score,
+            nonmanual_score=payload.nonmanual_score,
+            fingerspelling_score=payload.fingerspelling_score,
+            timing_score=payload.timing_score,
+            understandability_score=payload.understandability_score,
+            notes=payload.notes,
+            blocking_issue=payload.blocking_issue,
+        )
+        if not session:
+            raise HTTPException(status_code=404, detail="Translation job not found")
+        current_review_status = str(job.get("review_status") or "pending_signer_review")
+        if payload.review_status:
+            updated_job = db.update_review_status(payload.job_id, payload.review_status)
+            if not updated_job:
+                raise HTTPException(status_code=404, detail="Translation job not found")
+            current_review_status = str(updated_job.get("review_status") or current_review_status)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {
+        "status": "ok",
+        "session": session,
+        "job_id": payload.job_id,
+        "review_status": current_review_status,
+    }
 
 
 def require_review_access(request: Request) -> None:

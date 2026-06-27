@@ -11,6 +11,10 @@ All notable QSign Translator changes are summarized here.
 - Added render-plan, review-video, single-job AI-video brief, and batch
   AI-video brief endpoints.
 - Added token-protected review jobs and review feedback endpoints.
+- Added persisted review-session endpoints with scores, notes, blocking flags,
+  and optional status application back to saved jobs.
+- Added explicit video pipeline blockers and next-step hints to render-plan and
+  AI-video handoff payloads.
 - Added live footer attribution to `qdev.run`.
 - Aligned package, FastAPI OpenAPI, and visible UI version metadata.
 - Hid `HEAD` monitor routes from OpenAPI to avoid duplicate operation IDs.

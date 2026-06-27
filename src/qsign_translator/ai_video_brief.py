@@ -33,8 +33,10 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
     review_status = str(job.get("review_status") or "pending_signer_review")
     risk_domains = list(job.get("risk_domains") or [])
     summary = dict(render_plan.get("summary") or {})
+    publish_gate = dict(render_plan.get("publish_gate") or {})
     resolved_segments = int(summary.get("resolved_segments") or 0)
     missing_segments = int(summary.get("missing_segments") or 0)
+    pipeline_status = str(render_plan.get("pipeline_status") or "awaiting_signer_review")
     duration_seconds = max(3.0, len(units) * 1.4)
     unit_briefs = [_build_unit_brief(index, unit) for index, unit in enumerate(units, start=1)]
     master_prompt = _build_master_prompt(
@@ -65,6 +67,8 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
             "duration_seconds": round(duration_seconds, 2),
             "resolved_segments": resolved_segments,
             "missing_segments": missing_segments,
+            "pipeline_status": pipeline_status,
+            "publish_blockers": list(publish_gate.get("blockers") or []),
             "target_output_kind": "avatar_video_prompt_package",
         },
         "video_spec": default_video_spec(language),
@@ -91,6 +95,7 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
             "No lip-sync speech, dramatic acting, or decorative cinematic motion.",
             "Burned-in captions match the source text and stay legible on mobile.",
             "Output is marked as AI draft and must still be reviewed by a native signer.",
+            "Do not publish or distribute as final output while pipeline blockers remain active.",
         ],
     }
     brief["batch_render"] = _build_batch_render_structure([brief], title=str(job.get("input_text") or "Single-scene batch"))
@@ -197,6 +202,7 @@ def _build_master_prompt(
         f"Source text: {input_text}\n"
         f"Target signing route: {_sign_language_label(language)}.\n"
         f"Review status: {review_status}. This is an AI draft, not a certified interpreter output.\n"
+        f"Pipeline status: {pipeline_status_from_review(review_status, units)}.\n"
         f"Target duration: about {duration_seconds:.1f} seconds.\n"
         "Visual direction: one signer only, centered medium shot, hands always visible, neutral studio background, "
         "no camera moves, no cuts, no props, no decorative motion graphics.\n"
@@ -235,8 +241,17 @@ def _build_operator_task(
         f"- Clip-backed coverage available internally: {resolved_segments}; missing lexical coverage: {missing_segments}.\n"
         f"- High-risk domains: {', '.join(risk_domains) if risk_domains else 'none flagged'}.\n"
         "- Unknown terms must remain dactyl or visibly marked fallback, never be improvised as fluent native signs.\n"
-        "- Final delivery should be one reviewable mp4 plus the exact source captions."
+        "- Final delivery should be one reviewable mp4 plus the exact source captions.\n"
+        "- If blockers remain, keep the package in draft state and route it back to reviewer operations."
     )
+
+
+def pipeline_status_from_review(review_status: str, units: list[VideoUnitBrief]) -> str:
+    if review_status == "approved":
+        if any(unit.kind != "gloss" or not unit.clip_id for unit in units):
+            return "approved_with_fallback_or_missing_assets"
+        return "approved_ready_for_render"
+    return "awaiting_signer_review"
 
 
 def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]:

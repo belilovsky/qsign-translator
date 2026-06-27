@@ -394,6 +394,143 @@ def record_feedback(job_id: str, feedback_type: str, note: str | None = None) ->
     return str(row["id"])
 
 
+def list_review_sessions(job_id: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            if job_id:
+                try:
+                    cur.execute(
+                        """
+                        SELECT
+                            id,
+                            job_id,
+                            reviewer_role,
+                            reviewer_language,
+                            meaning_score,
+                            sign_choice_score,
+                            grammar_score,
+                            nonmanual_score,
+                            fingerspelling_score,
+                            timing_score,
+                            understandability_score,
+                            notes,
+                            blocking_issue,
+                            created_at
+                        FROM review_sessions
+                        WHERE job_id = %s
+                        ORDER BY created_at DESC
+                        LIMIT %s
+                        """,
+                        (job_id, limit),
+                    )
+                except Exception as exc:
+                    if _is_invalid_text_representation(exc):
+                        return []
+                    raise
+            else:
+                cur.execute(
+                    """
+                    SELECT
+                        id,
+                        job_id,
+                        reviewer_role,
+                        reviewer_language,
+                        meaning_score,
+                        sign_choice_score,
+                        grammar_score,
+                        nonmanual_score,
+                        fingerspelling_score,
+                        timing_score,
+                        understandability_score,
+                        notes,
+                        blocking_issue,
+                        created_at
+                    FROM review_sessions
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                    """,
+                    (limit,),
+                )
+            return [_stringify_id(row, extra_uuid_fields=("job_id",)) for row in cur.fetchall()]
+
+
+def create_review_session(
+    *,
+    job_id: str,
+    reviewer_role: str,
+    reviewer_language: str,
+    meaning_score: int | None = None,
+    sign_choice_score: int | None = None,
+    grammar_score: int | None = None,
+    nonmanual_score: int | None = None,
+    fingerspelling_score: int | None = None,
+    timing_score: int | None = None,
+    understandability_score: int | None = None,
+    notes: str | None = None,
+    blocking_issue: bool = False,
+) -> dict[str, Any] | None:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO review_sessions (
+                        job_id,
+                        reviewer_role,
+                        reviewer_language,
+                        meaning_score,
+                        sign_choice_score,
+                        grammar_score,
+                        nonmanual_score,
+                        fingerspelling_score,
+                        timing_score,
+                        understandability_score,
+                        notes,
+                        blocking_issue
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING
+                        id,
+                        job_id,
+                        reviewer_role,
+                        reviewer_language,
+                        meaning_score,
+                        sign_choice_score,
+                        grammar_score,
+                        nonmanual_score,
+                        fingerspelling_score,
+                        timing_score,
+                        understandability_score,
+                        notes,
+                        blocking_issue,
+                        created_at
+                    """,
+                    (
+                        job_id,
+                        reviewer_role,
+                        reviewer_language,
+                        meaning_score,
+                        sign_choice_score,
+                        grammar_score,
+                        nonmanual_score,
+                        fingerspelling_score,
+                        timing_score,
+                        understandability_score,
+                        notes,
+                        blocking_issue,
+                    ),
+                )
+            except Exception as exc:
+                if _is_invalid_text_representation(exc):
+                    return None
+                raise
+            row = cur.fetchone()
+        conn.commit()
+    if not row:
+        return None
+    return _stringify_id(row, extra_uuid_fields=("job_id",))
+
+
 def _stringify_id(row: dict[str, Any], extra_uuid_fields: tuple[str, ...] = ()) -> dict[str, Any]:
     result = dict(row)
     result["id"] = str(result["id"])

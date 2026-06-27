@@ -173,6 +173,46 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual(rows, [])
 
+    def test_create_review_session_writes_event(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            row = db.create_review_session(
+                job_id="job-1",
+                reviewer_role="native_signer",
+                reviewer_language="ru",
+                meaning_score=4,
+                understandability_score=5,
+                notes="Looks usable after one correction.",
+                blocking_issue=False,
+            )
+
+        self.assertEqual(row["id"], "job-1")
+        self.assertTrue(connection.committed)
+        self.assertIn("INSERT INTO review_sessions", cursor.calls[0][0])
+        self.assertEqual(cursor.calls[0][1][0], "job-1")
+        self.assertEqual(cursor.calls[0][1][1], "native_signer")
+
+    def test_list_review_sessions_filters_by_job(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            rows = db.list_review_sessions(job_id="job-1", limit=10)
+
+        self.assertEqual(rows[0]["job_id"], "job-1")
+        self.assertEqual(cursor.calls[0][1], ("job-1", 10))
+
+    def test_list_review_sessions_treats_invalid_uuid_as_empty(self) -> None:
+        cursor = InvalidUuidCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            rows = db.list_review_sessions(job_id="not-a-uuid", limit=10)
+
+        self.assertEqual(rows, [])
+
 
 if __name__ == "__main__":
     unittest.main()

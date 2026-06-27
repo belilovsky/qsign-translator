@@ -34,6 +34,7 @@ The project is intentionally honest about what exists today:
 - Saved plan-unit records for review and downstream rendering.
 - Feedback API for saved jobs.
 - Token-protected review API for operator workflows.
+- Persisted review-session API for signer, linguist, and operator validation.
 - Render-plan manifest for future clip or avatar assembly.
 - Review-video draft mp4 generation for saved jobs.
 - AI-video brief export for one saved phrase.
@@ -54,6 +55,8 @@ The project is intentionally honest about what exists today:
 - `GET /v1/jobs/{job_id}/ai-video-brief`
 - `POST /v1/ai-video-batch-brief`
 - `POST /v1/feedback`
+- `GET /v1/review/sessions`
+- `POST /v1/review/sessions`
 - `GET /health`
 - `GET /health/ready`
 
@@ -72,7 +75,7 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 52 automated tests green;
+- 58 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
@@ -83,6 +86,10 @@ Recent validation passed with:
 - OpenAPI generation is warning-free while `HEAD` monitor routes remain active.
 - invalid external job identifiers are handled as missing records instead of
   surfacing database tracebacks.
+- review sessions can now be persisted with scoring and notes, then optionally
+  apply a new `review_status` to the saved job.
+- render-plan and AI-video brief responses now expose pipeline blockers and the
+  next operational step instead of only raw asset counts.
 
 ## Readiness Rating
 
