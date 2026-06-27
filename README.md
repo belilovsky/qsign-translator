@@ -42,6 +42,8 @@ historical fallback and should be treated as read-only.
 
 - Source registry for datasets, models, licenses, and readiness.
 - Deterministic text-to-sign-plan prototype for Russian and Kazakh text.
+- Bundled runtime lexicon now merges a small reviewed seed with an archived
+  Slovo-derived Russian gloss list for broader draft coverage.
 - Dactyl fallback for unknown words.
 - Optional ASR adapter interface; no heavy weights are required for tests.
 - Persisted translation jobs and review/feedback API scaffolding.
@@ -210,6 +212,7 @@ The bundled check script stays dependency-light and covers:
 - Docker Compose ports are documented in [docs/infrastructure.md](docs/infrastructure.md)
 - Initial schema: `infra/db/migrations/001_initial.sql`
 - Seed helper: `scripts/seed_db.py`
+- Runtime lexicon rebuild: `python3 scripts/build_runtime_lexicon.py`
 
 ## Common Commands
 

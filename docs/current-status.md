@@ -28,6 +28,8 @@ The project is intentionally honest about what exists today:
 ## Implemented
 
 - Deterministic RU/KZ text-to-sign-plan prototype.
+- Runtime lexicon rebuilt from the archived Slovo gloss list plus reviewed seed
+  entries, which materially improves Russian draft coverage.
 - Phrase lookup, token lookup, and dactyl fallback.
 - Optional ASR adapter interface.
 - Persisted translation jobs when Postgres is configured.
