@@ -62,7 +62,7 @@ class ReviewVideoApiTests(unittest.TestCase):
             )
             with (
                 mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
-                mock.patch("qsign_translator.api.build_review_video", return_value=artifact),
+                mock.patch("qsign_translator.api.build_review_video", return_value=artifact) as build_video,
             ):
                 response = self.client.head("/v1/jobs/job-1/review-video")
 
@@ -71,6 +71,7 @@ class ReviewVideoApiTests(unittest.TestCase):
         self.assertEqual(response.headers["x-qsign-preview-kind"], "review_storyboard")
         self.assertEqual(response.headers["x-qsign-preview-units"], "1")
         self.assertEqual(response.content, b"")
+        build_video.assert_not_called()
 
     def test_review_video_returns_not_found_for_missing_job(self) -> None:
         with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):

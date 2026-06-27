@@ -83,10 +83,12 @@ def build_review_video(
             str(tmp_output),
         ]
         try:
-            subprocess.run(command, check=True, capture_output=True, text=True)
+            subprocess.run(command, check=True, capture_output=True, text=True, timeout=20)
         except subprocess.CalledProcessError as exc:
             stderr = (exc.stderr or "").strip()
             raise PreviewVideoUnavailable(f"ffmpeg failed: {stderr or exc}") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise PreviewVideoUnavailable("ffmpeg timed out while building preview video") from exc
 
         if not tmp_output.exists() or tmp_output.stat().st_size == 0:
             raise PreviewVideoUnavailable("preview video was not created")

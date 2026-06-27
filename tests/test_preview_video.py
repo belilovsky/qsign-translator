@@ -37,10 +37,11 @@ class PreviewVideoTests(unittest.TestCase):
             (asset_dir / "signing-avatar.png").write_bytes(b"fake-png")
             output_root = tmp_root / "out"
 
-            def fake_run(command, check, capture_output, text):  # noqa: ANN001
+            def fake_run(command, check, capture_output, text, timeout):  # noqa: ANN001
                 self.assertIn("ffmpeg", command[0])
                 self.assertIn("-vf", command)
                 self.assertIn("subtitles=", command[command.index("-vf") + 1])
+                self.assertEqual(timeout, 20)
                 Path(command[-1]).write_bytes(b"fake-mp4")
                 return mock.Mock(returncode=0)
 

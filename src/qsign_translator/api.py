@@ -300,6 +300,17 @@ def translation_job_review_video(job_id: str, request: Request) -> FileResponse 
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     if not job:
         raise HTTPException(status_code=404, detail="Translation job not found")
+    filename = f"qsign-review-{job_id}.mp4"
+    if request.method == "HEAD":
+        return Response(
+            status_code=200,
+            media_type="video/mp4",
+            headers=_review_video_headers(
+                filename=filename,
+                kind="review_storyboard",
+                unit_count=len(list(job.get("units") or [])),
+            ),
+        )
     try:
         artifact = build_review_video(
             job,
@@ -308,20 +319,32 @@ def translation_job_review_video(job_id: str, request: Request) -> FileResponse 
         )
     except PreviewVideoUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    filename = f"qsign-review-{job_id}.mp4"
-    headers = {
-        "content-disposition": f'inline; filename="{filename}"',
-        "x-qsign-preview-kind": artifact.kind,
-        "x-qsign-preview-duration": f"{artifact.duration_seconds:.3f}",
-        "x-qsign-preview-units": str(artifact.unit_count),
-    }
-    if request.method == "HEAD":
-        return Response(status_code=200, media_type="video/mp4", headers=headers)
     return FileResponse(
         artifact.path,
         media_type="video/mp4",
-        headers=headers,
+        headers=_review_video_headers(
+            filename=filename,
+            kind=artifact.kind,
+            unit_count=artifact.unit_count,
+            duration_seconds=artifact.duration_seconds,
+        ),
     )
+
+
+def _review_video_headers(
+    *,
+    filename: str,
+    kind: str,
+    unit_count: int,
+    duration_seconds: float | None = None,
+) -> dict[str, str]:
+    duration = duration_seconds if duration_seconds is not None else max(3.0, unit_count * 1.4)
+    return {
+        "content-disposition": f'inline; filename="{filename}"',
+        "x-qsign-preview-kind": kind,
+        "x-qsign-preview-duration": f"{duration:.3f}",
+        "x-qsign-preview-units": str(unit_count),
+    }
 
 
 @app.get("/v1/jobs/{job_id}/rendered-video", response_model=None)
