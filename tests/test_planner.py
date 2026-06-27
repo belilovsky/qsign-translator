@@ -63,6 +63,21 @@ class SignPlannerTests(unittest.TestCase):
         self.assertEqual([unit.kind for unit in plan.units], ["gloss", "gloss"])
         self.assertEqual([unit.gloss for unit in plan.units], ["АДРЕС/УЛИЦА", "РАБОТА"])
 
+    def test_common_service_forms_reuse_existing_glosses(self) -> None:
+        plan = self.planner.plan("Я не понимаю")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual([unit.gloss for unit in plan.units], ["ME", "НЕ", "ПОНИМАТЬ"])
+
+    def test_u_menya_phrase_and_pain_alias_reduce_noise(self) -> None:
+        plan = self.planner.plan("У меня болит голова")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual([unit.gloss for unit in plan.units], ["ME", "БОЛЕТЬ", "ГОЛОВА"])
+
+    def test_child_case_alias_and_nonsemantic_preposition_omit(self) -> None:
+        plan = self.planner.plan("Нужна школа для ребенка")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual([unit.gloss for unit in plan.units], ["NEED", "ШКОЛА", "РЕБЕНОК"])
+
     def test_plan_has_warning(self) -> None:
         data = self.planner.plan("Спасибо").to_dict()
         self.assertIn("native_signer_validation_required", data["warnings"])

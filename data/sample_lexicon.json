@@ -81,12 +81,28 @@
       "clip_id": null
     },
     {
+      "token": "для",
+      "gloss": "OMIT",
+      "language": "ru",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
       "token": "спасибо большое",
       "gloss": "THANK_YOU",
       "language": "ru",
       "source": "seed:manual_phrase",
       "confidence": 0.78,
       "clip_id": "rsl_thank_you"
+    },
+    {
+      "token": "у меня",
+      "gloss": "ME",
+      "language": "ru",
+      "source": "seed:manual_phrase",
+      "confidence": 0.58,
+      "clip_id": "rsl_me"
     },
     {
       "token": "10",
