@@ -37,13 +37,9 @@ def main() -> int:
     ]
     if missing:
         raise SystemExit(f"validate_sql: missing tables: {', '.join(missing)}")
-    missing_snippets = [
-        name for name, snippet in REQUIRED_SNIPPETS.items() if snippet not in sql
-    ]
+    missing_snippets = [name for name, snippet in REQUIRED_SNIPPETS.items() if snippet not in sql]
     if missing_snippets:
-        raise SystemExit(
-            f"validate_sql: missing snippets: {', '.join(missing_snippets)}"
-        )
+        raise SystemExit(f"validate_sql: missing snippets: {', '.join(missing_snippets)}")
     print("validate_sql: ok")
     return 0
 

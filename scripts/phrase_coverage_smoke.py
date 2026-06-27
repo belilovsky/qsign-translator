@@ -10,10 +10,7 @@ from qsign_translator.lexicon import load_default_lexicon
 
 
 FIXTURE_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "tests"
-    / "fixtures"
-    / "phrase_coverage_cases.json"
+    Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "phrase_coverage_cases.json"
 )
 
 
@@ -31,10 +28,7 @@ def main() -> int:
             and all(gloss in glosses for gloss in case["expected_glosses"])
         )
         marker = "ok" if ok else "FAIL"
-        print(
-            f"{marker:4} {case['text']}: "
-            f"fallbacks={plan.fallback_count} glosses={glosses}"
-        )
+        print(f"{marker:4} {case['text']}: fallbacks={plan.fallback_count} glosses={glosses}")
         if not ok:
             failed.append(case["text"])
 

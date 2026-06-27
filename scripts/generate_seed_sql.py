@@ -22,9 +22,7 @@ def main() -> int:
     source_registry = json.loads(
         (root / "data" / "source_registry.json").read_text(encoding="utf-8")
     )
-    lexicon = json.loads(
-        (root / "data" / "sample_lexicon.json").read_text(encoding="utf-8")
-    )
+    lexicon = json.loads((root / "data" / "sample_lexicon.json").read_text(encoding="utf-8"))
 
     print("BEGIN;")
     for source in source_registry["sources"]:

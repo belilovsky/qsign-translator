@@ -14,9 +14,7 @@ else:
     import_error = None
 
 
-@unittest.skipIf(
-    TestClient is None, f"API dependencies are not installed: {import_error!r}"
-)
+@unittest.skipIf(TestClient is None, f"API dependencies are not installed: {import_error!r}")
 class AIVideoBriefApiTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
@@ -45,9 +43,7 @@ class AIVideoBriefApiTests(unittest.TestCase):
                 },
             ],
         }
-        with mock.patch(
-            "qsign_translator.api.db.get_translation_job", return_value=job
-        ):
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=job):
             response = self.client.get("/v1/jobs/job-1/ai-video-brief")
 
         self.assertEqual(response.status_code, 200)
@@ -61,9 +57,7 @@ class AIVideoBriefApiTests(unittest.TestCase):
         self.assertEqual(len(data["units"]), 2)
 
     def test_ai_video_brief_returns_not_found(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.db.get_translation_job", return_value=None
-        ):
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
             response = self.client.get("/v1/jobs/missing/ai-video-brief")
         self.assertEqual(response.status_code, 404)
 
@@ -119,9 +113,7 @@ class AIVideoBriefApiTests(unittest.TestCase):
         self.assertEqual(len(data["batch_render"]["scenes"]), 2)
 
     def test_ai_video_batch_brief_returns_not_found_for_missing_job(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.db.get_translation_job", return_value=None
-        ):
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
             response = self.client.post(
                 "/v1/ai-video-batch-brief",
                 json={"job_ids": ["missing-job"]},

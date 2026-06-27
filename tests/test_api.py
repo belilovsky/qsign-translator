@@ -17,9 +17,7 @@ else:
     import_error = None
 
 
-@unittest.skipIf(
-    TestClient is None, f"API dependencies are not installed: {import_error!r}"
-)
+@unittest.skipIf(TestClient is None, f"API dependencies are not installed: {import_error!r}")
 class ApiTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
@@ -72,9 +70,7 @@ class ApiTests(unittest.TestCase):
         self.assertGreaterEqual(len(data["units"]), 1)
 
     def test_text_translation_returns_job_metadata_when_persisted(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.db.record_translation_job", return_value="job-1"
-        ):
+        with mock.patch("qsign_translator.api.db.record_translation_job", return_value="job-1"):
             response = self.client.post(
                 "/v1/translate/text",
                 json={"text": "Мне нужна скорая помощь"},
@@ -88,16 +84,12 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(data["metadata"]["output_kind"], "sign_plan_preview")
         self.assertEqual(data["metadata"]["output_status"], "not_rendered")
         self.assertGreater(data["metadata"]["fallback_count"], 0)
-        self.assertEqual(
-            data["trace"]["summary"]["review_gate"], "human_interpreter_required"
-        )
+        self.assertEqual(data["trace"]["summary"]["review_gate"], "human_interpreter_required")
         self.assertEqual(data["trace"]["stages"][-1]["id"], "output")
         self.assertIn("decision", data["units"][0])
 
     def test_translation_job_endpoint_returns_not_found(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.db.get_translation_job", return_value=None
-        ):
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
             response = self.client.get("/v1/jobs/00000000-0000-0000-0000-000000000000")
         self.assertEqual(response.status_code, 404)
 
@@ -117,9 +109,7 @@ class ApiTests(unittest.TestCase):
                 "qsign_translator.api.db.get_translation_job",
                 return_value={"id": "job-1"},
             ),
-            mock.patch(
-                "qsign_translator.api.db.record_feedback", return_value="feedback-1"
-            ),
+            mock.patch("qsign_translator.api.db.record_feedback", return_value="feedback-1"),
         ):
             response = self.client.post(
                 "/v1/feedback",
@@ -129,9 +119,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["feedback_id"], "feedback-1")
 
     def test_feedback_endpoint_returns_not_found_for_missing_job(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.db.get_translation_job", return_value=None
-        ):
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
             response = self.client.post(
                 "/v1/feedback",
                 json={"job_id": "missing", "feedback_type": "good"},
@@ -157,14 +145,10 @@ class ApiTests(unittest.TestCase):
 
     def test_review_jobs_endpoint_lists_jobs(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.list_translation_jobs",
-                return_value=[
-                    {"id": "job-1", "review_status": "pending_signer_review"}
-                ],
+                return_value=[{"id": "job-1", "review_status": "pending_signer_review"}],
             ),
         ):
             response = self.client.get(
@@ -181,9 +165,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 503)
 
     def test_review_jobs_endpoint_rejects_bad_token(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.settings", mock.Mock(review_token="secret")
-        ):
+        with mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")):
             response = self.client.get(
                 "/v1/review/jobs",
                 headers={"x-qsign-review-token": "wrong"},
@@ -192,9 +174,7 @@ class ApiTests(unittest.TestCase):
 
     def test_review_jobs_endpoint_rejects_bad_status(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.list_translation_jobs",
                 side_effect=ValueError("Unsupported review status"),
@@ -208,9 +188,7 @@ class ApiTests(unittest.TestCase):
 
     def test_review_job_endpoint_updates_status(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.update_review_status",
                 return_value={"id": "job-1", "review_status": "approved"},
@@ -225,9 +203,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["review_status"], "approved")
 
     def test_review_job_rendered_video_upload_requires_mp4(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.settings", mock.Mock(review_token="secret")
-        ):
+        with mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")):
             response = self.client.post(
                 "/v1/review/jobs/job-1/rendered-video",
                 content=b"bad",
@@ -241,9 +217,7 @@ class ApiTests(unittest.TestCase):
     def test_review_job_rendered_video_upload_attaches_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             with (
-                mock.patch(
-                    "qsign_translator.api.settings", mock.Mock(review_token="secret")
-                ),
+                mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
                 mock.patch("qsign_translator.api.UPLOADED_RENDER_ROOT", Path(tmp_dir)),
                 mock.patch(
                     "qsign_translator.api.db.get_translation_job",
@@ -274,14 +248,10 @@ class ApiTests(unittest.TestCase):
 
     def test_review_feedback_endpoint_lists_events(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.list_feedback_events",
-                return_value=[
-                    {"id": "feedback-1", "job_id": "job-1", "feedback_type": "good"}
-                ],
+                return_value=[{"id": "feedback-1", "job_id": "job-1", "feedback_type": "good"}],
             ),
         ):
             response = self.client.get(
@@ -293,9 +263,7 @@ class ApiTests(unittest.TestCase):
 
     def test_review_sessions_endpoint_lists_items(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.list_review_sessions",
                 return_value=[
@@ -317,9 +285,7 @@ class ApiTests(unittest.TestCase):
 
     def test_review_sessions_endpoint_creates_session_and_updates_status(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.get_translation_job",
                 return_value={"id": "job-1", "review_status": "pending_signer_review"},
@@ -357,12 +323,8 @@ class ApiTests(unittest.TestCase):
 
     def test_review_sessions_endpoint_returns_not_found_for_missing_job(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
-            mock.patch(
-                "qsign_translator.api.db.get_translation_job", return_value=None
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch("qsign_translator.api.db.get_translation_job", return_value=None),
         ):
             response = self.client.post(
                 "/v1/review/sessions",
@@ -377,14 +339,10 @@ class ApiTests(unittest.TestCase):
 
     def test_review_audit_endpoint_lists_events(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.list_audit_events",
-                return_value=[
-                    {"id": "audit-1", "job_id": "job-1", "event_type": "job_created"}
-                ],
+                return_value=[{"id": "audit-1", "job_id": "job-1", "event_type": "job_created"}],
             ),
         ):
             response = self.client.get(
@@ -397,9 +355,7 @@ class ApiTests(unittest.TestCase):
 
     def test_review_publish_status_endpoint_updates_state(self) -> None:
         with (
-            mock.patch(
-                "qsign_translator.api.settings", mock.Mock(review_token="secret")
-            ),
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
             mock.patch(
                 "qsign_translator.api.db.update_publish_status",
                 return_value={"id": "job-1", "publish_status": "publishable"},

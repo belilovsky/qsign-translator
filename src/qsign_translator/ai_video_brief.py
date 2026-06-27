@@ -39,13 +39,9 @@ def build_ai_video_brief(
     publish_gate = dict(render_plan.get("publish_gate") or {})
     resolved_segments = int(summary.get("resolved_segments") or 0)
     missing_segments = int(summary.get("missing_segments") or 0)
-    pipeline_status = str(
-        render_plan.get("pipeline_status") or "awaiting_signer_review"
-    )
+    pipeline_status = str(render_plan.get("pipeline_status") or "awaiting_signer_review")
     duration_seconds = max(3.0, len(units) * 1.4)
-    unit_briefs = [
-        _build_unit_brief(index, unit) for index, unit in enumerate(units, start=1)
-    ]
+    unit_briefs = [_build_unit_brief(index, unit) for index, unit in enumerate(units, start=1)]
     master_prompt = _build_master_prompt(
         language=language,
         review_status=review_status,
@@ -121,17 +117,13 @@ def build_ai_video_batch_brief(
     title: str | None = None,
 ) -> dict[str, object]:
     scene_briefs = [
-        build_ai_video_brief(job, render_plan)
-        for job, render_plan in jobs_with_render_plans
+        build_ai_video_brief(job, render_plan) for job, render_plan in jobs_with_render_plans
     ]
     if not scene_briefs:
         raise ValueError("At least one job is required for batch brief")
     batch_title = title or "QSign batch render"
     languages = _ordered_unique(
-        [
-            str(scene.get("summary", {}).get("language_route") or "unknown")
-            for scene in scene_briefs
-        ]
+        [str(scene.get("summary", {}).get("language_route") or "unknown") for scene in scene_briefs]
     )
     video_spec = default_video_spec(languages[0] if len(languages) == 1 else "mixed")
     batch_render = _build_batch_render_structure(scene_briefs, title=batch_title)
@@ -170,7 +162,9 @@ def _build_unit_brief(position: int, unit: dict[str, object]) -> VideoUnitBrief:
     elif kind == "dactyl":
         instruction = f"Finger-spell '{source_token}' clearly and slowly."
     else:
-        instruction = f"Show a cautious placeholder beat for '{source_token}' and keep subtitle visible."
+        instruction = (
+            f"Show a cautious placeholder beat for '{source_token}' and keep subtitle visible."
+        )
     return VideoUnitBrief(
         position=position,
         source_token=source_token,
@@ -559,12 +553,7 @@ def _ordered_unique(values: list[str]) -> list[str]:
 
 
 def _iso_now() -> str:
-    return (
-        datetime.now(timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _count_fallback_units(units: list[VideoUnitBrief]) -> int:

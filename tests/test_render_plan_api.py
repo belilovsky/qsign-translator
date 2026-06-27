@@ -16,9 +16,7 @@ else:
     import_error = None
 
 
-@unittest.skipIf(
-    TestClient is None, f"API dependencies are not installed: {import_error!r}"
-)
+@unittest.skipIf(TestClient is None, f"API dependencies are not installed: {import_error!r}")
 class RenderPlanApiTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
@@ -52,12 +50,8 @@ class RenderPlanApiTests(unittest.TestCase):
                 ],
             }
             with (
-                mock.patch(
-                    "qsign_translator.api.db.get_translation_job", return_value=job
-                ),
-                mock.patch(
-                    "qsign_translator.api.settings", mock.Mock(asset_root=tmp_dir)
-                ),
+                mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
+                mock.patch("qsign_translator.api.settings", mock.Mock(asset_root=tmp_dir)),
             ):
                 response = self.client.get("/v1/jobs/job-1/render-plan")
 
@@ -69,18 +63,14 @@ class RenderPlanApiTests(unittest.TestCase):
         self.assertFalse(data["adapter"]["publish_ready"])
         self.assertEqual(data["pipeline_status"], "approved_but_asset_incomplete")
         self.assertIn("missing_render_assets", data["publish_gate"]["blockers"])
-        self.assertEqual(
-            data["publish_gate"]["next_step"], "attach_or_generate_missing_assets"
-        )
+        self.assertEqual(data["publish_gate"]["next_step"], "attach_or_generate_missing_assets")
         self.assertEqual(data["summary"]["resolved_segments"], 1)
         self.assertEqual(data["summary"]["missing_segments"], 1)
         self.assertEqual(data["segments"][0]["asset_key"], "clips/rsl_hello.mp4")
         self.assertEqual(data["missing"][0]["reason"], "no_clip_id")
 
     def test_render_plan_returns_not_found_for_unknown_job(self) -> None:
-        with mock.patch(
-            "qsign_translator.api.db.get_translation_job", return_value=None
-        ):
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
             response = self.client.get("/v1/jobs/missing/render-plan")
         self.assertEqual(response.status_code, 404)
 
@@ -105,12 +95,8 @@ class RenderPlanApiTests(unittest.TestCase):
                 ],
             }
             with (
-                mock.patch(
-                    "qsign_translator.api.db.get_translation_job", return_value=job
-                ),
-                mock.patch(
-                    "qsign_translator.api.settings", mock.Mock(asset_root=tmp_dir)
-                ),
+                mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
+                mock.patch("qsign_translator.api.settings", mock.Mock(asset_root=tmp_dir)),
             ):
                 response = self.client.get("/v1/jobs/job-1/render-plan")
 

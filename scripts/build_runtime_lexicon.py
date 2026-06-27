@@ -28,9 +28,7 @@ def load_clip_ids(path: Path) -> dict[str, str]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def build_slovo_entries(
-    gloss_path: Path, clip_ids_path: Path
-) -> list[dict[str, object]]:
+def build_slovo_entries(gloss_path: Path, clip_ids_path: Path) -> list[dict[str, object]]:
     clip_ids = load_clip_ids(clip_ids_path)
     entries: list[dict[str, object]] = []
     seen_tokens: set[str] = set()

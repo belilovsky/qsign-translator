@@ -116,9 +116,7 @@ class DatabaseTests(unittest.TestCase):
         connection = FakeConnection(cursor)
 
         with mock.patch("qsign_translator.db.connect", return_value=connection):
-            rows = db.list_translation_jobs(
-                review_status="pending_signer_review", limit=10
-            )
+            rows = db.list_translation_jobs(review_status="pending_signer_review", limit=10)
 
         self.assertEqual(rows[0]["id"], "job-1")
         self.assertEqual(cursor.calls[0][1], ("pending_signer_review", 10))

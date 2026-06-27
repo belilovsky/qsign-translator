@@ -82,9 +82,7 @@ class SignPlan:
     @property
     def fallback_count(self) -> int:
         return sum(
-            1
-            for unit in self.units
-            if unit.kind != "gloss" or unit.source.startswith("fallback")
+            1 for unit in self.units if unit.kind != "gloss" or unit.source.startswith("fallback")
         )
 
     @property
@@ -328,9 +326,7 @@ class SignPlanner:
     def _match_longest(self, tokens: list[str], index: int, language: str):
         max_len = min(4, len(tokens) - index)
         for size in range(max_len, 1, -1):
-            phrase = " ".join(
-                normalize_for_lookup(token) for token in tokens[index : index + size]
-            )
+            phrase = " ".join(normalize_for_lookup(token) for token in tokens[index : index + size])
             entry = self.lexicon.lookup(phrase, language)
             if entry:
                 return " ".join(tokens[index : index + size]), entry, size

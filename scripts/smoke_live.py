@@ -52,9 +52,7 @@ def _record(results: list[SmokeResult], name: str, ok: bool, detail: str) -> Non
     results.append(SmokeResult(name=name, ok=ok, detail=detail))
 
 
-def run_smoke(
-    base_url: str, review_token: str | None, timeout: int
-) -> list[SmokeResult]:
+def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[SmokeResult]:
     results: list[SmokeResult] = []
 
     try:
@@ -189,9 +187,7 @@ def run_smoke(
         _request(base_url, "/v1/review/jobs", timeout=timeout)
         _record(results, "review_without_token", False, "unexpected 200")
     except HTTPError as exc:
-        _record(
-            results, "review_without_token", exc.code in {403, 503}, f"HTTP {exc.code}"
-        )
+        _record(results, "review_without_token", exc.code in {403, 503}, f"HTTP {exc.code}")
     except (URLError, TimeoutError) as exc:
         _record(results, "review_without_token", False, str(exc))
 
@@ -276,9 +272,7 @@ def run_smoke(
             _record(results, f"invalid_id:{path}", False, str(exc))
 
     try:
-        _request(
-            base_url, "/v1/jobs/not-a-uuid/review-video", method="HEAD", timeout=timeout
-        )
+        _request(base_url, "/v1/jobs/not-a-uuid/review-video", method="HEAD", timeout=timeout)
         _record(results, "invalid_id:review-video", False, "unexpected 200")
     except HTTPError as exc:
         _record(results, "invalid_id:review-video", exc.code == 404, f"HTTP {exc.code}")
@@ -289,20 +283,14 @@ def run_smoke(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Smoke-test a deployed QSign instance."
-    )
-    parser.add_argument(
-        "--base-url", default="https://qsign.qdev.run", help="Public base URL"
-    )
+    parser = argparse.ArgumentParser(description="Smoke-test a deployed QSign instance.")
+    parser.add_argument("--base-url", default="https://qsign.qdev.run", help="Public base URL")
     parser.add_argument(
         "--review-token",
         default=None,
         help="Optional review token for protected queue smoke",
     )
-    parser.add_argument(
-        "--timeout", type=int, default=20, help="Request timeout in seconds"
-    )
+    parser.add_argument("--timeout", type=int, default=20, help="Request timeout in seconds")
     args = parser.parse_args()
 
     results = run_smoke(args.base_url, args.review_token, args.timeout)
