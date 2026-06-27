@@ -4,12 +4,11 @@
 [![CI](https://github.com/belilovsky/qsign-translator/actions/workflows/ci.yml/badge.svg)](https://github.com/belilovsky/qsign-translator/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+Прототип планировщика жестового языка (РК/РФ) — создание черновиков
+жестовой записи, ревью-воркфлоу и подготовка к видео-рендеру.
 
-Open RU/KZ sign-planning prototype for transparent sign-language draft output,
-review workflows, and future video-generation handoff.
-
-This repository stays intentionally narrow. It focuses on the product core and
-keeps heavy ASR and signer-avatar generation behind explicit adapters:
+Репозиторий намеренно узкий: ядро продукта, ASR и генерация аватаров — за
+адаптерами:
 
 ```text
 audio / video / text
