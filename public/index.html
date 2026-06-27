@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260627e" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260628a" />
   </head>
   <body>
     <div class="app-shell">
@@ -184,6 +184,10 @@
               </div>
             </div>
             <div class="subtitle-box" id="subtitleBox">Черновик появится после генерации.</div>
+            <div class="trust-card neutral" id="trustCard" aria-live="polite">
+              <strong id="trustTitle">Пока нет черновика</strong>
+              <span id="trustText">Введите короткую фразу. Система покажет, что найдено в словарях, а что нужно проверить человеком.</span>
+            </div>
             <div class="transcript-card" aria-labelledby="transcriptTitle">
               <div class="transcript-head">
                 <div>
@@ -238,7 +242,7 @@
                 <span>выпуск: нет</span>
               </div>
             </div>
-            <div class="feedback-card export-card" aria-label="Экспорт для AI-видео" aria-live="polite">
+            <div class="feedback-card export-card operator-detail" aria-label="Экспорт для AI-видео" aria-live="polite">
               <div class="export-card-head">
                 <div>
                   <strong>Экспорт для AI-видео</strong>
@@ -318,6 +322,12 @@
           </div>
 
           <div class="review-status-banner" id="reviewStatusBanner">Введите токен и обновите очередь ревью.</div>
+          <div class="review-guide" aria-label="Порядок операторской проверки">
+            <span>1. Откройте запись</span>
+            <span>2. Проверьте смысл</span>
+            <span>3. Отметьте понятность</span>
+            <span>4. Сохраните решение</span>
+          </div>
           <div class="review-summary" id="reviewSummary"></div>
 
           <div class="review-grid">
@@ -473,6 +483,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260627f" defer></script>
+    <script src="/static/app.js?v=20260628a" defer></script>
   </body>
 </html>
