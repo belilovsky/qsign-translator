@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-06-27
+Last updated: 2026-06-28
 
 ## Scope
 
@@ -11,7 +11,7 @@ Repository source of truth:
 - archived fallback copy:
   `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator-archive`
 
-QSign Translator is currently a transparent RU/KZ sign-planning prototype. It
+QSign Translator is currently a transparent RU/KZ/EN sign-planning prototype. It
 accepts short text, optionally accepts audio for ASR when the dependency is
 installed, produces a reviewable sign plan, and exposes a public-safe API
 contract for later video generation.
@@ -27,12 +27,15 @@ The project is intentionally honest about what exists today:
 
 ## Implemented
 
-- Deterministic RU/KZ text-to-sign-plan prototype.
+- Deterministic RU/KZ/EN text-to-sign-plan prototype.
+- Explicit frontend and API language contract for `ru`, `kk`, and `en`; the UI
+  selection is sent to the planner instead of being a visual-only toggle.
 - Runtime lexicon rebuilt from the archived Slovo gloss list plus reviewed seed
   entries, which materially improves Russian draft coverage.
 - Curated overrides now live in `data/curated_overrides.json`, so reviewed
   manual phrases and aliases are maintained separately from the imported RU
-  corpus.
+  corpus. The same file now holds baseline KRSL and EN/ASL-oriented seed entries
+  for short public-service phrases.
 - Phrase lookup, token lookup, and dactyl fallback.
 - Optional ASR adapter interface.
 - Persisted translation jobs when Postgres is configured.
@@ -149,7 +152,7 @@ sign-language production stack.
   renderers; unresolved jobs now deliberately downgrade to review-only packages.
 - No production clip library is bundled in the repository.
 - No native-signer validation has happened yet.
-- ASR quality on real RU/KZ production audio is not benchmarked here.
+- ASR quality on real RU/KZ/EN production audio is not benchmarked here.
 - High-risk domains still require human interpreter fallback.
 - Batch render currently produces a strict handoff contract, not a render queue
   or worker-backed final video job.

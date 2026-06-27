@@ -12,6 +12,15 @@ class SignPlannerTests(unittest.TestCase):
     def test_detects_kazakh(self) -> None:
         self.assertEqual(detect_language("Сәлеметсіз бе, көмек керек"), "kk")
 
+    def test_detects_english(self) -> None:
+        self.assertEqual(detect_language("I need help"), "en")
+
+    def test_language_hint_overrides_auto_detection(self) -> None:
+        plan = self.planner.plan("Сәлем көмек керек", language_hint="kk")
+        self.assertEqual(plan.language, "kk")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual([unit.gloss for unit in plan.units], ["HELLO", "HELP", "NEED"])
+
     def test_russian_known_and_dactyl_fallback(self) -> None:
         plan = self.planner.plan("Привет Александр")
         self.assertEqual(plan.language, "ru")
@@ -47,6 +56,18 @@ class SignPlannerTests(unittest.TestCase):
         self.assertIn("QUESTION_NMM", glosses)
         self.assertIn("HELP", glosses)
         self.assertIn("NEED", glosses)
+
+    def test_english_known_words(self) -> None:
+        plan = self.planner.plan("I need help")
+        self.assertEqual(plan.language, "en")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual([unit.gloss for unit in plan.units], ["ME", "NEED", "HELP"])
+
+    def test_english_phrase_lookup(self) -> None:
+        plan = self.planner.plan("Thank you")
+        self.assertEqual(plan.language, "en")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual([unit.gloss for unit in plan.units], ["THANK_YOU"])
 
     def test_russian_alias_forms_reuse_reviewed_entries(self) -> None:
         plan = self.planner.plan("Мне нужно помочь")

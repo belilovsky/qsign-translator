@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="QSign Translator: RU/KZ speech and text to transparent sign-language plan."
+      content="QSign Translator: RU/KZ/EN speech and text to transparent sign-language plan."
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260628b" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260628c" />
   </head>
   <body>
     <div class="app-shell">
@@ -28,7 +28,7 @@
           </span>
         </a>
         <nav class="topnav" aria-label="Основная навигация">
-          <span>Русский и казахский</span>
+          <span>RU / KZ / EN</span>
           <span>Черновик жестового перевода</span>
           <span class="version">Beta</span>
         </nav>
@@ -40,6 +40,7 @@
           <div class="segmented" role="group" aria-label="Язык входного текста">
             <button class="active" type="button" data-language="ru" aria-pressed="true">RU</button>
             <button type="button" data-language="kk" aria-pressed="false">KZ</button>
+            <button type="button" data-language="en" aria-pressed="false">EN</button>
           </div>
           <button class="icon-button" id="settingsButton" type="button" aria-label="Источники и статус">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -79,7 +80,7 @@
               <span>Введите короткую фразу</span>
               <span id="charCount">0 / 5000</span>
             </label>
-            <textarea id="inputText" maxlength="5000" placeholder="Введите короткий русский текст"></textarea>
+            <textarea id="inputText" maxlength="5000" placeholder="Введите короткий русский текст" lang="ru"></textarea>
             <p class="hint" id="inputHint">Короткие фразы легче проверить и показать по шагам.</p>
 
             <div class="upload-box" id="uploadBox" role="button" tabindex="0" aria-label="Загрузка аудио">
@@ -483,6 +484,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260628b" defer></script>
+    <script src="/static/app.js?v=20260628c" defer></script>
   </body>
 </html>

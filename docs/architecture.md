@@ -9,12 +9,12 @@ Input adapters
   - video with speech
 
 ASR adapters
-  - faster-whisper for general RU/KZ
+  - faster-whisper for general RU/KZ/EN
   - Kazakh-specialized model after benchmark
   - Vosk/NeMo only when streaming constraints require it
 
 Language and normalization
-  - route RU/KZ/mixed
+  - route RU/KZ/EN/mixed
   - simplify text
   - preserve named entities
 

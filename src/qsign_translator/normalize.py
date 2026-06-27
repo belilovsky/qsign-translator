@@ -23,6 +23,37 @@ RU_ALIAS_MAP = {
     "помоги": "помощь",
     "помогите": "помощь",
 }
+EN_ALIAS_MAP = {
+    "i": "me",
+    "i'm": "me",
+    "im": "me",
+    "my": "me",
+    "mine": "me",
+    "you": "you",
+    "your": "you",
+    "thanks": "thank",
+    "please": "please",
+    "needed": "need",
+    "needs": "need",
+    "helping": "help",
+    "helped": "help",
+    "hurts": "pain",
+    "hurt": "pain",
+    "painful": "pain",
+    "doctor": "doctor",
+    "physician": "doctor",
+    "hospital": "hospital",
+    "restroom": "toilet",
+    "bathroom": "toilet",
+    "lavatory": "toilet",
+    "kid": "child",
+    "children": "child",
+    "kids": "child",
+    "working": "work",
+    "worked": "work",
+    "tomorrow": "tomorrow",
+    "today": "today",
+}
 
 
 def tokenize(text: str) -> list[str]:
@@ -33,6 +64,8 @@ def normalize_for_lookup(token: str) -> str:
     """Small deterministic normalizer before real morphology is introduced."""
 
     token = token.lower().replace("ё", "е")
+    if token in EN_ALIAS_MAP:
+        return EN_ALIAS_MAP[token]
     if token in RU_ALIAS_MAP:
         return RU_ALIAS_MAP[token]
     ru_suffixes = (

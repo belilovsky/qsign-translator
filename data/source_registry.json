@@ -55,6 +55,24 @@
       "license_note": "Apache 2.0."
     },
     {
+      "id": "asl_lex",
+      "name": "ASL-LEX",
+      "url": "https://asl-lex.org/",
+      "task": "asl_lexical_database",
+      "languages": ["en", "asl"],
+      "status": "needs_license_check",
+      "license_note": "Academic lexical database; use as metadata/research candidate only until terms are reviewed."
+    },
+    {
+      "id": "openasl",
+      "name": "OpenASL",
+      "url": "https://github.com/chevalierNoir/OpenASL",
+      "task": "asl_dataset",
+      "languages": ["en", "asl"],
+      "status": "needs_license_check",
+      "license_note": "Research dataset candidate for ASL translation experiments; exact reuse terms require review."
+    },
+    {
       "id": "krsl20",
       "name": "KRSL20",
       "url": "https://krslproject.github.io/krsl20/",
@@ -74,4 +92,3 @@
     }
   ]
 }
-

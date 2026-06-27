@@ -90,6 +90,34 @@
       "expected_fallback_count": 1,
       "require_exact_glosses": false,
       "expected_glosses": ["ВЫ", "NAME"]
+    },
+    {
+      "text": "Сәлем көмек керек",
+      "expected_language": "kk",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["HELLO", "HELP", "NEED"]
+    },
+    {
+      "text": "I need help",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["ME", "NEED", "HELP"]
+    },
+    {
+      "text": "Where is the toilet",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": false,
+      "expected_glosses": ["WHERE", "TOILET"]
+    },
+    {
+      "text": "Thank you",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["THANK_YOU"]
     }
   ]
 }

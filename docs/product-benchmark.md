@@ -94,7 +94,7 @@ For QSign, this means the product should stay transparent:
 | Embeddable widget | Missing | Website/plugin mode | P2 |
 | Learning mode | Missing | Dictionary/sign-by-sign learning | P2 |
 | Speed control | Static | Adjustable 0.5x/0.75x/1x | P2 |
-| RU/KZ code-switching | Planned | Explicit route + transcript confidence | P2 |
+| RU/KZ/EN code-switching | Planned | Explicit route + transcript confidence | P2 |
 | Offline/low bandwidth | Missing | Cache/reuse generated clips | P3 |
 
 ## Product Principles For QSign
@@ -122,4 +122,3 @@ For QSign, this means the product should stay transparent:
 - Arm overview of sign-language translation systems: https://developer.arm.com/community/arm-community-blogs/b/ai-blog/posts/sign-language-translation-using-machine-learning
 - Wired on Silence Speaks: https://www.wired.com/story/silence-speaks-deaf-ai-signing/
 - Sorenson app overview for Deaf users: https://sorenson.com/blog/vrs/the-best-apps-for-deaf-people-in-2025/
-

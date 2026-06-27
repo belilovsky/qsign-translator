@@ -69,6 +69,34 @@ class ApiTests(unittest.TestCase):
         self.assertIn("persistence_error", data["metadata"])
         self.assertGreaterEqual(len(data["units"]), 1)
 
+    def test_text_translation_accepts_forced_language(self) -> None:
+        with mock.patch(
+            "qsign_translator.api.db.record_translation_job",
+            side_effect=RuntimeError("database unavailable"),
+        ):
+            response = self.client.post(
+                "/v1/translate/text",
+                json={"text": "Сәлем көмек керек", "language": "kk"},
+            )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["language"], "kk")
+        self.assertEqual(data["coverage"]["fallback"], 0)
+
+    def test_text_translation_supports_english_route(self) -> None:
+        with mock.patch(
+            "qsign_translator.api.db.record_translation_job",
+            side_effect=RuntimeError("database unavailable"),
+        ):
+            response = self.client.post(
+                "/v1/translate/text",
+                json={"text": "I need help", "language": "en"},
+            )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["language"], "en")
+        self.assertEqual([unit["gloss"] for unit in data["units"]], ["ME", "NEED", "HELP"])
+
     def test_text_translation_returns_job_metadata_when_persisted(self) -> None:
         with mock.patch("qsign_translator.api.db.record_translation_job", return_value="job-1"):
             response = self.client.post(

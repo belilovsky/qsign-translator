@@ -37,7 +37,7 @@ belong to maintainers rather than code cleanup.
 Do not describe the project as a finished sign-language translator yet.
 Public-safe wording is:
 
-- transparent RU/KZ sign-planning prototype
+- transparent RU/KZ/EN sign-planning prototype
 - reviewable draft output
 - structured handoff for future video generation
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .dactyl import spell_token
-from .language import detect_language
+from .language import detect_language, normalize_language_hint
 from .lexicon import Lexicon
 from .normalize import normalize_for_lookup, tokenize
 from .risk import detect_risk_domains
@@ -252,8 +252,8 @@ class SignPlanner:
     def __init__(self, lexicon: Lexicon) -> None:
         self.lexicon = lexicon
 
-    def plan(self, text: str) -> SignPlan:
-        language = detect_language(text)
+    def plan(self, text: str, language_hint: str | None = None) -> SignPlan:
+        language = normalize_language_hint(language_hint) or detect_language(text)
         units: list[SignUnit] = []
         tokens = tokenize(text)
         index = 0

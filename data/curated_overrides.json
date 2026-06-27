@@ -9,6 +9,326 @@
       "clip_id": null
     },
     {
+      "token": "a",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "an",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "and",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "am",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "are",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "address",
+      "gloss": "ADDRESS",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_address"
+    },
+    {
+      "token": "child",
+      "gloss": "CHILD",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_child"
+    },
+    {
+      "token": "doctor",
+      "gloss": "DOCTOR",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_doctor"
+    },
+    {
+      "token": "emergency",
+      "gloss": "EMERGENCY",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_emergency"
+    },
+    {
+      "token": "good",
+      "gloss": "GOOD",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.62,
+      "clip_id": "asl_good"
+    },
+    {
+      "token": "hello",
+      "gloss": "HELLO",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.72,
+      "clip_id": "asl_hello"
+    },
+    {
+      "token": "help",
+      "gloss": "HELP",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.68,
+      "clip_id": "asl_help"
+    },
+    {
+      "token": "hi",
+      "gloss": "HELLO",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.68,
+      "clip_id": "asl_hello"
+    },
+    {
+      "token": "hospital",
+      "gloss": "HOSPITAL",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_hospital"
+    },
+    {
+      "token": "in",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "is",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "me",
+      "gloss": "ME",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.62,
+      "clip_id": "asl_me"
+    },
+    {
+      "token": "my name",
+      "gloss": "ME NAME",
+      "language": "en",
+      "source": "seed:manual_phrase",
+      "confidence": 0.58,
+      "clip_id": null
+    },
+    {
+      "token": "name",
+      "gloss": "NAME",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_name"
+    },
+    {
+      "token": "need",
+      "gloss": "NEED",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.66,
+      "clip_id": "asl_need"
+    },
+    {
+      "token": "no",
+      "gloss": "NO",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.62,
+      "clip_id": "asl_no"
+    },
+    {
+      "token": "of",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "on",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "pain",
+      "gloss": "PAIN",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_pain"
+    },
+    {
+      "token": "please",
+      "gloss": "PLEASE",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.6,
+      "clip_id": "asl_please"
+    },
+    {
+      "token": "police",
+      "gloss": "POLICE",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_police"
+    },
+    {
+      "token": "school",
+      "gloss": "SCHOOL",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_school"
+    },
+    {
+      "token": "thank",
+      "gloss": "THANK_YOU",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.68,
+      "clip_id": "asl_thank_you"
+    },
+    {
+      "token": "thank you",
+      "gloss": "THANK_YOU",
+      "language": "en",
+      "source": "seed:manual_phrase",
+      "confidence": 0.72,
+      "clip_id": "asl_thank_you"
+    },
+    {
+      "token": "the",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "to",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "today",
+      "gloss": "TODAY",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_today"
+    },
+    {
+      "token": "toilet",
+      "gloss": "TOILET",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_toilet"
+    },
+    {
+      "token": "tomorrow",
+      "gloss": "TOMORROW",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_tomorrow"
+    },
+    {
+      "token": "water",
+      "gloss": "WATER",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_water"
+    },
+    {
+      "token": "where",
+      "gloss": "WHERE",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.62,
+      "clip_id": "asl_where"
+    },
+    {
+      "token": "with",
+      "gloss": "OMIT",
+      "language": "en",
+      "source": "seed:manual_nonsemantic",
+      "confidence": 0.3,
+      "clip_id": null
+    },
+    {
+      "token": "work",
+      "gloss": "WORK",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.58,
+      "clip_id": "asl_work"
+    },
+    {
+      "token": "yes",
+      "gloss": "YES",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.62,
+      "clip_id": "asl_yes"
+    },
+    {
+      "token": "you",
+      "gloss": "YOU",
+      "language": "en",
+      "source": "seed:manual_asl_candidate",
+      "confidence": 0.62,
+      "clip_id": "asl_you"
+    },
+    {
       "token": "керек",
       "gloss": "NEED",
       "language": "kk",
@@ -33,6 +353,94 @@
       "clip_id": "krsl_me"
     },
     {
+      "token": "аурухана",
+      "gloss": "HOSPITAL",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_hospital"
+    },
+    {
+      "token": "аты",
+      "gloss": "NAME",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_name"
+    },
+    {
+      "token": "бүгін",
+      "gloss": "TODAY",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_today"
+    },
+    {
+      "token": "дәретхана",
+      "gloss": "TOILET",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_toilet"
+    },
+    {
+      "token": "дәрігер",
+      "gloss": "DOCTOR",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_doctor"
+    },
+    {
+      "token": "ертең",
+      "gloss": "TOMORROW",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_tomorrow"
+    },
+    {
+      "token": "жоқ",
+      "gloss": "NO",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.58,
+      "clip_id": "krsl_no"
+    },
+    {
+      "token": "иә",
+      "gloss": "YES",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.58,
+      "clip_id": "krsl_yes"
+    },
+    {
+      "token": "қайда",
+      "gloss": "WHERE",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.58,
+      "clip_id": "krsl_where"
+    },
+    {
+      "token": "мектеп",
+      "gloss": "SCHOOL",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_school"
+    },
+    {
+      "token": "мен",
+      "gloss": "ME",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_me"
+    },
+    {
       "token": "рахмет",
       "gloss": "THANK_YOU",
       "language": "kk",
@@ -41,12 +449,36 @@
       "clip_id": "krsl_thank_you"
     },
     {
+      "token": "сәлем",
+      "gloss": "HELLO",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.68,
+      "clip_id": "krsl_hello"
+    },
+    {
       "token": "сәлеметсіз",
       "gloss": "HELLO_FORMAL",
       "language": "kk",
       "source": "seed:manual",
       "confidence": 0.62,
       "clip_id": "krsl_hello_formal"
+    },
+    {
+      "token": "су",
+      "gloss": "WATER",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_water"
+    },
+    {
+      "token": "сіз",
+      "gloss": "YOU",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.55,
+      "clip_id": "krsl_you"
     },
     {
       "token": "адрес",

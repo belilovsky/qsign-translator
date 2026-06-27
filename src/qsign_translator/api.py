@@ -4,6 +4,7 @@ import os
 import secrets
 import tempfile
 from pathlib import Path
+from typing import Literal
 from uuid import uuid4
 
 from . import __version__
@@ -48,6 +49,7 @@ SUPPORTED_RENDERED_VIDEO_TYPES = {"video/mp4": ".mp4"}
 
 class TextTranslateRequest(BaseModel):
     text: str = Field(min_length=1, max_length=5000)
+    language: Literal["ru", "kk", "en"] | None = None
 
 
 class FeedbackRequest(BaseModel):
@@ -89,7 +91,7 @@ class BatchAIVideoBriefRequest(BaseModel):
 app = FastAPI(
     title="QSign Translator API",
     version=__version__,
-    description="Prototype RU/KZ text-to-sign-plan API with transparent draft output. Not a professional interpretation.",
+    description="Prototype RU/KZ/EN text-to-sign-plan API with transparent draft output. Not a professional interpretation.",
 )
 
 PUBLIC_ROOT = Path(__file__).resolve().parents[2] / "public"
@@ -169,11 +171,11 @@ def ready(request: Request, response: Response) -> dict[str, object] | Response:
 
 @app.post("/v1/translate/text")
 def translate_text(request: TextTranslateRequest) -> dict[str, object]:
-    return _plan_response(request.text, input_type="text")
+    return _plan_response(request.text, input_type="text", language_hint=request.language)
 
 
-def _plan_response(text: str, input_type: str) -> dict[str, object]:
-    plan = planner.plan(text)
+def _plan_response(text: str, input_type: str, language_hint: str | None = None) -> dict[str, object]:
+    plan = planner.plan(text, language_hint=language_hint)
     response = plan.to_dict()
     metadata = dict(response.get("metadata") or {})
     try:

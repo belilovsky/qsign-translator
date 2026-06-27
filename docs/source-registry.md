@@ -1,6 +1,6 @@
 # Source Registry
 
-This registry tracks candidate components for a free RU/KZ sign-language
+This registry tracks candidate components for a free RU/KZ/EN sign-language
 translator. Statuses are conservative:
 
 - `verified`: source exists and was checked directly.
@@ -21,6 +21,8 @@ translator. Statuses are conservative:
 | FluentSigners-50 | KRSL continuous dataset | KRSL | verified, needs-license-check | Academic/research terms | Research/reference | Useful for signer-independent continuous recognition. |
 | KRSL-OnlineSchool | Large KRSL corpus | KRSL | verified, needs-code-check | Dataset availability and license need author check | Strategic data source | Paper reports 890h cleaned video, 325h gloss annotations. |
 | sign-language-translator | Framework | Multi | verified | Apache 2.0 | Good architecture dependency | Extensible text/sign framework; no built-in RSL/KRSL production model. |
+| ASL-LEX | ASL lexical database | EN/ASL | needs-license-check | Academic lexical database; production terms require review | Research/metadata candidate for English route | Useful for vocabulary validation, not a video model. |
+| OpenASL | ASL dataset | EN/ASL | needs-license-check | Research dataset; exact reuse terms require review | Research candidate for English route | Potential benchmark/input for future ASL experiments. |
 | faster-whisper | ASR | RU/KZ | verified | MIT | Strong MVP ASR | Self-hosted, can be paired with VAD. |
 | ISSAI / Kazakh ASR | ASR | KZ | needs-code-check | Check exact model licenses | Candidate KZ ASR | Test against real Kazakh/code-switching audio. |
 | SignLLM | Sign production | Multi | research-only | Check repo/model license | R&D only for now | Promising text/prompt to pose generation, not RU/KZ-ready. |

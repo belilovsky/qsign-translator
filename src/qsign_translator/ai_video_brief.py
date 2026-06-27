@@ -196,6 +196,11 @@ def _avatar_spec(language: str) -> str:
             "Single adult signer with calm professional presence, Central Asian appearance, "
             "neutral dark clothing, hair tied back, high hand contrast, clear front lighting."
         )
+    if language == "en":
+        return (
+            "Single adult signer with calm professional presence, ASL-aware neutral signing style, "
+            "neutral dark clothing, hair tied back, high hand contrast, clear front lighting."
+        )
     return (
         "Single adult signer with calm professional presence, neutral dark clothing, "
         "hair tied back, high hand contrast, clear front lighting."
@@ -207,6 +212,8 @@ def _sign_language_label(language: str) -> str:
         return "Kazakh sign-language draft aligned to KRSL conventions when possible"
     if language == "ru":
         return "Russian sign-language draft aligned to RSL conventions when possible"
+    if language == "en":
+        return "English sign-language draft aligned to ASL conventions when possible"
     if language == "mixed":
         return "mixed RU/KZ sign-language draft with explicit fallback handling"
     return "sign-language draft with explicit fallback handling"

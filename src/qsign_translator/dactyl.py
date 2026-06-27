@@ -45,6 +45,35 @@ KAZAKH_TO_BASE = {
     "і": ["и"],
 }
 
+ENGLISH_DACTYL = {
+    "a": "FS_A",
+    "b": "FS_B",
+    "c": "FS_C",
+    "d": "FS_D",
+    "e": "FS_E",
+    "f": "FS_F",
+    "g": "FS_G",
+    "h": "FS_H",
+    "i": "FS_I",
+    "j": "FS_J",
+    "k": "FS_K",
+    "l": "FS_L",
+    "m": "FS_M",
+    "n": "FS_N",
+    "o": "FS_O",
+    "p": "FS_P",
+    "q": "FS_Q",
+    "r": "FS_R",
+    "s": "FS_S",
+    "t": "FS_T",
+    "u": "FS_U",
+    "v": "FS_V",
+    "w": "FS_W",
+    "x": "FS_X",
+    "y": "FS_Y",
+    "z": "FS_Z",
+}
+
 
 def spell_token(token: str) -> list[str]:
     """Return a transparent dactyl fallback sequence for an unknown token."""
@@ -53,7 +82,7 @@ def spell_token(token: str) -> list[str]:
     for char in token.lower().replace("ё", "е"):
         chars = KAZAKH_TO_BASE.get(char, [char])
         for mapped in chars:
-            sign = RUSSIAN_DACTYL.get(mapped)
+            sign = RUSSIAN_DACTYL.get(mapped) or ENGLISH_DACTYL.get(mapped)
             if sign:
                 signs.append(sign)
     return signs

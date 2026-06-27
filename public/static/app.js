@@ -41,11 +41,12 @@ const sampleSources = [
   { name: "Slovo", task: "rsl_dataset_models", languages: ["ru", "rsl"], status: "needs_license_check" },
   { name: "Easy Sign", task: "rsl_isolated_recognition", languages: ["ru", "rsl"], status: "verified" },
   { name: "KRSL20", task: "krsl_dataset_nonmanual", languages: ["krsl"], status: "needs_license_check" },
+  { name: "ASL-LEX", task: "asl_lexical_database", languages: ["en", "asl"], status: "needs_license_check" },
 ];
 
 const steps = [
   { title: "Текст", description: "Берем введенную фразу или расшифровку аудио." },
-  { title: "Язык", description: "Определяем русский или казахский текст и готовим его к разбору." },
+  { title: "Язык", description: "Выбираем или определяем русский, казахский или английский маршрут." },
   { title: "Жесты", description: "Подбираем известные жесты и отмечаем спорные места." },
   { title: "Показ", description: "Собираем прозрачный черновик для проверки человеком." },
 ];
@@ -256,19 +257,23 @@ function syncClearButton() {
 }
 
 function setInputLanguage(language) {
-  state.inputLanguage = language === "kk" ? "kk" : "ru";
-  const isKazakh = state.inputLanguage === "kk";
+  state.inputLanguage = ["ru", "kk", "en"].includes(language) ? language : "ru";
+  const placeholders = {
+    ru: "Введите короткий русский текст",
+    kk: "Қысқа қазақша мәтінді енгізіңіз",
+    en: "Enter a short English phrase",
+  };
   inputText.lang = state.inputLanguage;
   resultTranscript.lang = state.inputLanguage;
-  inputText.placeholder = isKazakh ? "Қысқа қазақша мәтінді енгізіңіз" : "Введите короткий русский текст";
+  inputText.placeholder = placeholders[state.inputLanguage] || placeholders.ru;
   updateInputGuidance();
 }
 
 function analyzeInputText(text) {
   const normalized = String(text || "").trim();
   const tokens = normalized ? normalized.split(/\s+/).filter(Boolean) : [];
-  const officialPattern = /(законодательств|государственн|обязательств|договор|услуг|товар|календарн|оплата|требован|исполнени|юридическ)/i;
-  const questionPattern = /[?？]|^(как|где|что|когда|почему|зачем|кім|қайда|қалай)\b/i;
+  const officialPattern = /(законодательств|государственн|обязательств|договор|услуг|товар|календарн|оплата|требован|исполнени|юридическ|law|legal|contract|procurement|payment|service|goods|obligation|requirement)/i;
+  const questionPattern = /[?？]|^(как|где|что|когда|почему|зачем|кім|қайда|қалай|who|what|where|when|why|how)\b/i;
   return {
     text: normalized,
     charCount: normalized.length,
@@ -1219,7 +1224,7 @@ async function generatePlan() {
     const response = await fetch("/v1/translate/text", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, language: state.inputLanguage }),
     });
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const plan = await response.json();
@@ -1555,6 +1560,8 @@ function formatTask(task) {
     framework: "открытый код",
     krsl_dataset_nonmanual: "маркеры KZ",
     krsl_large_corpus: "корпус KZ",
+    asl_lexical_database: "лексика ASL",
+    asl_dataset: "корпус ASL",
   };
   return labels[task] || String(task || "").replaceAll("_", " ");
 }
