@@ -4,6 +4,7 @@ import os
 import secrets
 import tempfile
 from pathlib import Path
+from uuid import uuid4
 
 from . import __version__
 from . import db
@@ -31,6 +32,7 @@ except ImportError as exc:  # pragma: no cover - import guard for optional API e
 import json
 
 MAX_AUDIO_BYTES = 50 * 1024 * 1024
+MAX_RENDERED_VIDEO_BYTES = 250 * 1024 * 1024
 SUPPORTED_AUDIO_TYPES = {
     "audio/aac": ".aac",
     "audio/mp4": ".m4a",
@@ -41,6 +43,7 @@ SUPPORTED_AUDIO_TYPES = {
     "audio/x-m4a": ".m4a",
     "audio/x-wav": ".wav",
 }
+SUPPORTED_RENDERED_VIDEO_TYPES = {"video/mp4": ".mp4"}
 
 
 class TextTranslateRequest(BaseModel):
@@ -87,6 +90,7 @@ app = FastAPI(
 PUBLIC_ROOT = Path(__file__).resolve().parents[2] / "public"
 STATIC_ROOT = PUBLIC_ROOT / "static"
 GENERATED_PREVIEW_ROOT = Path(tempfile.gettempdir()) / "qsign-preview-videos"
+UPLOADED_RENDER_ROOT = Path(settings.generated_media_root) / "rendered-videos"
 
 if STATIC_ROOT.exists():
     app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
@@ -310,6 +314,30 @@ def translation_job_review_video(job_id: str, request: Request) -> FileResponse 
     )
 
 
+@app.get("/v1/jobs/{job_id}/rendered-video", response_model=None)
+@app.head("/v1/jobs/{job_id}/rendered-video", response_model=None, include_in_schema=False)
+def translation_job_rendered_video(job_id: str, request: Request) -> FileResponse | Response:
+    try:
+        job = db.get_translation_job(job_id)
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if not job:
+        raise HTTPException(status_code=404, detail="Translation job not found")
+    output_status = str(job.get("output_status") or "not_rendered")
+    output_uri = str(job.get("output_uri") or "")
+    path = uploaded_render_path(job_id)
+    if output_status != "ready" or not output_uri or not path.exists():
+        raise HTTPException(status_code=404, detail="Rendered video is not available")
+    filename = f"qsign-rendered-{job_id}.mp4"
+    headers = {
+        "content-disposition": f'inline; filename="{filename}"',
+        "x-qsign-render-kind": "uploaded_final",
+    }
+    if request.method == "HEAD":
+        return Response(status_code=200, media_type="video/mp4", headers=headers)
+    return FileResponse(path, media_type="video/mp4", headers=headers)
+
+
 @app.get("/v1/jobs/{job_id}/ai-video-brief")
 def translation_job_ai_video_brief(job_id: str) -> dict[str, object]:
     try:
@@ -434,12 +462,65 @@ def create_review_session(payload: ReviewSessionRequest, request: Request) -> di
     }
 
 
+@app.post("/v1/review/jobs/{job_id}/rendered-video")
+async def upload_rendered_video(job_id: str, request: Request) -> dict[str, object]:
+    require_review_access(request)
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type not in SUPPORTED_RENDERED_VIDEO_TYPES:
+        raise HTTPException(status_code=415, detail="Unsupported rendered video type")
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            declared_length = int(content_length)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid content length") from exc
+        if declared_length > MAX_RENDERED_VIDEO_BYTES:
+            raise HTTPException(status_code=413, detail="Rendered video is too large")
+    try:
+        job = db.get_translation_job(job_id)
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if not job:
+        raise HTTPException(status_code=404, detail="Translation job not found")
+    body = await request.body()
+    if not body:
+        raise HTTPException(status_code=400, detail="Rendered video is empty")
+    if len(body) > MAX_RENDERED_VIDEO_BYTES:
+        raise HTTPException(status_code=413, detail="Rendered video is too large")
+    output_path = uploaded_render_path(job_id)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = output_path.with_name(f"{output_path.stem}-{uuid4().hex}.tmp")
+    tmp_path.write_bytes(body)
+    tmp_path.replace(output_path)
+    output_uri = f"/v1/jobs/{job_id}/rendered-video"
+    try:
+        updated_job = db.attach_rendered_video(job_id, output_uri=output_uri)
+    except db.DatabaseUnavailable as exc:
+        output_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if not updated_job:
+        output_path.unlink(missing_ok=True)
+        raise HTTPException(status_code=404, detail="Translation job not found")
+    return {
+        "status": "ok",
+        "job_id": job_id,
+        "output_status": updated_job.get("output_status"),
+        "output_uri": updated_job.get("output_uri"),
+        "render_adapter": updated_job.get("render_adapter"),
+        "size_bytes": output_path.stat().st_size,
+    }
+
+
 def require_review_access(request: Request) -> None:
     if not settings.review_token:
         raise HTTPException(status_code=503, detail="Review API is not configured")
     supplied = request.headers.get("x-qsign-review-token", "")
     if not secrets.compare_digest(supplied, settings.review_token):
         raise HTTPException(status_code=403, detail="Review API token is invalid")
+
+
+def uploaded_render_path(job_id: str) -> Path:
+    return UPLOADED_RENDER_ROOT / f"{job_id}.mp4"
 
 
 @app.post("/v1/feedback")

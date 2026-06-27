@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
 import unittest
 from unittest import mock
 
@@ -193,6 +195,41 @@ class ApiTests(unittest.TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["review_status"], "approved")
+
+    def test_review_job_rendered_video_upload_requires_mp4(self) -> None:
+        with mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")):
+            response = self.client.post(
+                "/v1/review/jobs/job-1/rendered-video",
+                content=b"bad",
+                headers={"x-qsign-review-token": "secret", "content-type": "application/octet-stream"},
+            )
+        self.assertEqual(response.status_code, 415)
+
+    def test_review_job_rendered_video_upload_attaches_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with (
+                mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+                mock.patch("qsign_translator.api.UPLOADED_RENDER_ROOT", Path(tmp_dir)),
+                mock.patch("qsign_translator.api.db.get_translation_job", return_value={"id": "job-1"}),
+                mock.patch(
+                    "qsign_translator.api.db.attach_rendered_video",
+                    return_value={
+                        "id": "job-1",
+                        "output_status": "ready",
+                        "output_uri": "/v1/jobs/job-1/rendered-video",
+                        "render_adapter": "external_upload",
+                    },
+                ),
+            ):
+                response = self.client.post(
+                    "/v1/review/jobs/job-1/rendered-video",
+                    content=b"fake-mp4",
+                    headers={"x-qsign-review-token": "secret", "content-type": "video/mp4"},
+                )
+                self.assertTrue((Path(tmp_dir) / "job-1.mp4").exists())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["output_status"], "ready")
 
     def test_review_feedback_endpoint_lists_events(self) -> None:
         with (

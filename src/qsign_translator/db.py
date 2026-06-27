@@ -531,6 +531,54 @@ def create_review_session(
     return _stringify_id(row, extra_uuid_fields=("job_id",))
 
 
+def attach_rendered_video(
+    job_id: str,
+    *,
+    output_uri: str,
+    output_status: str = "ready",
+    render_adapter: str = "external_upload",
+) -> dict[str, Any] | None:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    UPDATE translation_jobs
+                    SET output_uri = %s, output_status = %s, render_adapter = %s, updated_at = now()
+                    WHERE id = %s
+                    RETURNING
+                        id,
+                        input_type,
+                        input_text,
+                        detected_language,
+                        status,
+                        output_kind,
+                        output_status,
+                        confidence,
+                        warnings,
+                        review_status,
+                        risk_domains,
+                        source_ids,
+                        fallback_count,
+                        unknown_token_count,
+                        output_uri,
+                        render_adapter,
+                        created_at,
+                        updated_at
+                    """,
+                    (output_uri, output_status, render_adapter, job_id),
+                )
+            except Exception as exc:
+                if _is_invalid_text_representation(exc):
+                    return None
+                raise
+            row = cur.fetchone()
+        conn.commit()
+    if not row:
+        return None
+    return _stringify_id(row)
+
+
 def _stringify_id(row: dict[str, Any], extra_uuid_fields: tuple[str, ...] = ()) -> dict[str, Any]:
     result = dict(row)
     result["id"] = str(result["id"])

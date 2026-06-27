@@ -130,6 +130,10 @@ const reviewBlockingIssueInput = document.querySelector("#reviewBlockingIssueInp
 const reviewSessionNotesInput = document.querySelector("#reviewSessionNotesInput");
 const reviewSessionStatus = document.querySelector("#reviewSessionStatus");
 const reviewSessionSubmitButton = document.querySelector("#reviewSessionSubmitButton");
+const reviewUploadForm = document.querySelector("#reviewUploadForm");
+const reviewRenderedVideoInput = document.querySelector("#reviewRenderedVideoInput");
+const reviewUploadStatus = document.querySelector("#reviewUploadStatus");
+const reviewUploadSubmitButton = document.querySelector("#reviewUploadSubmitButton");
 
 const warningLabels = {
   prototype_sign_plan_not_professional_interpretation: "Черновик не заменяет профессиональный перевод.",
@@ -1412,6 +1416,8 @@ function syncReviewActionButtons() {
   reviewUnderstandabilityScoreInput.disabled = disabled;
   reviewBlockingIssueInput.disabled = disabled;
   reviewSessionNotesInput.disabled = disabled;
+  reviewRenderedVideoInput.disabled = disabled;
+  reviewUploadSubmitButton.disabled = disabled;
 }
 
 function renderReviewJobs(items) {
@@ -1474,6 +1480,9 @@ function renderReviewDetail(job, feedbackItems = []) {
     reviewSessionStatus.textContent = state.reviewToken
       ? "Сессию можно сохранить после выбора записи."
       : "Сессии ревью доступны после ввода review token.";
+    reviewUploadStatus.textContent = state.reviewToken
+      ? "Видео можно прикрепить после выбора записи."
+      : "Загрузка видео доступна после ввода review token.";
     return;
   }
   appendTextElement(reviewDetailSummary, "strong", "", String(job.input_text || "Без текста"));
@@ -1503,6 +1512,18 @@ function renderReviewDetail(job, feedbackItems = []) {
       "",
       `Пайплайн: ${formatPipelineStatus(state.lastRenderPlan.pipeline_status)}.${blockers ? ` Блокеры: ${blockers}.` : ""}`
     );
+    if (job.output_status === "ready" && job.output_uri) {
+      const outputLink = document.createElement("a");
+      outputLink.href = String(job.output_uri);
+      outputLink.target = "_blank";
+      outputLink.rel = "noopener noreferrer";
+      outputLink.className = "inline-link";
+      outputLink.textContent = "Открыть загруженное видео";
+      reviewDetailSummary.append(outputLink);
+      reviewUploadStatus.textContent = "У записи уже есть прикрепленное видео. Можно заменить новой версией.";
+    } else {
+      reviewUploadStatus.textContent = "Загрузите внешний mp4 после рендера.";
+    }
   }
   syncReviewActionButtons();
   reviewSessionStatus.textContent = "Сохраните решение носителя или оператора по этой записи.";
@@ -1630,6 +1651,9 @@ async function selectReviewJob(jobId, refreshList = true) {
   reviewSessionStatus.textContent = state.selectedReviewJobId
     ? "Сохраните решение носителя или оператора по этой записи."
     : "Сессию можно сохранить после выбора записи.";
+  reviewUploadStatus.textContent = state.selectedReviewJobId
+    ? "Загрузите внешний mp4 после рендера."
+    : "Видео можно прикрепить после выбора записи.";
   if (refreshList) renderReviewJobs(state.reviewJobs);
   if (!state.selectedReviewJobId) {
     renderReviewDetail(null);
@@ -1731,6 +1755,42 @@ async function saveReviewSession() {
     await loadReviewDashboard();
   } catch (error) {
     reviewSessionStatus.textContent = `Сессия не сохранена: ${String(error.message || error)}`;
+  } finally {
+    syncReviewActionButtons();
+  }
+}
+
+async function uploadRenderedVideo() {
+  if (!state.selectedReviewJobId || !state.reviewToken) return;
+  const file = reviewRenderedVideoInput.files?.[0];
+  if (!file) {
+    reviewUploadStatus.textContent = "Выберите mp4-файл для загрузки.";
+    return;
+  }
+  if (file.type !== "video/mp4") {
+    reviewUploadStatus.textContent = "Поддерживается только mp4.";
+    return;
+  }
+  reviewUploadStatus.textContent = "Загружаем финальный mp4...";
+  reviewUploadSubmitButton.disabled = true;
+  try {
+    const response = await fetch(`/v1/review/jobs/${state.selectedReviewJobId}/rendered-video`, {
+      method: "POST",
+      headers: {
+        "content-type": "video/mp4",
+        ...reviewHeaders(),
+      },
+      body: file,
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
+    }
+    reviewRenderedVideoInput.value = "";
+    reviewUploadStatus.textContent = "Финальный mp4 прикреплен к записи.";
+    await loadReviewDashboard();
+  } catch (error) {
+    reviewUploadStatus.textContent = `Видео не прикреплено: ${String(error.message || error)}`;
   } finally {
     syncReviewActionButtons();
   }
@@ -1855,6 +1915,11 @@ reviewStatusActionButtons.forEach((button) => {
 reviewSessionForm.addEventListener("submit", (event) => {
   event.preventDefault();
   saveReviewSession();
+});
+
+reviewUploadForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  uploadRenderedVideo();
 });
 
 copyAIBriefButton.addEventListener("click", async () => {

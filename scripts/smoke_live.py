@@ -173,6 +173,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
     for path in [
         "/v1/jobs/not-a-uuid/render-plan",
         "/v1/jobs/not-a-uuid/ai-video-brief",
+        "/v1/jobs/not-a-uuid/rendered-video",
     ]:
         try:
             _request(base_url, path, timeout=timeout)

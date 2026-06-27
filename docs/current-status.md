@@ -35,6 +35,8 @@ The project is intentionally honest about what exists today:
 - Feedback API for saved jobs.
 - Token-protected review API for operator workflows.
 - Persisted review-session API for signer, linguist, and operator validation.
+- Protected upload flow for attaching an externally rendered `mp4` back to a
+  saved job.
 - Render-plan manifest for future clip or avatar assembly.
 - Review-video draft mp4 generation for saved jobs.
 - AI-video brief export for one saved phrase.
@@ -54,11 +56,13 @@ The project is intentionally honest about what exists today:
 - `GET /v1/jobs/{job_id}`
 - `GET /v1/jobs/{job_id}/render-plan`
 - `GET|HEAD /v1/jobs/{job_id}/review-video`
+- `GET|HEAD /v1/jobs/{job_id}/rendered-video`
 - `GET /v1/jobs/{job_id}/ai-video-brief`
 - `POST /v1/ai-video-batch-brief`
 - `POST /v1/feedback`
 - `GET /v1/review/sessions`
 - `POST /v1/review/sessions`
+- `POST /v1/review/jobs/{job_id}/rendered-video`
 - `GET /health`
 - `GET /health/ready`
 
@@ -77,7 +81,7 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 58 automated tests green;
+- 64 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
@@ -92,6 +96,8 @@ Recent validation passed with:
   apply a new `review_status` to the saved job.
 - render-plan and AI-video brief responses now expose pipeline blockers and the
   next operational step instead of only raw asset counts.
+- reviewer UI now supports attaching an externally rendered final `mp4`, and
+  saved jobs can expose that uploaded video through a dedicated route.
 
 ## Readiness Rating
 

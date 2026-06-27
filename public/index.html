@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260627b" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260627c" />
   </head>
   <body>
     <div class="app-shell">
@@ -395,6 +395,18 @@
                   <button class="secondary-button compact" id="reviewSessionSubmitButton" type="submit">Сохранить сессию</button>
                 </div>
               </form>
+              <form class="review-session-form review-upload-form" id="reviewUploadForm">
+                <div class="review-form-grid review-upload-grid">
+                  <label class="review-form-field review-upload-picker">
+                    <span>Финальный mp4</span>
+                    <input id="reviewRenderedVideoInput" type="file" accept="video/mp4" />
+                  </label>
+                  <div class="review-form-actions review-upload-actions">
+                    <span class="small-status" id="reviewUploadStatus">Загрузите внешний mp4 после рендера.</span>
+                    <button class="secondary-button compact" id="reviewUploadSubmitButton" type="submit">Прикрепить видео</button>
+                  </div>
+                </div>
+              </form>
               <div class="review-unit-list" id="reviewUnitList"></div>
               <div class="review-feedback-list" id="reviewSessionList"></div>
               <div class="review-feedback-list" id="reviewFeedbackList"></div>
@@ -414,6 +426,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260627b" defer></script>
+    <script src="/static/app.js?v=20260627c" defer></script>
   </body>
 </html>

@@ -88,6 +88,19 @@ TOKEN='set-me-from-secure-env'
 curl -fsS "$BASE/v1/review/jobs" -H "x-qsign-review-token: $TOKEN"
 ```
 
+Attach a rendered `mp4` back to a saved job:
+
+```bash
+BASE=https://your-public-host.example
+TOKEN='set-me-from-secure-env'
+JOB='job-uuid'
+curl -fsS -X POST "$BASE/v1/review/jobs/$JOB/rendered-video" \
+  -H "x-qsign-review-token: $TOKEN" \
+  -H 'content-type: video/mp4' \
+  --data-binary @final-reviewable.mp4
+curl -fsSI "$BASE/v1/jobs/$JOB/rendered-video" | grep -Ei 'content-type|x-qsign-render'
+```
+
 ## Rollback
 
 - Keep your last known-good deploy artifact or git revision outside the app

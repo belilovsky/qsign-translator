@@ -112,6 +112,10 @@ Protected reviewer APIs now also support persisted review sessions, so native
 signer or linguist checks can be saved with scores, notes, blocking flags, and
 an optional applied `review_status`.
 
+Operators can also attach an externally rendered `mp4` back to a saved job
+through the protected review API. This closes the loop between sign-plan
+generation, human review, external video rendering, and final publish gating.
+
 API responses follow the same rule: `metadata.output_status=not_rendered`
 means the result is a reviewable plan, not a generated video.
 

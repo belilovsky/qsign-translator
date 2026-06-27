@@ -74,6 +74,38 @@ class RenderPlanApiTests(unittest.TestCase):
             response = self.client.get("/v1/jobs/missing/render-plan")
         self.assertEqual(response.status_code, 404)
 
+    def test_render_plan_reports_uploaded_render_when_available(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            job = {
+                "id": "job-1",
+                "status": "review_required",
+                "review_status": "approved",
+                "output_kind": "sign_plan_preview",
+                "output_status": "ready",
+                "output_uri": "/v1/jobs/job-1/rendered-video",
+                "units": [
+                    {
+                        "position": 1,
+                        "kind": "dactyl",
+                        "source_token": "александр",
+                        "gloss": "DACTYL_A",
+                        "clip_id": None,
+                    },
+                ],
+            }
+            with (
+                mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
+                mock.patch("qsign_translator.api.settings", mock.Mock(asset_root=tmp_dir)),
+            ):
+                response = self.client.get("/v1/jobs/job-1/render-plan")
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["pipeline_status"], "render_uploaded_ready_for_publish")
+        self.assertTrue(data["adapter"]["uploaded_render_available"])
+        self.assertTrue(data["publish_gate"]["ready"])
+        self.assertEqual(data["publish_gate"]["next_step"], "publish_or_manual_final_qc")
+
 
 if __name__ == "__main__":
     unittest.main()

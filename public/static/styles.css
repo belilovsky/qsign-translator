@@ -1722,6 +1722,29 @@ tr:last-child td {
   background: #fcfcfb;
 }
 
+.review-upload-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+  align-items: end;
+}
+
+.review-upload-actions {
+  margin-top: 0;
+}
+
+.inline-link {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 8px;
+  color: var(--green);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(37, 122, 85, 0.22);
+}
+
+.inline-link:hover,
+.inline-link:focus-visible {
+  border-bottom-color: rgba(37, 122, 85, 0.56);
+}
+
 .review-job-card {
   display: grid;
   gap: 8px;
@@ -1908,6 +1931,10 @@ tr:last-child td {
 
   .review-form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .review-upload-grid {
+    grid-template-columns: 1fr;
   }
 }
 

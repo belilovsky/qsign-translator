@@ -15,6 +15,8 @@ All notable QSign Translator changes are summarized here.
   and optional status application back to saved jobs.
 - Added explicit video pipeline blockers and next-step hints to render-plan and
   AI-video handoff payloads.
+- Added protected `mp4` upload flow for attaching externally rendered final
+  videos back to saved jobs, plus a dedicated served route for uploaded output.
 - Added live footer attribution to `qdev.run`.
 - Aligned package, FastAPI OpenAPI, and visible UI version metadata.
 - Hid `HEAD` monitor routes from OpenAPI to avoid duplicate operation IDs.

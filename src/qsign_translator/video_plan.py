@@ -101,23 +101,32 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
     resolved_count = len(resolved)
     missing_count = len(missing)
     review_status = str(job.get("review_status") or "pending_signer_review")
+    output_status = str(job.get("output_status") or "not_rendered")
+    output_uri = str(job.get("output_uri") or "")
+    has_uploaded_render = output_status == "ready" and bool(output_uri)
     if resolved_count and not missing_count:
         adapter_status = "ready_for_render"
     elif resolved_count:
         adapter_status = "partial_assets"
     else:
         adapter_status = "awaiting_assets"
-    publish_ready = review_status == "approved" and total_units > 0 and missing_count == 0
+    publish_ready = review_status == "approved" and (has_uploaded_render or (total_units > 0 and missing_count == 0))
     renderable_ratio = round(resolved_count / total_units, 3) if total_units else 0.0
     blockers: list[str] = []
     if review_status != "approved":
         blockers.append("needs_signer_approval")
-    if missing_count > 0:
+    if missing_count > 0 and not has_uploaded_render:
         blockers.append("missing_render_assets")
-    if total_units == 0:
+    if total_units == 0 and not has_uploaded_render:
         blockers.append("empty_sign_plan")
+    if not has_uploaded_render:
+        blockers.append("render_output_missing")
+    if has_uploaded_render and review_status == "approved":
+        pipeline_status = "render_uploaded_ready_for_publish"
+    elif has_uploaded_render:
+        pipeline_status = "render_uploaded_pending_review"
     if publish_ready:
-        pipeline_status = "ready_for_external_render"
+        pipeline_status = pipeline_status if has_uploaded_render else "ready_for_external_render"
     elif missing_count > 0 and review_status == "approved":
         pipeline_status = "approved_but_asset_incomplete"
     elif review_status == "approved":
@@ -131,7 +140,8 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
         "review_status": review_status,
         "pipeline_status": pipeline_status,
         "source_output_kind": str(job.get("output_kind") or "sign_plan_preview"),
-        "source_output_status": str(job.get("output_status") or "not_rendered"),
+        "source_output_status": output_status,
+        "output_uri": output_uri or None,
         "target_output_kind": "avatar_video",
         "adapter": {
             "type": "local_clip_concat",
@@ -139,6 +149,7 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
             "adapter_status": adapter_status,
             "ffmpeg_concat_supported": resolved_count > 0,
             "publish_ready": publish_ready,
+            "uploaded_render_available": has_uploaded_render,
             "blockers": blockers,
         },
         "publish_gate": {
@@ -169,6 +180,10 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
 
 
 def _next_step_for_pipeline_status(pipeline_status: str) -> str:
+    if pipeline_status == "render_uploaded_ready_for_publish":
+        return "publish_or_manual_final_qc"
+    if pipeline_status == "render_uploaded_pending_review":
+        return "complete_final_video_review"
     if pipeline_status == "ready_for_external_render":
         return "prepare_external_render"
     if pipeline_status == "approved_but_asset_incomplete":

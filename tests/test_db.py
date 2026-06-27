@@ -213,6 +213,23 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual(rows, [])
 
+    def test_attach_rendered_video_updates_output_fields(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            row = db.attach_rendered_video(
+                "job-1",
+                output_uri="/v1/jobs/job-1/rendered-video",
+                output_status="ready",
+                render_adapter="external_upload",
+            )
+
+        self.assertEqual(row["id"], "job-1")
+        self.assertTrue(connection.committed)
+        self.assertIn("UPDATE translation_jobs", cursor.calls[0][0])
+        self.assertEqual(cursor.calls[0][1], ("/v1/jobs/job-1/rendered-video", "ready", "external_upload", "job-1"))
+
 
 if __name__ == "__main__":
     unittest.main()
