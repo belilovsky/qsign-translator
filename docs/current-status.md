@@ -88,6 +88,8 @@ The current repository state has been exercised through:
 - unit and API tests via `./scripts/check.sh`;
 - curated phrase-coverage smoke for common RU user requests;
 - live API smoke against a deployed instance via `scripts/smoke_live.py`;
+- authenticated review smoke against the deployed instance with a real operator
+  token, including review queue, audit trail, and publish-status checks;
 - browser smoke at desktop and mobile widths;
 - batch-brief checks with multiple saved jobs;
 - review-video checks through both `GET` and `HEAD`.
@@ -143,6 +145,9 @@ Recent validation passed with:
   asset gaps.
 - source registry UI now shows canonical links, normalized language labels, and
   human-readable license/access notes instead of a raw registry dump.
+- review-video `HEAD` is now intentionally lightweight and monitor-safe: it
+  validates job presence and preview metadata without forcing `ffmpeg` preview
+  generation during UI preflight or operational smoke checks.
 
 ## Readiness Rating
 
