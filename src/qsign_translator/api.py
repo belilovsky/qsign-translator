@@ -327,7 +327,20 @@ def translation_job_review_video(job_id: str, request: Request) -> FileResponse 
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     if not job:
         raise HTTPException(status_code=404, detail="Translation job not found")
+    unit_count = len(list(job.get("units") or []))
+    if unit_count == 0:
+        raise HTTPException(status_code=503, detail="translation job has no units")
     filename = f"qsign-review-{job_id}.mp4"
+    if request.method == "HEAD":
+        return Response(
+            status_code=200,
+            media_type="video/mp4",
+            headers=_review_video_headers(
+                filename=filename,
+                kind="review_storyboard",
+                unit_count=unit_count,
+            ),
+        )
     try:
         artifact = build_review_video(
             job,
@@ -336,17 +349,6 @@ def translation_job_review_video(job_id: str, request: Request) -> FileResponse 
         )
     except PreviewVideoUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    if request.method == "HEAD":
-        return Response(
-            status_code=200,
-            media_type="video/mp4",
-            headers=_review_video_headers(
-                filename=filename,
-                kind=artifact.kind,
-                unit_count=artifact.unit_count,
-                duration_seconds=artifact.duration_seconds,
-            ),
-        )
     return FileResponse(
         artifact.path,
         media_type="video/mp4",

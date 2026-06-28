@@ -48,44 +48,29 @@ class ReviewVideoApiTests(unittest.TestCase):
         self.assertEqual(response.headers["x-qsign-preview-units"], "1")
 
     def test_review_video_head_returns_headers_without_body(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            video_path = Path(tmp_dir) / "review.mp4"
-            video_path.write_bytes(b"fake-mp4")
-            job = {
-                "id": "job-1",
-                "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}],
-            }
-            artifact = mock.Mock(
-                path=video_path,
-                duration_seconds=3.0,
-                unit_count=1,
-                kind="review_storyboard",
-            )
-            with (
-                mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
-                mock.patch("qsign_translator.api.build_review_video", return_value=artifact) as build_video,
-            ):
-                response = self.client.head("/v1/jobs/job-1/review-video")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers["content-type"], "video/mp4")
-        self.assertEqual(response.headers["x-qsign-preview-kind"], "review_storyboard")
-        self.assertEqual(response.headers["x-qsign-preview-units"], "1")
-        self.assertEqual(response.content, b"")
-        build_video.assert_called_once()
-
-    def test_review_video_head_returns_503_when_preview_is_unavailable(self) -> None:
         job = {
             "id": "job-1",
             "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}],
         }
         with (
             mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
-            mock.patch(
-                "qsign_translator.api.build_review_video",
-                side_effect=PreviewVideoUnavailable("preview missing"),
-            ),
+            mock.patch("qsign_translator.api.build_review_video") as build_video,
         ):
+            response = self.client.head("/v1/jobs/job-1/review-video")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["content-type"], "video/mp4")
+        self.assertEqual(response.headers["x-qsign-preview-kind"], "review_storyboard")
+        self.assertEqual(response.headers["x-qsign-preview-units"], "1")
+        self.assertEqual(response.content, b"")
+        build_video.assert_not_called()
+
+    def test_review_video_head_returns_503_when_job_has_no_units(self) -> None:
+        job = {
+            "id": "job-1",
+            "units": [],
+        }
+        with mock.patch("qsign_translator.api.db.get_translation_job", return_value=job):
             response = self.client.head("/v1/jobs/job-1/review-video")
         self.assertEqual(response.status_code, 503)
 
