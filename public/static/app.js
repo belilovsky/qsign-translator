@@ -1476,7 +1476,7 @@ function formatReviewStatus(status) {
 
 function formatPipelineStatus(status) {
   if (status === "ready_for_external_render") return "можно готовить внешний рендер";
-  if (status === "approved_but_asset_incomplete") return "одобрено, но не хватает ассетов";
+  if (status === "approved_but_asset_incomplete") return "одобрено, но не хватает материалов";
   if (status === "approved_pending_render") return "одобрено, можно запускать сборку";
   if (status === "awaiting_signer_review") return "ждет проверки носителем";
   if (status === "render_uploaded_pending_review") return "видео загружено, ждет финальной проверки";
@@ -1499,7 +1499,7 @@ function formatPipelineNextStep(step) {
   if (step === "complete_final_video_review") return "завершить финальную проверку видео";
   if (step === "prepare_external_render") return "подготовить внешний рендер";
   if (step === "attach_or_generate_missing_assets") return "добавить недостающие клипы";
-  if (step === "start_render_or_brief_export") return "запустить сборку или отдать brief в работу";
+  if (step === "start_render_or_brief_export") return "запустить сборку или отдать пакет в работу";
   if (step === "complete_signer_review") return "завершить проверку носителем";
   return String(step || "ожидание");
 }
@@ -1568,6 +1568,25 @@ function formatAuditDetailValue(value) {
   return String(value);
 }
 
+function formatFeedbackType(type) {
+  if (type === "good") return "Хорошо";
+  if (type === "wrong_sign") return "Неверный жест";
+  if (type === "unclear_sign") return "Непонятно";
+  if (type === "missing_sign") return "Нет жеста";
+  if (type === "offensive") return "Неприемлемо";
+  return String(type || "отзыв");
+}
+
+function formatAuditDetailEntry(key, value) {
+  const label = formatAuditDetailKey(key);
+  if (key === "feedback_type") return `${label}: ${formatFeedbackType(value)}`;
+  if (key === "review_status") return `${label}: ${formatReviewStatus(value)}`;
+  if (key === "publish_status") return `${label}: ${formatPublishStatus(value)}`;
+  if (key === "language" || key === "reviewer_language") return `${label}: ${formatPlanLanguage(value)}`;
+  if (key === "render_adapter" && value === "external_ai_video") return `${label}: внешний AI-видео рендер`;
+  return `${label}: ${formatAuditDetailValue(value)}`;
+}
+
 function formatPlanLanguage(language) {
   if (language === "ru") return "Русский";
   if (language === "kk") return "Казахский";
@@ -1608,7 +1627,7 @@ function formatSourceLanguages(languages) {
     rsl: "RSL",
     asl: "ASL",
     krsl: "KRSL",
-    multi: "multi",
+    multi: "несколько",
   };
   return values
     .map((value) => labels[String(value || "").toLowerCase()] || String(value || "").toUpperCase())
@@ -1885,7 +1904,7 @@ function renderReviewDetail(job, feedbackItems = []) {
     feedbackItems.forEach((item) => {
       const card = document.createElement("article");
       card.className = "review-feedback-card";
-      appendTextElement(card, "strong", "", formatStatus(item.feedback_type));
+      appendTextElement(card, "strong", "", formatFeedbackType(item.feedback_type));
       const meta = document.createElement("div");
       meta.className = "review-card-meta";
       appendTextElement(meta, "span", "", formatDateTime(item.created_at) || "время не указано");
@@ -1920,7 +1939,7 @@ function renderReviewAudit(items) {
       "p",
       "",
       detail.length
-        ? detail.map(([key, value]) => `${formatAuditDetailKey(key)}: ${formatAuditDetailValue(value)}`).join(" · ")
+        ? detail.map(([key, value]) => formatAuditDetailEntry(key, value)).join(" · ")
         : "Без деталей."
     );
     reviewAuditList.append(card);
