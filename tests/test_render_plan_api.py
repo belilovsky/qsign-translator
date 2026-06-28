@@ -66,6 +66,8 @@ class RenderPlanApiTests(unittest.TestCase):
         self.assertEqual(data["publish_gate"]["next_step"], "attach_or_generate_missing_assets")
         self.assertEqual(data["summary"]["resolved_segments"], 1)
         self.assertEqual(data["summary"]["missing_segments"], 1)
+        self.assertEqual(data["summary"]["missing_clip_bindings"], 1)
+        self.assertEqual(data["summary"]["missing_clip_files"], 0)
         self.assertEqual(data["segments"][0]["asset_key"], "clips/rsl_hello.mp4")
         self.assertEqual(data["missing"][0]["reason"], "no_clip_id")
 

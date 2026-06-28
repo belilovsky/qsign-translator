@@ -100,6 +100,8 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
     total_units = len(units)
     resolved_count = len(resolved)
     missing_count = len(missing)
+    missing_clip_bindings = sum(1 for item in missing if item.get("reason") == "no_clip_id")
+    missing_clip_files = sum(1 for item in missing if item.get("reason") == "clip_missing")
     review_status = str(job.get("review_status") or "pending_signer_review")
     publish_status = str(job.get("publish_status") or "draft")
     output_status = str(job.get("output_status") or "not_rendered")
@@ -169,6 +171,8 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
             "total_units": total_units,
             "resolved_segments": resolved_count,
             "missing_segments": missing_count,
+            "missing_clip_bindings": missing_clip_bindings,
+            "missing_clip_files": missing_clip_files,
             "renderable_ratio": renderable_ratio,
         },
         "segments": [

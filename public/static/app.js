@@ -1058,6 +1058,8 @@ async function loadRenderPlan(jobId, generationRequestId = 0) {
     const adapterStatus = formatAdapterStatus(data?.adapter?.adapter_status);
     const resolved = Number(data?.summary?.resolved_segments ?? 0);
     const missing = Number(data?.summary?.missing_segments ?? 0);
+    const missingBindings = Number(data?.summary?.missing_clip_bindings ?? 0);
+    const missingFiles = Number(data?.summary?.missing_clip_files ?? 0);
     const publishReady = Boolean(data?.adapter?.publish_ready);
     const outputKind = formatOutputKind(data?.target_output_kind);
     const blockers = Array.isArray(data?.publish_gate?.blockers)
@@ -1071,6 +1073,8 @@ async function loadRenderPlan(jobId, generationRequestId = 0) {
         `готовность: ${adapterStatus}`,
         `есть фрагментов: ${resolved}`,
         `нужно добавить: ${missing}`,
+        `без clip binding: ${missingBindings}`,
+        `нет файла клипа: ${missingFiles}`,
         `выпуск: ${publishReady ? "да" : "нет"}`,
         blockers.length ? `блокеры: ${blockers.join(", ")}` : "блокеры: нет",
         nextStep ? `следующий шаг: ${nextStep}` : "следующий шаг: ожидание",
