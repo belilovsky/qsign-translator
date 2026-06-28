@@ -350,7 +350,7 @@ function renderAIBriefData() {
   if (!activeExport) {
     renderAIBriefSummary(
       "Пакет для AI-видео пока не получен.",
-      "Не удалось собрать brief. Попробуйте позже.",
+      "Не удалось собрать экспортный пакет. Попробуйте позже.",
       false
     );
     return;
@@ -637,7 +637,7 @@ async function loadAIVideoBrief(jobId, generationRequestId = 0) {
   }
   renderAIBriefSummary(
     "Собираем пакет для AI-видео генератора.",
-    "Подождите, идет подготовка brief.",
+    "Подождите, идет подготовка экспортного пакета.",
     false
   );
   try {
@@ -656,7 +656,7 @@ async function loadAIVideoBrief(jobId, generationRequestId = 0) {
     state.lastAIBrief = null;
     renderAIBriefSummary(
       "Пакет для AI-видео пока не получен.",
-      "Не удалось собрать brief. Попробуйте позже.",
+      "Не удалось собрать экспортный пакет. Попробуйте позже.",
       false
     );
   }
@@ -672,7 +672,7 @@ function showUnsavedDependentState() {
   );
   renderAIBriefSummary(
     "Экспорт для AI-видео доступен только после сохранения записи.",
-    "Сейчас доступен только локальный черновик плана без brief-пакета.",
+    "Сейчас доступен только локальный черновик плана без экспортного пакета.",
     false
   );
 }
@@ -849,7 +849,7 @@ function markPlanStale() {
   );
   renderAIBriefSummary(
     "Пакет для AI-видео устарел вместе с черновиком.",
-    "Пересоберите результат, чтобы обновить brief.",
+    "Пересоберите результат, чтобы обновить экспортный пакет.",
     false
   );
   syncAIBriefModeButtons();
@@ -1191,7 +1191,7 @@ async function generatePlan() {
   resetRenderPlanSummary();
   renderAIBriefSummary(
     "Готовим пакет для AI-видео...",
-    "Сохраните черновик, затем здесь появится свежий brief.",
+    "Сохраните черновик, затем здесь появится свежий экспортный пакет.",
     false
   );
   generateButton.disabled = true;
@@ -1507,11 +1507,11 @@ function formatPublishStatus(status) {
 
 function formatAuditEventType(type) {
   if (type === "job_created") return "создана запись";
-  if (type === "review_status_updated") return "обновлен review status";
+  if (type === "review_status_updated") return "обновлен статус проверки";
   if (type === "review_session_created") return "сохранена сессия ревью";
-  if (type === "feedback_recorded") return "получен пользовательский feedback";
+  if (type === "feedback_recorded") return "получен отзыв пользователя";
   if (type === "rendered_video_attached") return "прикреплено финальное видео";
-  if (type === "publish_status_updated") return "обновлен publish status";
+  if (type === "publish_status_updated") return "обновлен статус публикации";
   return String(type || "событие");
 }
 
@@ -1525,9 +1525,9 @@ function formatAuditDetailKey(key) {
     understandability_score: "понятность",
     output_uri: "ссылка",
     render_adapter: "рендер",
-    review_status: "review status",
-    publish_status: "publish status",
-    feedback_type: "feedback",
+    review_status: "статус проверки",
+    publish_status: "статус публикации",
+    feedback_type: "тип отзыва",
     has_note: "есть заметка",
     note: "комментарий",
   };
@@ -1543,7 +1543,7 @@ function formatAuditDetailValue(value) {
 function formatPlanLanguage(language) {
   if (language === "ru") return "Русский";
   if (language === "kk") return "Казахский";
-  if (language === "en") return "English";
+  if (language === "en") return "Английский";
   return "Язык не определен";
 }
 
@@ -1709,17 +1709,17 @@ function renderReviewDetail(job, feedbackItems = []) {
       "",
       state.reviewToken
         ? "После выбора записи здесь появятся детали, единицы плана и отзывы."
-        : "После ввода review token здесь откроются защищенные детали сохраненной записи."
+        : "После ввода токена ревью здесь откроются защищенные детали сохраненной записи."
     );
     reviewSessionStatus.textContent = state.reviewToken
       ? "Сессию можно сохранить после выбора записи."
-      : "Сессии ревью доступны после ввода review token.";
+      : "Сессии ревью доступны после ввода токена.";
     reviewUploadStatus.textContent = state.reviewToken
       ? "Видео можно прикрепить после выбора записи."
-      : "Загрузка видео доступна после ввода review token.";
+      : "Загрузка видео доступна после ввода токена.";
     reviewPublishStatus.textContent = state.reviewToken
       ? "Финальное решение можно сохранить после выбора записи."
-      : "Финальное решение доступно после ввода review token.";
+      : "Финальное решение доступно после ввода токена.";
     reviewUnitsMeta.textContent = "0 единиц";
     reviewSessionsMeta.textContent = "0 сессий";
     reviewFeedbackMeta.textContent = "0 отзывов";
@@ -1773,7 +1773,7 @@ function renderReviewDetail(job, feedbackItems = []) {
   reviewPublishNoteInput.value = typeof latestPublishNote === "string" ? latestPublishNote : "";
   reviewPublishStatus.textContent = latestPublishNote
     ? "Последний комментарий к публикации подставлен в форму."
-    : "Финальное решение сохраняется отдельно от review status.";
+    : "Финальное решение сохраняется отдельно от статуса проверки.";
   syncReviewActionButtons();
   reviewSessionStatus.textContent = "Сохраните решение носителя или оператора по этой записи.";
 
@@ -2263,9 +2263,9 @@ copyAIBriefButton.addEventListener("click", async () => {
   if (!text) return;
   try {
     await navigator.clipboard.writeText(text);
-    aiBriefSummary.textContent = "Brief скопирован в буфер обмена.";
+    aiBriefSummary.textContent = "Экспортный пакет скопирован в буфер обмена.";
   } catch {
-    aiBriefSummary.textContent = "Не удалось скопировать brief автоматически.";
+    aiBriefSummary.textContent = "Не удалось скопировать экспортный пакет автоматически.";
   }
 });
 

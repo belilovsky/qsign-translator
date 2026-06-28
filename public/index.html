@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260628k" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260628l" />
   </head>
   <body>
     <div class="app-shell">
@@ -249,14 +249,14 @@
                   <strong id="aiBriefStatusTitle">Экспорт для AI-видео</strong>
                   <span id="aiBriefSummary">Пакет для AI-видео появится после сохранения черновика.</span>
                 </div>
-                <button class="secondary-button compact" id="copyAIBriefButton" type="button" disabled>Копировать brief</button>
+                <button class="secondary-button compact" id="copyAIBriefButton" type="button" disabled>Копировать пакет</button>
               </div>
-              <div class="segmented-control export-modes" role="group" aria-label="Формат экспорта brief">
-                <button type="button" class="mode-button active" id="aiBriefModeUniversal" data-brief-mode="universal_prompt" aria-pressed="true">Universal</button>
-                <button type="button" class="mode-button" id="aiBriefModeOperator" data-brief-mode="operator_handoff" aria-pressed="false">Operator</button>
-                <button type="button" class="mode-button" id="aiBriefModeContract" data-brief-mode="render_contract" aria-pressed="false">Contract</button>
+              <div class="segmented-control export-modes" role="group" aria-label="Формат экспортного пакета">
+                <button type="button" class="mode-button active" id="aiBriefModeUniversal" data-brief-mode="universal_prompt" aria-pressed="true">Универсальный</button>
+                <button type="button" class="mode-button" id="aiBriefModeOperator" data-brief-mode="operator_handoff" aria-pressed="false">Оператор</button>
+                <button type="button" class="mode-button" id="aiBriefModeContract" data-brief-mode="render_contract" aria-pressed="false">Контракт</button>
                 <button type="button" class="mode-button" id="aiBriefModeJson" data-brief-mode="json_payload" aria-pressed="false">JSON</button>
-                <button type="button" class="mode-button" id="aiBriefModeBatch" data-brief-mode="batch_storyboard" aria-pressed="false">Batch</button>
+                <button type="button" class="mode-button" id="aiBriefModeBatch" data-brief-mode="batch_storyboard" aria-pressed="false">Пакет</button>
               </div>
               <textarea
                 id="aiBriefOutput"
@@ -431,7 +431,7 @@
                     </select>
                   </label>
                   <div class="review-form-actions review-upload-actions">
-                    <span class="small-status" id="reviewPublishStatus">Финальное решение сохраняется отдельно от review status.</span>
+                    <span class="small-status" id="reviewPublishStatus">Финальное решение сохраняется отдельно от статуса проверки.</span>
                     <button class="secondary-button compact" id="reviewPublishSubmitButton" type="submit">Сохранить решение</button>
                   </div>
                 </div>
@@ -456,7 +456,7 @@
               </section>
               <section class="review-subsection" aria-labelledby="reviewFeedbackTitle">
                 <div class="review-subsection-head">
-                  <h3 id="reviewFeedbackTitle">Пользовательский feedback</h3>
+                  <h3 id="reviewFeedbackTitle">Отзывы пользователей</h3>
                   <span class="small-status" id="reviewFeedbackMeta">0 отзывов</span>
                 </div>
                 <div class="review-feedback-list" id="reviewFeedbackList"></div>
@@ -484,6 +484,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260628k" defer></script>
+    <script src="/static/app.js?v=20260628l" defer></script>
   </body>
 </html>
