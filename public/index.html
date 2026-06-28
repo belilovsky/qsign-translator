@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260628n" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260628o" />
   </head>
   <body>
     <div class="app-shell">
@@ -304,10 +304,10 @@
             <button class="secondary-button compact" id="reviewBackButton" type="button">К приложению</button>
           </div>
 
-          <div class="review-toolbar">
+          <form class="review-toolbar" id="reviewToolbarForm">
             <label class="review-token-field">
               <span>Токен ревью</span>
-              <input id="reviewTokenInput" type="password" placeholder="x-qsign-review-token" autocomplete="off" />
+              <input id="reviewTokenInput" type="password" placeholder="Вставьте токен x-qsign-review-token" autocomplete="current-password" />
             </label>
             <label class="review-filter-field">
               <span>Статус</span>
@@ -319,8 +319,8 @@
                 <option value="rejected">Отклонено</option>
               </select>
             </label>
-            <button class="secondary-button compact" id="reviewLoadButton" type="button">Обновить</button>
-          </div>
+            <button class="secondary-button compact" id="reviewLoadButton" type="submit">Обновить</button>
+          </form>
 
           <div class="review-status-banner" id="reviewStatusBanner">Введите токен и обновите очередь ревью.</div>
           <div class="review-guide" aria-label="Порядок операторской проверки">
@@ -355,11 +355,11 @@
                 <div class="review-form-grid">
                   <label class="review-form-field">
                     <span>Роль</span>
-                    <input id="reviewerRoleInput" type="text" placeholder="native_signer" maxlength="80" />
+                    <input id="reviewerRoleInput" type="text" placeholder="носитель / оператор / лингвист" maxlength="80" />
                   </label>
                   <label class="review-form-field">
                     <span>Язык</span>
-                    <input id="reviewerLanguageInput" type="text" placeholder="ru" maxlength="20" />
+                    <input id="reviewerLanguageInput" type="text" placeholder="ru / kk / en" maxlength="20" />
                   </label>
                   <label class="review-form-field">
                     <span>Новый статус</span>
@@ -484,6 +484,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260628n" defer></script>
+    <script src="/static/app.js?v=20260628o" defer></script>
   </body>
 </html>

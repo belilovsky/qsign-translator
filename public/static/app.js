@@ -113,9 +113,9 @@ const speedButtons = Array.from(document.querySelectorAll(".speed-button"));
 const appView = document.querySelector("#appView");
 const reviewView = document.querySelector("#reviewView");
 const reviewBackButton = document.querySelector("#reviewBackButton");
+const reviewToolbarForm = document.querySelector("#reviewToolbarForm");
 const reviewTokenInput = document.querySelector("#reviewTokenInput");
 const reviewStatusFilter = document.querySelector("#reviewStatusFilter");
-const reviewLoadButton = document.querySelector("#reviewLoadButton");
 const reviewStatusBanner = document.querySelector("#reviewStatusBanner");
 const reviewSummary = document.querySelector("#reviewSummary");
 const reviewJobs = document.querySelector("#reviewJobs");
@@ -2315,17 +2315,12 @@ reviewBackButton.addEventListener("click", () => {
   setRoute("app");
 });
 
-reviewLoadButton.addEventListener("click", () => {
+reviewToolbarForm.addEventListener("submit", (event) => {
+  event.preventDefault();
   loadReviewDashboard();
 });
 
 reviewStatusFilter.addEventListener("change", () => {
-  loadReviewDashboard();
-});
-
-reviewTokenInput.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") return;
-  event.preventDefault();
   loadReviewDashboard();
 });
 
