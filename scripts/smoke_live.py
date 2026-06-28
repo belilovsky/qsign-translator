@@ -20,6 +20,10 @@ class SmokeResult:
     detail: str
 
 
+def _normalize_headers(headers: dict[str, str]) -> dict[str, str]:
+    return {str(key).lower(): value for key, value in headers.items()}
+
+
 def _request(
     base_url: str,
     path: str,
@@ -48,7 +52,7 @@ def _request(
                 parsed = json.loads(response_body.decode("utf-8"))
             except json.JSONDecodeError:
                 parsed = {"raw": response_body.decode("utf-8", "replace")}
-        return response.status, parsed, dict(response.headers)
+        return response.status, parsed, _normalize_headers(dict(response.headers))
 
 
 def _record(results: list[SmokeResult], name: str, ok: bool, detail: str) -> None:
@@ -69,7 +73,7 @@ def _request_bytes(
         method=method,
     )
     with urlopen(request, timeout=timeout) as response:
-        return response.status, response.read(), dict(response.headers)
+        return response.status, response.read(), _normalize_headers(dict(response.headers))
 
 
 def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[SmokeResult]:
