@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 
 KAZAKH_SPECIFIC = set("әғқңөұүһіӘҒҚҢӨҰҮҺІ")
 CYRILLIC_RE = re.compile(r"[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]")
@@ -167,7 +168,12 @@ def _token_counts_by_script(tokens: list[str]) -> tuple[int, int, int, int]:
 
 
 def _tokenize(text: str) -> list[str]:
-    return [token.lower() for token in TOKEN_RE.findall(text)]
+    return list(_tokenize_cached(text))
+
+
+@lru_cache(maxsize=4096)
+def _tokenize_cached(text: str) -> tuple[str, ...]:
+    return tuple(token.lower() for token in TOKEN_RE.findall(text))
 
 
 def _cyrillic_token_ratio(tokens: list[str]) -> float:
@@ -190,6 +196,7 @@ def _count_hints(tokens: list[str], hints: set[str]) -> int:
     return len(set(tokens) & hints)
 
 
+@lru_cache(maxsize=8192)
 def _normalise_latin_token(token: str) -> str:
     return token.lower().replace("\ufeff", "").replace("'", "").replace("’", "").strip()
 
@@ -204,6 +211,7 @@ def _en_hint_count(tokens: list[str]) -> int:
     return _count_hints(list(normalized), EN_HINT_TOKENS)
 
 
+@lru_cache(maxsize=8192)
 def transliterate_kazakh_latin_to_cyrillic(text: str) -> str:
     lowered = _normalise_latin_token(text)
     if not lowered:
@@ -220,6 +228,7 @@ def transliterate_kazakh_latin_to_cyrillic(text: str) -> str:
     return "".join(mapped_chars)
 
 
+@lru_cache(maxsize=4096)
 def resolve_mixed_language(text: str) -> str:
     """Resolve ambiguous mixed-script routes to a concrete language.
 
@@ -261,6 +270,7 @@ def resolve_mixed_language(text: str) -> str:
     return "ru"
 
 
+@lru_cache(maxsize=4096)
 def detect_language(text: str) -> str:
     """Return a coarse language route: en, kk, ru, or mixed.
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import lru_cache
+
 RUSSIAN_DACTYL = {
     "а": "DACTYL_A",
     "б": "DACTYL_BE",
@@ -78,6 +80,11 @@ KAZAKH_TO_BASE = {
 def spell_token(token: str) -> list[str]:
     """Return a transparent dactyl fallback sequence for an unknown token."""
 
+    return list(_spell_token_cached(token))
+
+
+@lru_cache(maxsize=8192)
+def _spell_token_cached(token: str) -> tuple[str, ...]:
     signs: list[str] = []
     for char in token.lower().replace("ё", "е"):
         chars = KAZAKH_TO_BASE.get(char, [char])
@@ -85,4 +92,4 @@ def spell_token(token: str) -> list[str]:
             sign = RUSSIAN_DACTYL.get(mapped) or EN_DACTYL.get(mapped)
             if sign:
                 signs.append(sign)
-    return signs
+    return tuple(signs)
