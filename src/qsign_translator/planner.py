@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cached_property
 
 from .dactyl import spell_token
 from .language import (
@@ -78,23 +79,23 @@ class SignPlan:
     units: list[SignUnit]
     risk_domains: list[str]
 
-    @property
+    @cached_property
     def confidence(self) -> float:
         if not self.units:
             return 0.0
         return round(sum(unit.confidence for unit in self.units) / len(self.units), 3)
 
-    @property
+    @cached_property
     def fallback_count(self) -> int:
         return sum(
             1 for unit in self.units if unit.kind != "gloss" or unit.source.startswith("fallback")
         )
 
-    @property
+    @cached_property
     def unknown_token_count(self) -> int:
         return sum(1 for unit in self.units if unit.source.startswith("fallback"))
 
-    @property
+    @cached_property
     def source_ids(self) -> list[str]:
         sources = []
         for unit in self.units:
@@ -103,11 +104,11 @@ class SignPlan:
                 sources.append(source)
         return sources
 
-    @property
+    @cached_property
     def normalized_tokens(self) -> list[str]:
         return [normalize_for_lookup(token) for token in tokenize(self.input_text)]
 
-    @property
+    @cached_property
     def review_gate(self) -> str:
         if self.risk_domains:
             return "human_interpreter_required"
@@ -115,17 +116,17 @@ class SignPlan:
             return "native_signer_review_required"
         return "native_signer_review_recommended"
 
-    @property
+    @cached_property
     def job_status(self) -> str:
         if self.risk_domains or self.fallback_count:
             return "review_required"
         return "draft_plan"
 
-    @property
+    @cached_property
     def output_status(self) -> str:
         return "not_rendered"
 
-    @property
+    @cached_property
     def output_kind(self) -> str:
         return "sign_plan_preview"
 
@@ -263,9 +264,16 @@ class SignPlanner:
             language = resolve_mixed_language(text)
         units: list[SignUnit] = []
         tokens = tokenize(text)
+        normalized_tokens = [normalize_for_lookup(token) for token in tokens]
+        transliterated_tokens = None
+        if language == "kk":
+            transliterated_tokens = [
+                normalize_for_lookup(transliterate_kazakh_latin_to_cyrillic(token))
+                for token in tokens
+            ]
         index = 0
         while index < len(tokens):
-            match = self._match_longest(tokens, index, language)
+            match = self._match_longest(tokens, normalized_tokens, transliterated_tokens, index, language)
             if match:
                 source_token, entry, consumed = match
                 index += consumed
@@ -284,8 +292,8 @@ class SignPlanner:
                 continue
 
             token = tokens[index]
+            normalized = normalized_tokens[index]
             index += 1
-            normalized = normalize_for_lookup(token)
             entry = self.lexicon.lookup(normalized, language)
             if entry:
                 if entry.gloss == "OMIT":
@@ -303,8 +311,8 @@ class SignPlanner:
                 continue
 
             if language == "kk":
-                latin_variant = transliterate_kazakh_latin_to_cyrillic(token)
-                latin_entry = self.lexicon.lookup(normalize_for_lookup(latin_variant), language)
+                assert transliterated_tokens is not None
+                latin_entry = self.lexicon.lookup(transliterated_tokens[index - 1], language)
                 if latin_entry:
                     if latin_entry.gloss == "OMIT":
                         continue
@@ -348,18 +356,22 @@ class SignPlanner:
             risk_domains=detect_risk_domains(text),
         )
 
-    def _match_longest(self, tokens: list[str], index: int, language: str):
+    def _match_longest(
+        self,
+        tokens: list[str],
+        normalized_tokens: list[str],
+        transliterated_tokens: list[str] | None,
+        index: int,
+        language: str,
+    ):
         max_len = min(4, len(tokens) - index)
         for size in range(max_len, 1, -1):
-            phrase = " ".join(normalize_for_lookup(token) for token in tokens[index : index + size])
+            phrase = " ".join(normalized_tokens[index : index + size])
             entry = self.lexicon.lookup(phrase, language)
             if entry:
                 return " ".join(tokens[index : index + size]), entry, size
-            if language == "kk":
-                transliterated = " ".join(
-                    normalize_for_lookup(transliterate_kazakh_latin_to_cyrillic(token))
-                    for token in tokens[index : index + size]
-                )
+            if language == "kk" and transliterated_tokens is not None:
+                transliterated = " ".join(transliterated_tokens[index : index + size])
                 transliterated_entry = self.lexicon.lookup(transliterated, language)
                 if transliterated_entry:
                     return " ".join(tokens[index : index + size]), transliterated_entry, size
