@@ -561,12 +561,68 @@
       "clip_id": "rsl_name"
     },
     {
+      "token": "две",
+      "gloss": "ДВА",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
       "token": "нужна",
       "gloss": "NEED",
       "language": "ru",
       "source": "seed:manual",
       "confidence": 0.68,
       "clip_id": "rsl_need"
+    },
+    {
+      "token": "проект",
+      "gloss": "ПРОЕКТ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
+      "token": "реально",
+      "gloss": "РЕАЛЬНО",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
+      "token": "результат",
+      "gloss": "РЕЗУЛЬТАТ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
+      "token": "зрелость",
+      "gloss": "ЗРЕЛОСТЬ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
+      "token": "качество",
+      "gloss": "КАЧЕСТВО",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
+      "token": "повышать",
+      "gloss": "ПОВЫШАТЬ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
     },
     {
       "token": "помощь",
@@ -583,6 +639,22 @@
       "source": "seed:manual",
       "confidence": 0.8,
       "clip_id": "rsl_hello"
+    },
+    {
+      "token": "удобство",
+      "gloss": "УДОБСТВО",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
+      "token": "улучшать",
+      "gloss": "УЛУЧШАТЬ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
     },
     {
       "token": "спасибо",

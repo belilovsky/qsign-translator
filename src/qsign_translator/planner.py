@@ -67,8 +67,8 @@ class SignUnit:
         return {
             "type": "subtitle_fallback",
             "status": "needs_review",
-            "reason": "Сервис не смог подобрать жест или дактиль и оставил текстовую подсказку.",
-            "review_hint": "Нужна ручная замена на жестовый вариант.",
+            "reason": "Слово оставлено текстом как временная подсказка, потому что словарного жеста пока нет.",
+            "review_hint": "Нужна ручная замена на жестовый вариант или подтверждение локальной практики.",
         }
 
 
@@ -328,6 +328,18 @@ class SignPlanner:
                     )
                     continue
 
+            if _should_use_subtitle_fallback(token, language):
+                units.append(
+                    SignUnit(
+                        kind="subtitle",
+                        source_token=token,
+                        gloss=token,
+                        confidence=0.24,
+                        source="fallback:subtitle",
+                    )
+                )
+                continue
+
             dactyl_units = spell_token(token)
             if dactyl_units:
                 units.append(
@@ -387,3 +399,16 @@ def _plural_ru(value: int, one: str, few: str, many: str) -> str:
     if 2 <= value % 10 <= 4:
         return few
     return many
+
+
+def _should_use_subtitle_fallback(token: str, language: str) -> bool:
+    normalized = normalize_for_lookup(token)
+    if not normalized:
+        return False
+    if any(char.isdigit() for char in normalized):
+        return False
+    if len(normalized) <= 5:
+        return False
+    if language == "en":
+        return True
+    return True

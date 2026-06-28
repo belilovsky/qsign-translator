@@ -1010,10 +1010,6 @@ textarea:focus {
 }
 
 .feedback-card.operator-detail {
-  display: none;
-}
-
-.review-mode .feedback-card.operator-detail {
   display: grid;
 }
 

@@ -57,6 +57,13 @@
       "expected_glosses": ["АДРЕС/УЛИЦА", "РАБОТА"]
     },
     {
+      "text": "две вещи, которые реально повышают зрелость проекта.",
+      "expected_language": "ru",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": ["ДВА", "ВЕЩЬ", "КОТОРЫЙ", "РЕАЛЬНО", "ПОВЫШАТЬ", "ЗРЕЛОСТЬ", "ПРОЕКТ"]
+    },
+    {
       "text": "Спасибо большое",
       "expected_language": "ru",
       "expected_fallback_count": 0,

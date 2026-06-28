@@ -89,14 +89,6 @@
       "clip_id": "asl_hello"
     },
     {
-      "token": "salam",
-      "gloss": "HELLO",
-      "language": "kk",
-      "source": "seed:manual",
-      "confidence": 0.72,
-      "clip_id": "krsl_hello"
-    },
-    {
       "token": "help",
       "gloss": "HELP",
       "language": "en",
@@ -329,6 +321,14 @@
       "clip_id": "asl_you"
     },
     {
+      "token": "salam",
+      "gloss": "HELLO",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.72,
+      "clip_id": "krsl_hello"
+    },
+    {
       "token": "аты",
       "gloss": "NAME",
       "language": "kk",
@@ -481,20 +481,20 @@
       "clip_id": "krsl_hello_formal"
     },
     {
-      "token": "қалайсыз",
-      "gloss": "HOW_ARE_YOU",
-      "language": "kk",
-      "source": "seed:manual",
-      "confidence": 0.67,
-      "clip_id": null
-    },
-    {
       "token": "қайда",
       "gloss": "WHERE",
       "language": "kk",
       "source": "seed:manual",
       "confidence": 0.58,
       "clip_id": "krsl_where"
+    },
+    {
+      "token": "қалайсыз",
+      "gloss": "HOW_ARE_YOU",
+      "language": "kk",
+      "source": "seed:manual",
+      "confidence": 0.67,
+      "clip_id": null
     },
     {
       "token": "10",
@@ -1897,6 +1897,14 @@
       "clip_id": "90c865db-f6be-40e4-88ac-170e5e5ea451"
     },
     {
+      "token": "две",
+      "gloss": "ДВА",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
       "token": "две недели",
       "gloss": "ДВЕ НЕДЕЛИ",
       "language": "ru",
@@ -2833,6 +2841,14 @@
       "clip_id": "fad93851-a4d7-4da5-bdca-ea025b6edef9"
     },
     {
+      "token": "зрелость",
+      "gloss": "ЗРЕЛОСТЬ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
       "token": "зуб",
       "gloss": "ЗУБ",
       "language": "ru",
@@ -3095,6 +3111,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "885e15e3-6bf5-4e5d-a434-3883c6c833f7"
+    },
+    {
+      "token": "качество",
+      "gloss": "КАЧЕСТВО",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
     },
     {
       "token": "класс/кабинет/комната",
@@ -5313,6 +5337,14 @@
       "clip_id": "3f2a1c29-7920-4a60-a5e2-62b2ef88524e"
     },
     {
+      "token": "повышать",
+      "gloss": "ПОВЫШАТЬ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
       "token": "погода",
       "gloss": "ПОГОДА",
       "language": "ru",
@@ -5913,6 +5945,14 @@
       "clip_id": "ccdb9197-1bfa-49cb-8b89-c9b261f26c0f"
     },
     {
+      "token": "проект",
+      "gloss": "ПРОЕКТ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
       "token": "прозрачный",
       "gloss": "ПРОЗРАЧНЫЙ",
       "language": "ru",
@@ -6225,6 +6265,14 @@
       "clip_id": "a1ce7b55-c570-42db-aa74-6abf48524017"
     },
     {
+      "token": "реально",
+      "gloss": "РЕАЛЬНО",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
       "token": "ребенок",
       "gloss": "РЕБЕНОК",
       "language": "ru",
@@ -6255,6 +6303,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "1443c6e6-405b-483a-9363-9c3b3857ae2f"
+    },
+    {
+      "token": "результат",
+      "gloss": "РЕЗУЛЬТАТ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
     },
     {
       "token": "религия",
@@ -7409,6 +7465,14 @@
       "clip_id": "57efa9ae-d181-4614-a029-d54c109e870a"
     },
     {
+      "token": "удобство",
+      "gloss": "УДОБСТВО",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
+    },
+    {
       "token": "ужасный",
       "gloss": "УЖАСНЫЙ",
       "language": "ru",
@@ -7423,6 +7487,14 @@
       "source": "slovo:archive_gloss",
       "confidence": 0.63,
       "clip_id": "b539c376-943e-438d-ae61-a07b806cf0be"
+    },
+    {
+      "token": "улучшать",
+      "gloss": "УЛУЧШАТЬ",
+      "language": "ru",
+      "source": "seed:manual_ru_candidate",
+      "confidence": 0.46,
+      "clip_id": null
     },
     {
       "token": "уметь/знать",

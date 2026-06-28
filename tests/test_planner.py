@@ -12,13 +12,18 @@ class SignPlannerTests(unittest.TestCase):
     def test_detects_kazakh(self) -> None:
         self.assertEqual(detect_language("Сәлеметсіз бе, көмек керек"), "kk")
 
-    def test_russian_known_and_dactyl_fallback(self) -> None:
+    def test_russian_known_and_subtitle_fallback(self) -> None:
         plan = self.planner.plan("Привет Александр")
         self.assertEqual(plan.language, "ru")
         self.assertEqual(plan.units[0].kind, "gloss")
         self.assertEqual(plan.units[0].gloss, "HELLO")
-        self.assertEqual(plan.units[1].kind, "dactyl")
-        self.assertIn("DACTYL_A", plan.units[1].gloss)
+        self.assertEqual(plan.units[1].kind, "subtitle")
+        self.assertEqual(plan.units[1].gloss, "александр")
+
+    def test_short_unknown_word_stays_in_dactyl(self) -> None:
+        plan = self.planner.plan("Где")
+        self.assertEqual(plan.units[0].kind, "dactyl")
+        self.assertIn("DACTYL_GE", plan.units[0].gloss)
 
     def test_russian_phrase_lookup(self) -> None:
         plan = self.planner.plan("Привет меня зовут Александр")
@@ -68,6 +73,14 @@ class SignPlannerTests(unittest.TestCase):
         self.assertEqual(plan.fallback_count, 0)
         self.assertEqual([unit.gloss for unit in plan.units], ["ME", "НЕ", "ПОНИМАТЬ"])
 
+    def test_product_sentence_uses_reviewed_aliases_instead_of_letter_by_letter_fallback(self) -> None:
+        plan = self.planner.plan("две вещи, которые реально повышают зрелость проекта.")
+        self.assertEqual(plan.fallback_count, 0)
+        self.assertEqual(
+            [unit.gloss for unit in plan.units],
+            ["ДВА", "ВЕЩЬ", "КОТОРЫЙ", "РЕАЛЬНО", "ПОВЫШАТЬ", "ЗРЕЛОСТЬ", "ПРОЕКТ"],
+        )
+
     def test_u_menya_phrase_and_pain_alias_reduce_noise(self) -> None:
         plan = self.planner.plan("У меня болит голова")
         self.assertEqual(plan.fallback_count, 0)
@@ -92,7 +105,7 @@ class SignPlannerTests(unittest.TestCase):
         data = self.planner.plan("Привет Александр").to_dict()
         self.assertEqual(data["coverage"]["total"], 2)
         self.assertEqual(data["coverage"]["gloss"], 1)
-        self.assertEqual(data["coverage"]["dactyl"], 1)
+        self.assertEqual(data["coverage"]["dactyl"], 0)
         self.assertEqual(data["metadata"]["fallback_count"], 1)
         self.assertEqual(data["metadata"]["unknown_token_count"], 1)
         self.assertEqual(data["metadata"]["job_status"], "review_required")
@@ -113,7 +126,7 @@ class SignPlannerTests(unittest.TestCase):
         data = self.planner.plan("salam dostar").to_dict()
         self.assertEqual(data["language"], "kk")
         self.assertEqual(data["units"][0]["gloss"], "HELLO")
-        self.assertIn("dactyl", [unit["kind"] for unit in data["units"]])
+        self.assertIn(data["units"][1]["kind"], ["subtitle", "dactyl"])
 
     def test_language_scopes_do_not_leak_cross_language_matches(self) -> None:
         data = self.planner.plan("Hello", language_hint="ru").to_dict()
@@ -150,7 +163,7 @@ class SignPlannerTests(unittest.TestCase):
         decisions = [unit["decision"] for unit in data["units"]]
         self.assertEqual(decisions[0]["type"], "token_lookup")
         self.assertEqual(decisions[0]["status"], "matched")
-        self.assertEqual(decisions[1]["type"], "dactyl_fallback")
+        self.assertEqual(decisions[1]["type"], "subtitle_fallback")
         self.assertEqual(decisions[1]["status"], "needs_review")
 
 

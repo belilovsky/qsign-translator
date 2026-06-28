@@ -4,7 +4,7 @@ import io
 import json
 import runpy
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from unittest import mock
 
 from qsign_translator import cli
@@ -46,7 +46,12 @@ class CliTests(unittest.TestCase):
 
     def test_main_requires_non_empty_text(self) -> None:
         fake_stdin = io.StringIO("   ")
-        with mock.patch("sys.stdin", fake_stdin), self.assertRaises(SystemExit) as exc:
+        stderr = io.StringIO()
+        with (
+            mock.patch("sys.stdin", fake_stdin),
+            redirect_stderr(stderr),
+            self.assertRaises(SystemExit) as exc,
+        ):
             cli.main([])
 
         self.assertEqual(exc.exception.code, 2)

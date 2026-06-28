@@ -112,6 +112,24 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(data["language"], "en")
         self.assertEqual([unit["gloss"] for unit in data["units"]], ["ME", "NEED", "HELP"])
 
+    def test_text_translation_reuses_new_russian_reviewed_aliases(self) -> None:
+        with mock.patch(
+            "qsign_translator.api.db.record_translation_job",
+            side_effect=RuntimeError("database unavailable"),
+        ):
+            response = self.client.post(
+                "/v1/translate/text",
+                json={"text": "две вещи, которые реально повышают зрелость проекта."},
+            )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["language"], "ru")
+        self.assertEqual(data["coverage"]["fallback"], 0)
+        self.assertEqual(
+            [unit["gloss"] for unit in data["units"]],
+            ["ДВА", "ВЕЩЬ", "КОТОРЫЙ", "РЕАЛЬНО", "ПОВЫШАТЬ", "ЗРЕЛОСТЬ", "ПРОЕКТ"],
+        )
+
     def test_text_translation_returns_job_metadata_when_persisted(self) -> None:
         with mock.patch("qsign_translator.api.db.record_translation_job", return_value="job-1"):
             response = self.client.post(

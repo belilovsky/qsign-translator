@@ -1146,8 +1146,11 @@ async function generatePlan() {
     state.lastAIBrief = null;
     const jobId = plan?.metadata?.job_id;
     if (jobId) {
-      await loadReviewVideo(jobId, generationId);
-      await Promise.allSettled([loadRenderPlan(jobId, generationId), loadAIVideoBrief(jobId, generationId)]);
+      void Promise.allSettled([
+        loadReviewVideo(jobId, generationId),
+        loadRenderPlan(jobId, generationId),
+        loadAIVideoBrief(jobId, generationId),
+      ]);
     } else {
       if (generationId !== state.generationRequestId) return;
       showUnsavedDependentState();
