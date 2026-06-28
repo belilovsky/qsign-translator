@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from qsign_translator.preview_video import FFMPEG_TIMEOUT_SECONDS
 from qsign_translator.preview_video import PreviewVideoUnavailable
 from qsign_translator.preview_video import build_review_video
 
@@ -41,7 +42,7 @@ class PreviewVideoTests(unittest.TestCase):
                 self.assertIn("ffmpeg", command[0])
                 self.assertIn("-vf", command)
                 self.assertIn("subtitles=", command[command.index("-vf") + 1])
-                self.assertEqual(timeout, 20)
+                self.assertEqual(timeout, FFMPEG_TIMEOUT_SECONDS)
                 Path(command[-1]).write_bytes(b"fake-mp4")
                 return mock.Mock(returncode=0)
 

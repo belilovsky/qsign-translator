@@ -12,6 +12,12 @@ class PreviewVideoUnavailable(RuntimeError):
     pass
 
 
+PREVIEW_WIDTH = 960
+PREVIEW_HEIGHT = 540
+PREVIEW_FONT_SIZE = 20
+FFMPEG_TIMEOUT_SECONDS = 12
+
+
 @dataclass(frozen=True)
 class PreviewVideoArtifact:
     path: Path
@@ -74,6 +80,12 @@ def build_review_video(
             filter_value,
             "-t",
             f"{_duration_seconds(units):.3f}",
+            "-preset",
+            "ultrafast",
+            "-tune",
+            "stillimage",
+            "-crf",
+            "30",
             "-pix_fmt",
             "yuv420p",
             "-c:v",
@@ -83,7 +95,13 @@ def build_review_video(
             str(tmp_output),
         ]
         try:
-            subprocess.run(command, check=True, capture_output=True, text=True, timeout=20)
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=FFMPEG_TIMEOUT_SECONDS,
+            )
         except subprocess.CalledProcessError as exc:
             stderr = (exc.stderr or "").strip()
             raise PreviewVideoUnavailable(f"ffmpeg failed: {stderr or exc}") from exc
@@ -172,7 +190,7 @@ def _build_filter(subtitles_path: Path) -> str:
     subtitle_value = subtitles_path.as_posix().replace("\\", "\\\\").replace(":", "\\:")
     style = (
         "FontName=DejaVu Sans,"
-        "FontSize=24,"
+        f"FontSize={PREVIEW_FONT_SIZE},"
         "PrimaryColour=&H00FFFFFF,"
         "OutlineColour=&H64000000,"
         "BackColour=&H50000000,"
@@ -183,7 +201,7 @@ def _build_filter(subtitles_path: Path) -> str:
         "MarginV=26"
     )
     return (
-        "scale=1280:720:force_original_aspect_ratio=decrease,"
-        "pad=1280:720:(ow-iw)/2:(oh-ih)/2:color=white,"
+        f"scale={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:force_original_aspect_ratio=decrease,"
+        f"pad={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=white,"
         f"subtitles={subtitle_value}:force_style='{style}'"
     )

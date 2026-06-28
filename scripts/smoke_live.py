@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import sys
 from dataclasses import dataclass
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+REQUEST_EXCEPTIONS = (HTTPError, URLError, TimeoutError, socket.timeout)
 
 
 @dataclass
@@ -63,7 +66,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             status == 200 and payload.get("status") == "ok",
             f"{status} {payload}",
         )
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except REQUEST_EXCEPTIONS as exc:
         _record(results, "health", False, str(exc))
 
     try:
@@ -74,7 +77,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             and payload.get("database", {}).get("ok")
         )
         _record(results, "ready", bool(ok), f"{status} {payload}")
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except REQUEST_EXCEPTIONS as exc:
         _record(results, "ready", False, str(exc))
 
     try:
@@ -86,7 +89,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             status == 200 and version == "0.2.0",
             f"{status} version={version}",
         )
-    except (HTTPError, URLError, TimeoutError) as exc:
+    except REQUEST_EXCEPTIONS as exc:
         _record(results, "openapi", False, str(exc))
 
     job_ids: list[str] = []
@@ -112,7 +115,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 and metadata.get("output_status") == "not_rendered"
             )
             _record(results, name, bool(ok), f"{status} job_id={job_id or '-'}")
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except REQUEST_EXCEPTIONS as exc:
             _record(results, name, False, str(exc))
 
     if job_ids:
@@ -128,7 +131,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 status == 200 and "total_units" in summary,
                 f"{status} {summary}",
             )
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except REQUEST_EXCEPTIONS as exc:
             _record(results, "render_plan", False, str(exc))
 
         try:
@@ -145,7 +148,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 status == 200 and bool(preview_kind),
                 f"{status} {preview_kind}",
             )
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except REQUEST_EXCEPTIONS as exc:
             _record(results, "review_video_head", False, str(exc))
 
         try:
@@ -159,7 +162,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 "batch_storyboard",
             }.issubset(exports)
             _record(results, "ai_video_brief", ok, f"{status} exports={exports}")
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except REQUEST_EXCEPTIONS as exc:
             _record(results, "ai_video_brief", False, str(exc))
 
     if len(job_ids) >= 2:
@@ -180,7 +183,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 ok,
                 f"{status} scenes={scene_count} exports={exports}",
             )
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except REQUEST_EXCEPTIONS as exc:
             _record(results, "ai_video_batch_brief", False, str(exc))
 
     try:
@@ -188,7 +191,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
         _record(results, "review_without_token", False, "unexpected 200")
     except HTTPError as exc:
         _record(results, "review_without_token", exc.code in {403, 503}, f"HTTP {exc.code}")
-    except (URLError, TimeoutError) as exc:
+    except REQUEST_EXCEPTIONS as exc:
         _record(results, "review_without_token", False, str(exc))
 
     try:
@@ -201,7 +204,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             exc.code in {403, 503},
             f"HTTP {exc.code}",
         )
-    except (URLError, TimeoutError) as exc:
+    except REQUEST_EXCEPTIONS as exc:
         _record(results, "review_sessions_without_token", False, str(exc))
 
     if review_token:
@@ -218,7 +221,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                 status == 200 and "count" in payload,
                 f"{status} count={payload.get('count')}",
             )
-        except (HTTPError, URLError, TimeoutError) as exc:
+        except REQUEST_EXCEPTIONS as exc:
             _record(results, "review_with_token", False, str(exc))
 
         if job_ids:
@@ -237,7 +240,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                     status == 200 and isinstance(items, list),
                     f"{status} items={len(items)}",
                 )
-            except (HTTPError, URLError, TimeoutError) as exc:
+            except REQUEST_EXCEPTIONS as exc:
                 _record(results, "review_audit_with_token", False, str(exc))
 
             try:
@@ -255,7 +258,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
                     status == 200 and payload.get("publish_status") == "draft",
                     f"{status} publish_status={payload.get('publish_status')}",
                 )
-            except (HTTPError, URLError, TimeoutError) as exc:
+            except REQUEST_EXCEPTIONS as exc:
                 _record(results, "review_publish_status_with_token", False, str(exc))
 
     for path in [
@@ -268,7 +271,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             _record(results, f"invalid_id:{path}", False, "unexpected 200")
         except HTTPError as exc:
             _record(results, f"invalid_id:{path}", exc.code == 404, f"HTTP {exc.code}")
-        except (URLError, TimeoutError) as exc:
+        except REQUEST_EXCEPTIONS as exc:
             _record(results, f"invalid_id:{path}", False, str(exc))
 
     try:
@@ -276,7 +279,7 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
         _record(results, "invalid_id:review-video", False, "unexpected 200")
     except HTTPError as exc:
         _record(results, "invalid_id:review-video", exc.code == 404, f"HTTP {exc.code}")
-    except (URLError, TimeoutError) as exc:
+    except REQUEST_EXCEPTIONS as exc:
         _record(results, "invalid_id:review-video", False, str(exc))
 
     return results
