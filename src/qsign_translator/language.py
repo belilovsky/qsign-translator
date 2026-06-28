@@ -5,6 +5,25 @@ import re
 KAZAKH_SPECIFIC = set("әғқңөұүһіӘҒҚҢӨҰҮҺІ")
 CYRILLIC_RE = re.compile(r"[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]")
 LATIN_RE = re.compile(r"[A-Za-z]")
+KAZAKH_HINT_TOKENS = {
+    "мен",
+    "сен",
+    "сіз",
+    "менің",
+    "маған",
+    "сені",
+    "жоқ",
+    "қалай",
+    "қайда",
+    "қандай",
+    "керек",
+    "қажет",
+    "көмек",
+    "бала",
+    "ата",
+    "ана",
+    "ауыр",
+}
 
 
 def detect_language(text: str) -> str:
@@ -29,6 +48,13 @@ def detect_language(text: str) -> str:
 
     kazakh_count = sum(1 for ch in letters if ch in KAZAKH_SPECIFIC)
     if kazakh_count == 0:
+        tokens = set(
+            token.strip().lower()
+            for token in re.split(r"\W+", text)
+            if token.strip()
+        )
+        if tokens.intersection(KAZAKH_HINT_TOKENS):
+            return "kk"
         return "ru"
     ratio = kazakh_count / max(1, len(letters))
     if ratio >= 0.08:

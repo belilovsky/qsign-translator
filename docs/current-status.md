@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-06-27
+Last updated: 2026-06-28
 
 ## Scope
 
@@ -94,11 +94,14 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 69 automated tests green;
+- 91 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
 - working single-job and batch AI-video export modes.
+- deterministic language route now routes Kazakh without explicit Kazakh-specific
+  characters when common Kazakh lexical markers are present (`мен`, `керек`, etc.),
+  and EN/KK seed coverage is expanded for common short phrases.
 - deterministic runtime lexicon rebuild from curated overrides plus archived
   Slovo assets.
 - live footer attribution now points back to `qdev.run` in a muted, non-promotional style.

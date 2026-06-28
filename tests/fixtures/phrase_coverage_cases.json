@@ -5,77 +5,113 @@
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["HELLO"]
+      "expected_glosses": [
+        "HELLO"
+      ]
     },
     {
       "text": "Добрый день",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["HELLO_FORMAL"]
+      "expected_glosses": [
+        "HELLO_FORMAL"
+      ]
     },
     {
       "text": "Мне нужна помощь",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["ME", "NEED", "HELP"]
+      "expected_glosses": [
+        "ME",
+        "NEED",
+        "HELP"
+      ]
     },
     {
       "text": "Мне нужно помочь",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["ME", "NEED", "HELP"]
+      "expected_glosses": [
+        "ME",
+        "NEED",
+        "HELP"
+      ]
     },
     {
       "text": "Я не понимаю",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["ME", "НЕ", "ПОНИМАТЬ"]
+      "expected_glosses": [
+        "ME",
+        "НЕ",
+        "ПОНИМАТЬ"
+      ]
     },
     {
       "text": "У меня болит голова",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["ME", "БОЛЕТЬ", "ГОЛОВА"]
+      "expected_glosses": [
+        "ME",
+        "БОЛЕТЬ",
+        "ГОЛОВА"
+      ]
     },
     {
       "text": "Нужна школа для ребенка",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["NEED", "ШКОЛА", "РЕБЕНОК"]
+      "expected_glosses": [
+        "NEED",
+        "ШКОЛА",
+        "РЕБЕНОК"
+      ]
     },
     {
       "text": "Адрес и работа",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["АДРЕС/УЛИЦА", "РАБОТА"]
+      "expected_glosses": [
+        "АДРЕС/УЛИЦА",
+        "РАБОТА"
+      ]
     },
     {
       "text": "Спасибо большое",
       "expected_language": "ru",
       "expected_fallback_count": 0,
       "require_exact_glosses": true,
-      "expected_glosses": ["THANK_YOU", "БОЛЬШОЙ"]
+      "expected_glosses": [
+        "THANK_YOU",
+        "БОЛЬШОЙ"
+      ]
     },
     {
       "text": "Мне нужен врач",
       "expected_language": "ru",
       "expected_fallback_count": 1,
       "require_exact_glosses": false,
-      "expected_glosses": ["ME", "NEED"]
+      "expected_glosses": [
+        "ME",
+        "NEED"
+      ]
     },
     {
       "text": "Мне нужна больница",
       "expected_language": "ru",
       "expected_fallback_count": 1,
       "require_exact_glosses": false,
-      "expected_glosses": ["ME", "NEED"]
+      "expected_glosses": [
+        "ME",
+        "NEED"
+      ]
     },
     {
       "text": "Где туалет",
@@ -89,7 +125,89 @@
       "expected_language": "ru",
       "expected_fallback_count": 1,
       "require_exact_glosses": false,
-      "expected_glosses": ["ВЫ", "NAME"]
+      "expected_glosses": [
+        "ВЫ",
+        "NAME"
+      ]
+    },
+    {
+      "text": "Hello there",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "HELLO",
+        "THERE"
+      ]
+    },
+    {
+      "text": "Thank you",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "THANK_YOU"
+      ]
+    },
+    {
+      "text": "I need help",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "I NEED HELP"
+      ]
+    },
+    {
+      "text": "Where is the hospital",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "WHERE",
+        "THE",
+        "HOSPITAL"
+      ]
+    },
+    {
+      "text": "Where are you",
+      "expected_language": "en",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "WHERE",
+        "ARE",
+        "YOU"
+      ]
+    },
+    {
+      "text": "Сәлеметсіз бе",
+      "expected_language": "kk",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "HELLO_FORMAL",
+        "QUESTION_NMM"
+      ]
+    },
+    {
+      "text": "Сәлем",
+      "expected_language": "kk",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "HELLO"
+      ]
+    },
+    {
+      "text": "Қайда автобус",
+      "expected_language": "kk",
+      "expected_fallback_count": 0,
+      "require_exact_glosses": true,
+      "expected_glosses": [
+        "WHERE",
+        "BUS"
+      ]
     }
   ]
 }
