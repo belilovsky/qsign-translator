@@ -67,47 +67,16 @@ def build_review_video(
         subtitles_path = workdir / "captions.srt"
         subtitles_path.write_text(_build_srt(units), encoding="utf-8")
         tmp_output = workdir / "review.mp4"
-        filter_value = _build_filter(subtitles_path)
-        command = [
-            ffmpeg_path,
-            "-y",
-            "-loop",
-            "1",
-            "-framerate",
-            str(PREVIEW_FRAME_RATE),
-            "-i",
-            str(avatar_path),
-            "-vf",
-            filter_value,
-            "-t",
-            f"{_duration_seconds(units):.3f}",
-            "-r",
-            str(PREVIEW_FRAME_RATE),
-            "-threads",
-            "1",
-            "-pix_fmt",
-            "yuv420p",
-            "-c:v",
-            "mpeg4",
-            "-q:v",
-            "8",
-            "-movflags",
-            "+faststart",
-            str(tmp_output),
-        ]
         try:
-            subprocess.run(
-                command,
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=FFMPEG_TIMEOUT_SECONDS,
+            _render_preview_video(
+                ffmpeg_path=ffmpeg_path,
+                avatar_path=avatar_path,
+                subtitles_path=subtitles_path,
+                output_path=tmp_output,
+                duration_seconds=_duration_seconds(units),
             )
-        except subprocess.CalledProcessError as exc:
-            stderr = (exc.stderr or "").strip()
-            raise PreviewVideoUnavailable(f"ffmpeg failed: {stderr or exc}") from exc
-        except subprocess.TimeoutExpired as exc:
-            raise PreviewVideoUnavailable("ffmpeg timed out while building preview video") from exc
+        except PreviewVideoUnavailable as exc:
+            raise PreviewVideoUnavailable(str(exc)) from exc
 
         if not tmp_output.exists() or tmp_output.stat().st_size == 0:
             raise PreviewVideoUnavailable("preview video was not created")
@@ -135,6 +104,65 @@ def _job_signature(job: dict[str, object]) -> str:
     ]
     digest = hashlib.sha1("\n".join(payload).encode("utf-8")).hexdigest()
     return digest[:12]
+
+
+def _render_preview_video(
+    *,
+    ffmpeg_path: str,
+    avatar_path: Path,
+    subtitles_path: Path,
+    output_path: Path,
+    duration_seconds: float,
+) -> None:
+    primary_filter = _build_filter(subtitles_path)
+    fallback_filter = _build_fallback_filter()
+    primary_error: str | None = None
+    for filter_value, kind in ((primary_filter, "storyboard"), (fallback_filter, "fallback")):
+        command = [
+            ffmpeg_path,
+            "-y",
+            "-loop",
+            "1",
+            "-framerate",
+            str(PREVIEW_FRAME_RATE),
+            "-i",
+            str(avatar_path),
+            "-vf",
+            filter_value,
+            "-t",
+            f"{duration_seconds:.3f}",
+            "-r",
+            str(PREVIEW_FRAME_RATE),
+            "-threads",
+            "1",
+            "-pix_fmt",
+            "yuv420p",
+            "-c:v",
+            "mpeg4",
+            "-q:v",
+            "8",
+            "-movflags",
+            "+faststart",
+            str(output_path),
+        ]
+        try:
+            subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=FFMPEG_TIMEOUT_SECONDS,
+            )
+            return
+        except subprocess.CalledProcessError as exc:
+            stderr = (exc.stderr or "").strip()
+            message = f"ffmpeg {kind} render failed: {stderr or exc}"
+        except subprocess.TimeoutExpired:
+            message = f"ffmpeg {kind} render timed out"
+        if kind == "storyboard":
+            primary_error = message
+            continue
+        raise PreviewVideoUnavailable(primary_error or message)
 
 
 def _duration_seconds(units: list[dict[str, object]]) -> float:
@@ -205,4 +233,11 @@ def _build_filter(subtitles_path: Path) -> str:
         f"scale={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:force_original_aspect_ratio=decrease,"
         f"pad={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=white,"
         f"subtitles={subtitle_value}:force_style='{style}'"
+    )
+
+
+def _build_fallback_filter() -> str:
+    return (
+        f"scale={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:force_original_aspect_ratio=decrease,"
+        f"pad={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=white"
     )
