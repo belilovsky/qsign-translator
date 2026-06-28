@@ -28,6 +28,7 @@ manager, secret store, or host-level environment config.
 
 ```bash
 ./scripts/check.sh
+make benchmark
 rsync -az --delete \
   --exclude '.git/' \
   --exclude '.venv/' \

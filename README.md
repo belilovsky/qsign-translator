@@ -180,6 +180,12 @@ Fast sanity check:
 ./scripts/check.sh
 ```
 
+Lightweight planner benchmark:
+
+```bash
+make benchmark
+```
+
 Live deployment smoke:
 
 ```bash
