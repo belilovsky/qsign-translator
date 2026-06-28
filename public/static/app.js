@@ -1077,7 +1077,7 @@ async function loadRenderPlan(jobId, generationRequestId = 0) {
         `нет файла клипа: ${missingFiles}`,
         `выпуск: ${publishReady ? "да" : "нет"}`,
         blockers.length ? `блокеры: ${blockers.join(", ")}` : "блокеры: нет",
-        nextStep ? `следующий шаг: ${nextStep}` : "следующий шаг: ожидание",
+        nextStep ? `следующий шаг: ${formatPipelineNextStep(nextStep)}` : "следующий шаг: ожидание",
       ]
     );
   } catch {
@@ -1460,8 +1460,20 @@ function formatPipelineStatus(status) {
 function formatPipelineBlocker(blocker) {
   if (blocker === "needs_signer_approval") return "нужна проверка носителем";
   if (blocker === "missing_render_assets") return "не хватает видеофрагментов";
+  if (blocker === "render_output_missing") return "финальное видео еще не загружено";
   if (blocker === "empty_sign_plan") return "план жестов пуст";
   return String(blocker || "не задан");
+}
+
+function formatPipelineNextStep(step) {
+  if (step === "publishable_now") return "можно публиковать";
+  if (step === "replace_or_reupload_final_video") return "заменить или заново загрузить финальное видео";
+  if (step === "complete_final_video_review") return "завершить финальную проверку видео";
+  if (step === "prepare_external_render") return "подготовить внешний рендер";
+  if (step === "attach_or_generate_missing_assets") return "добавить недостающие клипы";
+  if (step === "start_render_or_brief_export") return "запустить сборку или отдать brief в работу";
+  if (step === "complete_signer_review") return "завершить проверку носителем";
+  return String(step || "ожидание");
 }
 
 function formatReviewerRole(role) {
@@ -1736,11 +1748,12 @@ function renderReviewDetail(job, feedbackItems = []) {
     const blockers = Array.isArray(state.lastRenderPlan?.publish_gate?.blockers)
       ? state.lastRenderPlan.publish_gate.blockers.map(formatPipelineBlocker).join(", ")
       : "";
+    const nextStep = formatPipelineNextStep(state.lastRenderPlan?.publish_gate?.next_step);
     appendTextElement(
       reviewDetailSummary,
       "p",
       "",
-      `Пайплайн: ${formatPipelineStatus(state.lastRenderPlan.pipeline_status)}.${blockers ? ` Блокеры: ${blockers}.` : ""}`
+      `Пайплайн: ${formatPipelineStatus(state.lastRenderPlan.pipeline_status)}.${blockers ? ` Блокеры: ${blockers}.` : ""}${nextStep ? ` Следующий шаг: ${nextStep}.` : ""}`
     );
     if (job.output_status === "ready" && job.output_uri) {
       const outputLink = document.createElement("a");
