@@ -1,4 +1,4 @@
-.PHONY: install install-api check api bootstrap-local
+.PHONY: install install-api check api bootstrap-local benchmark
 
 install:
 	python3 -m pip install -e ".[test]"
@@ -14,3 +14,6 @@ api:
 
 bootstrap-local:
 	./scripts/bootstrap_local.sh
+
+benchmark:
+	PYTHONPATH=src python3 scripts/benchmark_planner.py
