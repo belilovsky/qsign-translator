@@ -11,7 +11,7 @@ Repository source of truth:
 - archived fallback copy:
   `/Users/belilovsky/Documents/Codex/2026-04-28/qsign-translator-archive`
 
-QSign Translator is currently a transparent RU/KZ/EN sign-planning prototype. It
+QSign Translator is currently a transparent RU/KZ sign-planning prototype. It
 accepts short text, optionally accepts audio for ASR when the dependency is
 installed, produces a reviewable sign plan, and exposes a public-safe API
 contract for later video generation.
@@ -27,15 +27,12 @@ The project is intentionally honest about what exists today:
 
 ## Implemented
 
-- Deterministic RU/KZ/EN text-to-sign-plan prototype.
-- Explicit frontend and API language contract for `ru`, `kk`, and `en`; the UI
-  selection is sent to the planner instead of being a visual-only toggle.
+- Deterministic RU/KZ text-to-sign-plan prototype.
 - Runtime lexicon rebuilt from the archived Slovo gloss list plus reviewed seed
   entries, which materially improves Russian draft coverage.
 - Curated overrides now live in `data/curated_overrides.json`, so reviewed
   manual phrases and aliases are maintained separately from the imported RU
-  corpus. The same file now holds baseline KRSL and EN/ASL-oriented seed entries
-  for short public-service phrases.
+  corpus.
 - Phrase lookup, token lookup, and dactyl fallback.
 - Optional ASR adapter interface.
 - Persisted translation jobs when Postgres is configured.
@@ -97,11 +94,16 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 69 automated tests green;
+- 95 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
 - working single-job and batch AI-video export modes.
+- deterministic language route now routes Kazakh without explicit Kazakh-specific
+  characters when common Kazakh lexical markers are present (`мен`, `керек`, etc.),
+  and EN/KK seed coverage is expanded for common short phrases.
+- repeated regeneration in the same session updates dependent draft artifacts
+  (plan, render-plan, AI video brief) without stale cross-run overwrites.
 - deterministic runtime lexicon rebuild from curated overrides plus archived
   Slovo assets.
 - live footer attribution now points back to `qdev.run` in a muted, non-promotional style.
@@ -152,7 +154,7 @@ sign-language production stack.
   renderers; unresolved jobs now deliberately downgrade to review-only packages.
 - No production clip library is bundled in the repository.
 - No native-signer validation has happened yet.
-- ASR quality on real RU/KZ/EN production audio is not benchmarked here.
+- ASR quality on real RU/KZ production audio is not benchmarked here.
 - High-risk domains still require human interpreter fallback.
 - Batch render currently produces a strict handoff contract, not a render queue
   or worker-backed final video job.

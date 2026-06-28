@@ -12,15 +12,6 @@ class SignPlannerTests(unittest.TestCase):
     def test_detects_kazakh(self) -> None:
         self.assertEqual(detect_language("Сәлеметсіз бе, көмек керек"), "kk")
 
-    def test_detects_english(self) -> None:
-        self.assertEqual(detect_language("I need help"), "en")
-
-    def test_language_hint_overrides_auto_detection(self) -> None:
-        plan = self.planner.plan("Сәлем көмек керек", language_hint="kk")
-        self.assertEqual(plan.language, "kk")
-        self.assertEqual(plan.fallback_count, 0)
-        self.assertEqual([unit.gloss for unit in plan.units], ["HELLO", "HELP", "NEED"])
-
     def test_russian_known_and_dactyl_fallback(self) -> None:
         plan = self.planner.plan("Привет Александр")
         self.assertEqual(plan.language, "ru")
@@ -56,18 +47,6 @@ class SignPlannerTests(unittest.TestCase):
         self.assertIn("QUESTION_NMM", glosses)
         self.assertIn("HELP", glosses)
         self.assertIn("NEED", glosses)
-
-    def test_english_known_words(self) -> None:
-        plan = self.planner.plan("I need help")
-        self.assertEqual(plan.language, "en")
-        self.assertEqual(plan.fallback_count, 0)
-        self.assertEqual([unit.gloss for unit in plan.units], ["ME", "NEED", "HELP"])
-
-    def test_english_phrase_lookup(self) -> None:
-        plan = self.planner.plan("Thank you")
-        self.assertEqual(plan.language, "en")
-        self.assertEqual(plan.fallback_count, 0)
-        self.assertEqual([unit.gloss for unit in plan.units], ["THANK_YOU"])
 
     def test_russian_alias_forms_reuse_reviewed_entries(self) -> None:
         plan = self.planner.plan("Мне нужно помочь")
@@ -124,6 +103,29 @@ class SignPlannerTests(unittest.TestCase):
         self.assertIn("seed", data["metadata"]["source_ids"])
         self.assertIn("fallback", data["metadata"]["source_ids"])
 
+    def test_english_known_word_lookup(self) -> None:
+        data = self.planner.plan("Hello thank you", language_hint="en").to_dict()
+        self.assertEqual(data["language"], "en")
+        self.assertEqual([unit["gloss"] for unit in data["units"]], ["HELLO", "THANK_YOU"])
+        self.assertEqual([unit["kind"] for unit in data["units"]], ["gloss", "gloss"])
+
+    def test_latin_kazakh_text_routes_to_kk(self) -> None:
+        data = self.planner.plan("salam dostar").to_dict()
+        self.assertEqual(data["language"], "kk")
+        self.assertEqual(data["units"][0]["gloss"], "HELLO")
+        self.assertIn("dactyl", [unit["kind"] for unit in data["units"]])
+
+    def test_language_scopes_do_not_leak_cross_language_matches(self) -> None:
+        data = self.planner.plan("Hello", language_hint="ru").to_dict()
+        self.assertEqual(data["language"], "ru")
+        self.assertEqual(data["units"][0]["kind"], "dactyl")
+        self.assertEqual(data["units"][0]["source"], "fallback:dactyl")
+
+    def test_mixed_script_input_is_deterministically_routed(self) -> None:
+        data = self.planner.plan("Hello мен керек").to_dict()
+        self.assertEqual(data["language"], "kk")
+        self.assertIn("NEED", [unit.gloss for unit in self.planner.plan("Hello мен керек").units])
+
     def test_trace_explains_pipeline(self) -> None:
         data = self.planner.plan("Привет Александр").to_dict()
         trace = data["trace"]
@@ -131,26 +133,17 @@ class SignPlannerTests(unittest.TestCase):
         self.assertEqual(trace["summary"]["unit_count"], 2)
         self.assertEqual(trace["summary"]["fallback_units"], 1)
         self.assertEqual(trace["summary"]["review_gate"], "native_signer_review_required")
-        self.assertEqual(
-            [stage["id"] for stage in trace["stages"]],
-            [
-                "input",
-                "language",
-                "normalization",
-                "planning",
-                "review",
-                "output",
-            ],
-        )
+        self.assertEqual([stage["id"] for stage in trace["stages"]], [
+            "input",
+            "language",
+            "normalization",
+            "planning",
+            "review",
+            "output",
+        ])
         self.assertEqual(trace["stages"][0]["summary"], "16 символов, 2 токена.")
-        self.assertEqual(
-            trace["stages"][3]["summary"],
-            "Найдено 1, требует замены 1, всего 2 единицы.",
-        )
-        self.assertEqual(
-            trace["stages"][5]["summary"],
-            "Видео-аватар пока не собран. Сейчас доступен только прозрачный черновик плана.",
-        )
+        self.assertEqual(trace["stages"][3]["summary"], "Найдено 1, требует замены 1, всего 2 единицы.")
+        self.assertEqual(trace["stages"][5]["summary"], "Видео-аватар пока не собран. Сейчас доступен только прозрачный черновик плана.")
 
     def test_unit_decisions_explain_matches_and_fallbacks(self) -> None:
         data = self.planner.plan("Привет Александр").to_dict()

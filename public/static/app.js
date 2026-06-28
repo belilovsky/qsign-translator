@@ -17,6 +17,7 @@ const state = {
   lastAIBrief: null,
   aiBriefMode: "universal_prompt",
   aiBriefRequestId: 0,
+  generationRequestId: 0,
   videoPreviewReady: false,
   previewVideoRequestId: 0,
   renderPlanRequestId: 0,
@@ -41,12 +42,11 @@ const sampleSources = [
   { name: "Slovo", task: "rsl_dataset_models", languages: ["ru", "rsl"], status: "needs_license_check" },
   { name: "Easy Sign", task: "rsl_isolated_recognition", languages: ["ru", "rsl"], status: "verified" },
   { name: "KRSL20", task: "krsl_dataset_nonmanual", languages: ["krsl"], status: "needs_license_check" },
-  { name: "ASL-LEX", task: "asl_lexical_database", languages: ["en", "asl"], status: "needs_license_check" },
 ];
 
 const steps = [
   { title: "Текст", description: "Берем введенную фразу или расшифровку аудио." },
-  { title: "Язык", description: "Выбираем или определяем русский, казахский или английский маршрут." },
+  { title: "Язык", description: "Проверяем выбранный язык и готовим текст к разбору." },
   { title: "Жесты", description: "Подбираем известные жесты и отмечаем спорные места." },
   { title: "Показ", description: "Собираем прозрачный черновик для проверки человеком." },
 ];
@@ -77,9 +77,6 @@ const aiBriefModeButtons = Array.from(document.querySelectorAll("[data-brief-mod
 const riskCard = document.querySelector("#riskCard");
 const riskText = document.querySelector("#riskText");
 const subtitleBox = document.querySelector("#subtitleBox");
-const trustCard = document.querySelector("#trustCard");
-const trustTitle = document.querySelector("#trustTitle");
-const trustText = document.querySelector("#trustText");
 const resultTranscript = document.querySelector("#resultTranscript");
 const transcriptMeta = document.querySelector("#transcriptMeta");
 const applyTranscriptButton = document.querySelector("#applyTranscriptButton");
@@ -247,7 +244,6 @@ function scheduleHealthRetry() {
 
 function updateCharCount() {
   charCount.textContent = `${inputText.value.length} / 5000`;
-  updateInputGuidance();
 }
 
 function syncClearButton() {
@@ -257,59 +253,17 @@ function syncClearButton() {
 }
 
 function setInputLanguage(language) {
-  state.inputLanguage = ["ru", "kk", "en"].includes(language) ? language : "ru";
-  const placeholders = {
-    ru: "Введите короткий русский текст",
-    kk: "Қысқа қазақша мәтінді енгізіңіз",
-    en: "Enter a short English phrase",
-  };
+  const normalized = String(language || "ru").toLowerCase();
+  state.inputLanguage = normalized === "kk" || normalized === "en" ? normalized : "ru";
+  const isKazakh = state.inputLanguage === "kk";
+  const isEnglish = state.inputLanguage === "en";
   inputText.lang = state.inputLanguage;
   resultTranscript.lang = state.inputLanguage;
-  inputText.placeholder = placeholders[state.inputLanguage] || placeholders.ru;
-  updateInputGuidance();
-}
-
-function analyzeInputText(text) {
-  const normalized = String(text || "").trim();
-  const tokens = normalized ? normalized.split(/\s+/).filter(Boolean) : [];
-  const officialPattern = /(законодательств|государственн|обязательств|договор|услуг|товар|календарн|оплата|требован|исполнени|юридическ|law|legal|contract|procurement|payment|service|goods|obligation|requirement)/i;
-  const questionPattern = /[?？]|^(как|где|что|когда|почему|зачем|кім|қайда|қалай|who|what|where|when|why|how)\b/i;
-  return {
-    text: normalized,
-    charCount: normalized.length,
-    tokenCount: tokens.length,
-    isLong: tokens.length > 12 || normalized.length > 140,
-    isVeryLong: tokens.length > 24 || normalized.length > 260,
-    isOfficial: officialPattern.test(normalized),
-    isQuestion: questionPattern.test(normalized),
-  };
-}
-
-function updateInputGuidance() {
-  if (!inputHint) return;
-  const analysis = analyzeInputText(inputText.value);
-  if (!analysis.text) {
-    inputHint.textContent = "Короткие фразы легче проверить и показать по шагам.";
-    inputHint.className = "hint";
-    return;
-  }
-  if (analysis.isVeryLong || analysis.isOfficial) {
-    inputHint.textContent = "Это похоже на длинный или официальный текст. Лучше разбить его на короткие фразы и проверить человеком.";
-    inputHint.className = "hint strong";
-    return;
-  }
-  if (analysis.isLong) {
-    inputHint.textContent = "Фраза длинная: черновик будет полезен как разбор, но не как готовый жестовый перевод.";
-    inputHint.className = "hint strong";
-    return;
-  }
-  if (analysis.isQuestion) {
-    inputHint.textContent = "Вопросы лучше проверять носителем: порядок слов и мимика могут менять смысл.";
-    inputHint.className = "hint";
-    return;
-  }
-  inputHint.textContent = "Короткая фраза подходит для черновика и проверки по шагам.";
-  inputHint.className = "hint";
+  inputText.placeholder = isKazakh
+    ? "Қысқа қазақша мәтінді енгізіңіз"
+    : isEnglish
+      ? "Enter short English phrase"
+      : "Введите короткий русский текст";
 }
 
 function setUploadState(nextState, title, status) {
@@ -381,66 +335,6 @@ function syncAIBriefModeButtons() {
   });
 }
 
-function setTrustState(tone, title, text) {
-  trustCard.classList.remove("neutral", "ok", "warn", "bad");
-  trustCard.classList.add(tone || "neutral");
-  trustTitle.textContent = title;
-  trustText.textContent = text;
-}
-
-function summarizePlanTrust(plan) {
-  const units = plan?.units || [];
-  const coverage = plan?.coverage || {};
-  const total = Number(coverage.total ?? units.length);
-  const gloss = Number(coverage.gloss ?? units.filter((unit) => unit.kind === "gloss").length);
-  const dactyl = Number(coverage.dactyl ?? units.filter((unit) => unit.kind === "dactyl").length);
-  const fallback = Number(
-    coverage.fallback ?? units.filter((unit) => String(unit.source || "").startsWith("fallback")).length
-  );
-  const confidence = Number(plan?.confidence || 0);
-  const input = analyzeInputText(plan?.input_text || "");
-  const needsHuman = Boolean(plan?.risk?.needs_human_interpreter);
-  const replacementCount = dactyl + fallback;
-  if (needsHuman) {
-    return {
-      tone: "bad",
-      title: "Только как черновик для специалиста",
-      text: "Фраза относится к чувствительной теме. Не используйте результат как перевод без человека-переводчика.",
-    };
-  }
-  if (input.isVeryLong || input.isOfficial) {
-    return {
-      tone: "bad",
-      title: "Нужна переработка фразы",
-      text: "Длинный официальный текст лучше сначала упростить и разбить на короткие смысловые фразы. Текущий вывод подходит только для разбора проблемных мест.",
-    };
-  }
-  if (total > 0 && replacementCount / total >= 0.35) {
-    return {
-      tone: "warn",
-      title: "Черновик требует проверки",
-      text: `Найдено ${gloss} из ${total} единиц, остальные нужно заменить или проверить. Для показа пользователю этого пока недостаточно.`,
-    };
-  }
-  if (confidence >= 0.72 && replacementCount === 0) {
-    return {
-      tone: "ok",
-      title: "Хороший черновик для ревью",
-      text: "Словарное покрытие выглядит стабильным. Всё равно нужна проверка носителем жестового языка перед публикацией.",
-    };
-  }
-  return {
-    tone: "neutral",
-    title: "Черновик готов к разбору",
-    text: "Система собрала план и показала спорные места. Перед применением результат должен пройти человеческую проверку.",
-  };
-}
-
-function shouldAutoPreview(plan) {
-  const trust = summarizePlanTrust(plan);
-  return trust.tone === "ok" || trust.tone === "neutral";
-}
-
 function renderAIBriefData() {
   const data = state.lastAIBrief;
   if (!data) {
@@ -459,13 +353,8 @@ function renderAIBriefData() {
     );
     return;
   }
-  const genericAllowed = Boolean(data?.summary?.generic_avatar_allowed);
-  const blockers = Array.isArray(data?.summary?.render_blockers) ? data.summary.render_blockers : [];
-  const summaryText = genericAllowed
-    ? `Готов формат: ${activeExport.label || "brief"} · запись ${(data.job_id || "").slice(0, 8) || "—"}.`
-    : `Только для оператора: генерация аватара заблокирована${blockers.length ? ` · ${blockers.length} причин` : ""}.`;
   renderAIBriefSummary(
-    summaryText,
+    `Готов формат: ${activeExport.label || "brief"} · запись ${(data.job_id || "").slice(0, 8) || "—"}.`,
     String(activeExport.text || ""),
     true
   );
@@ -636,11 +525,14 @@ function applyLoadedVideoState(label) {
   }
 }
 
-async function loadReviewVideo(jobId) {
+async function loadReviewVideo(jobId, generationRequestId = 0) {
   const requestId = ++state.previewVideoRequestId;
   clearPreviewVideo();
   if (!jobId) {
     setVideoPreviewState(false, "Без сохраненной записи обзорное видео не собирается.");
+    return;
+  }
+  if (generationRequestId && generationRequestId !== state.generationRequestId) {
     return;
   }
   setVideoPreviewState(false, "Собираем обзорное видео черновика.");
@@ -652,12 +544,20 @@ async function loadReviewVideo(jobId) {
         resolve();
         return;
       }
+      if (generationRequestId && generationRequestId !== state.generationRequestId) {
+        resolve();
+        return;
+      }
       applyLoadedVideoState("Доступно обзорное видео черновика.");
       resolve();
     };
     const handleError = () => {
       cleanup();
       if (requestId !== state.previewVideoRequestId) {
+        resolve();
+        return;
+      }
+      if (generationRequestId && generationRequestId !== state.generationRequestId) {
         resolve();
         return;
       }
@@ -676,8 +576,11 @@ async function loadReviewVideo(jobId) {
   });
 }
 
-async function loadAIVideoBrief(jobId) {
+async function loadAIVideoBrief(jobId, generationRequestId = 0) {
   const requestId = ++state.aiBriefRequestId;
+  if (generationRequestId && generationRequestId !== state.generationRequestId) {
+    return;
+  }
   if (!jobId) {
     renderAIBriefSummary(
       "Экспорт для AI-видео доступен только после сохранения записи.",
@@ -694,13 +597,16 @@ async function loadAIVideoBrief(jobId) {
   try {
     const response = await fetch(`/v1/jobs/${jobId}/ai-video-brief`);
     if (requestId !== state.aiBriefRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const data = await response.json();
     if (requestId !== state.aiBriefRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     state.lastAIBrief = data;
     renderAIBriefData();
   } catch {
     if (requestId !== state.aiBriefRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     state.lastAIBrief = null;
     renderAIBriefSummary(
       "Пакет для AI-видео пока не получен.",
@@ -711,7 +617,9 @@ async function loadAIVideoBrief(jobId) {
 }
 
 function showUnsavedDependentState() {
+  state.lastAIBrief = null;
   setVideoPreviewState(false, "Сохранение записи недоступно: обзорное видео не собирается.");
+  resetAIBrief();
   renderRenderPlanSummary(
     "Без сохраненной записи нельзя проверить готовность к сборке видео.",
     ["готовность: нужна запись", "есть фрагментов: —", "нужно добавить: —", "выпуск: нет"]
@@ -754,9 +662,6 @@ function renderPlan(plan) {
   confidenceValue.textContent = confidence.toFixed(2);
   confidenceBar.style.width = `${Math.max(0, Math.min(1, confidence)) * 100}%`;
   subtitleBox.textContent = plan.input_text || "Нет текста";
-  const trust = summarizePlanTrust(plan);
-  setTrustState(trust.tone, trust.title, trust.text);
-  videoFrame.classList.toggle("blocked-preview", trust.tone === "bad" || trust.tone === "warn");
   resultTranscript.value = plan.input_text || "";
   syncClearButton();
   syncTranscriptState();
@@ -771,7 +676,6 @@ function renderPlan(plan) {
   renderTrace(plan.trace, plan);
 
   clearNode(timeline);
-  timeline.classList.toggle("dense", units.length > 12);
   units.forEach((unit, index) => {
     const fallback = unit.kind !== "gloss" || String(unit.source || "").startsWith("fallback");
     const gloss = formatGloss(unit);
@@ -803,8 +707,10 @@ function renderPlan(plan) {
 }
 
 function renderEmptyState() {
+  state.generationRequestId += 1;
   state.renderPlanRequestId += 1;
   state.previewVideoRequestId += 1;
+  state.aiBriefRequestId += 1;
   state.lastPlan = null;
   state.lastRenderPlan = null;
   state.videoPreviewReady = false;
@@ -815,18 +721,12 @@ function renderEmptyState() {
   jobMeta.classList.remove("stale");
   clearPreviewVideo();
   setVideoPreviewState(false, "Сначала соберите черновик перевода.");
-  videoFrame.classList.remove("blocked-preview");
   resetPlayback();
   setFullscreen(false);
   resetUploadState();
   subtitleBox.hidden = false;
   subtitleToggle.checked = true;
   subtitleBox.textContent = "Черновик появится после генерации.";
-  setTrustState(
-    "neutral",
-    "Пока нет черновика",
-    "Введите короткую фразу. Система покажет, что найдено в словарях, а что нужно проверить человеком."
-  );
   resultTranscript.value = inputText.value.trim();
   syncClearButton();
   transcriptMeta.textContent = "После первой сборки здесь можно будет быстро поправить текст и пересобрать черновик.";
@@ -869,19 +769,15 @@ function renderEmptyState() {
 
 function markPlanStale() {
   if (!state.lastPlan) return;
+  state.generationRequestId += 1;
   state.renderPlanRequestId += 1;
   state.previewVideoRequestId += 1;
+  state.aiBriefRequestId += 1;
   resultPanel.classList.add("is-stale");
   state.submittedFeedbackType = null;
   clearPreviewVideo();
   resetPlayback();
   setVideoPreviewState(false, "Черновик изменился. Пересоберите результат.");
-  videoFrame.classList.remove("blocked-preview");
-  setTrustState(
-    "neutral",
-    "Черновик устарел",
-    "Текст изменился. Пересоберите результат, чтобы обновить оценку качества и план жестов."
-  );
   jobMeta.textContent = "Текст изменен. Пересоберите черновик, чтобы обновить план, оценку и проверку.";
   jobMeta.classList.remove("muted");
   jobMeta.classList.add("stale");
@@ -1032,10 +928,7 @@ function renderJobMeta(metadata = {}) {
   const outputSentence = capitalizeFirst(outputStatus);
   jobMeta.classList.remove("stale");
   if (metadata?.persisted && metadata?.job_id) {
-    const previewCopy = shouldAutoPreview(state.lastPlan)
-      ? "Обзорное видео можно открыть как технический черновик."
-      : "Обзорное видео скрыто: сначала нужна правка текста или проверка человеком.";
-    jobMeta.textContent = `Черновик сохранен для проверки. ${outputSentence}. ${previewCopy} Проверка: ${reviewStatus}. Требует замены: ${fallbackCount}, неизвестно: ${unknownCount}.`;
+    jobMeta.textContent = `Черновик сохранен для проверки. ${outputSentence}. Обзорное видео собирается отдельно. Проверка: ${reviewStatus}. Требует замены: ${fallbackCount}, неизвестно: ${unknownCount}.`;
     jobMeta.classList.remove("muted");
     setFeedbackEnabled(true);
     return;
@@ -1076,10 +969,13 @@ function formatAdapterStatus(status) {
   return String(status || "не задан");
 }
 
-async function loadRenderPlan(jobId) {
+async function loadRenderPlan(jobId, generationRequestId = 0) {
   const requestId = ++state.renderPlanRequestId;
   if (!jobId) {
     resetRenderPlanSummary();
+    return;
+  }
+  if (generationRequestId && generationRequestId !== state.generationRequestId) {
     return;
   }
   renderRenderPlanSummary(
@@ -1092,9 +988,11 @@ async function loadRenderPlan(jobId) {
     const response = await fetch(`/v1/jobs/${jobId}/render-plan`, { signal: controller.signal });
     window.clearTimeout(timeoutId);
     if (requestId !== state.renderPlanRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const data = await response.json();
     if (requestId !== state.renderPlanRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     state.lastRenderPlan = data;
     const adapterStatus = formatAdapterStatus(data?.adapter?.adapter_status);
     const resolved = Number(data?.summary?.resolved_segments ?? 0);
@@ -1120,6 +1018,7 @@ async function loadRenderPlan(jobId) {
   } catch {
     window.clearTimeout(timeoutId);
     if (requestId !== state.renderPlanRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     renderRenderPlanSummary(
       "Готовность видео пока не получена. Черновик сохранен, проверьте позже.",
       ["готовность: ошибка", "есть фрагментов: ?", "нужно добавить: ?", "выпуск: нет"]
@@ -1216,7 +1115,20 @@ async function generatePlan() {
     inputText.focus();
     return;
   }
+  const generationId = ++state.generationRequestId;
   state.renderPlanRequestId += 1;
+  state.previewVideoRequestId += 1;
+  state.aiBriefRequestId += 1;
+  state.lastRenderPlan = null;
+  state.lastAIBrief = null;
+  state.aiBriefMode = "universal_prompt";
+  syncAIBriefModeButtons();
+  resetRenderPlanSummary();
+  renderAIBriefSummary(
+    "Готовим пакет для AI-видео...",
+    "Сохраните черновик, затем здесь появится свежий brief.",
+    false
+  );
   generateButton.disabled = true;
   generateButton.textContent = "Собираем...";
   renderSteps(2);
@@ -1226,23 +1138,25 @@ async function generatePlan() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text, language: state.inputLanguage }),
     });
+    if (generationId !== state.generationRequestId) return;
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const plan = await response.json();
+    if (generationId !== state.generationRequestId) return;
     renderPlan(plan);
+    state.lastAIBrief = null;
     const jobId = plan?.metadata?.job_id;
     if (jobId) {
-      if (shouldAutoPreview(plan)) {
-        await loadReviewVideo(jobId);
-      } else {
-        clearPreviewVideo();
-        setVideoPreviewState(false, "Видео скрыто: черновик сначала нужно проверить или упростить.");
-      }
-      await Promise.allSettled([loadRenderPlan(jobId), loadAIVideoBrief(jobId)]);
+      await loadReviewVideo(jobId, generationId);
+      await Promise.allSettled([loadRenderPlan(jobId, generationId), loadAIVideoBrief(jobId, generationId)]);
     } else {
+      if (generationId !== state.generationRequestId) return;
       showUnsavedDependentState();
     }
-    setService("ok", "работает");
+    if (generationId === state.generationRequestId) {
+      setService("ok", "работает");
+    }
   } catch (error) {
+    if (generationId !== state.generationRequestId) return;
     renderPlan({
       input_text: text,
       language: "unknown",
@@ -1258,9 +1172,11 @@ async function generatePlan() {
       ],
       warnings: ["api_unavailable"],
     });
+    resetAIBrief();
     resetRenderPlanSummary();
     setService("bad", "ошибка сервиса");
   } finally {
+    if (generationId !== state.generationRequestId) return;
     generateButton.disabled = false;
     setGenerateButtonIdle();
   }
@@ -1293,6 +1209,14 @@ async function uploadAudio(file) {
       return;
     }
     inputText.value = data.text || "";
+    if (data.language) {
+      setInputLanguage(data.language);
+      document.querySelectorAll("[data-language]").forEach((item) => {
+        const isCurrent = item.dataset.language === state.inputLanguage;
+        item.classList.toggle("active", isCurrent);
+        item.setAttribute("aria-pressed", String(isCurrent));
+      });
+    }
     updateCharCount();
     setUploadState("success", "Текст получен", data.language ? `Язык: ${data.language}` : file.name);
     if (inputText.value.trim()) await generatePlan();
@@ -1560,8 +1484,6 @@ function formatTask(task) {
     framework: "открытый код",
     krsl_dataset_nonmanual: "маркеры KZ",
     krsl_large_corpus: "корпус KZ",
-    asl_lexical_database: "лексика ASL",
-    asl_dataset: "корпус ASL",
   };
   return labels[task] || String(task || "").replaceAll("_", " ");
 }
