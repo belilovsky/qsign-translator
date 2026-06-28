@@ -12,10 +12,11 @@ class PreviewVideoUnavailable(RuntimeError):
     pass
 
 
-PREVIEW_WIDTH = 960
-PREVIEW_HEIGHT = 540
-PREVIEW_FONT_SIZE = 20
-FFMPEG_TIMEOUT_SECONDS = 12
+PREVIEW_WIDTH = 640
+PREVIEW_HEIGHT = 360
+PREVIEW_FONT_SIZE = 16
+PREVIEW_FRAME_RATE = 10
+FFMPEG_TIMEOUT_SECONDS = 8
 
 
 @dataclass(frozen=True)
@@ -73,23 +74,23 @@ def build_review_video(
             "-loop",
             "1",
             "-framerate",
-            "25",
+            str(PREVIEW_FRAME_RATE),
             "-i",
             str(avatar_path),
             "-vf",
             filter_value,
             "-t",
             f"{_duration_seconds(units):.3f}",
-            "-preset",
-            "ultrafast",
-            "-tune",
-            "stillimage",
-            "-crf",
-            "30",
+            "-r",
+            str(PREVIEW_FRAME_RATE),
+            "-threads",
+            "1",
             "-pix_fmt",
             "yuv420p",
             "-c:v",
-            "libx264",
+            "mpeg4",
+            "-q:v",
+            "8",
             "-movflags",
             "+faststart",
             str(tmp_output),
