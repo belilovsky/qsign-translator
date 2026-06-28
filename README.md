@@ -159,6 +159,12 @@ python3 scripts/smoke_live.py --base-url https://qsign.qdev.run  # Live smoke
 pytest -q                              # Модульные тесты
 ```
 
+### 5. Лёгкий benchmark ядра
+
+```bash
+make benchmark
+```
+
 ---
 
 ## Структура проекта
