@@ -84,6 +84,7 @@ JOB1="$(curl -fsS -X POST "$BASE/v1/translate/text" -H 'content-type: applicatio
 JOB2="$(curl -fsS -X POST "$BASE/v1/translate/text" -H 'content-type: application/json' -d '{"text":"Мне нужна помощь"}' | jq -r '.metadata.job_id')"
 curl -fsS "$BASE/v1/jobs/$JOB1/render-plan" | jq '.summary, .adapter.adapter_status'
 curl -fsSI "$BASE/v1/jobs/$JOB1/review-video" | grep -Ei 'content-type|x-qsign-preview'
+curl -fsS "$BASE/v1/jobs/$JOB1/review-video" -o /tmp/qsign-review.mp4 && file /tmp/qsign-review.mp4
 curl -fsS "$BASE/v1/jobs/$JOB1/ai-video-brief" | jq '.exports | keys'
 curl -fsS -X POST "$BASE/v1/ai-video-batch-brief" -H 'content-type: application/json' \
   -d "{\"job_ids\":[\"$JOB1\",\"$JOB2\"],\"title\":\"Smoke batch\"}" | jq '.format_version, .summary.scene_count, (.exports | keys)'

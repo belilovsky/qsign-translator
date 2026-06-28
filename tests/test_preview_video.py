@@ -32,10 +32,6 @@ class PreviewVideoTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
-            static_root = tmp_root / "static"
-            asset_dir = static_root / "assets"
-            asset_dir.mkdir(parents=True, exist_ok=True)
-            (asset_dir / "signing-avatar.png").write_bytes(b"fake-png")
             output_root = tmp_root / "out"
 
             def fake_run(command, check, capture_output, text, timeout):  # noqa: ANN001
@@ -56,7 +52,7 @@ class PreviewVideoTests(unittest.TestCase):
                     side_effect=fake_run,
                 ),
             ):
-                artifact = build_review_video(job, static_root=static_root, output_root=output_root)
+                artifact = build_review_video(job, output_root=output_root)
                 self.assertEqual(artifact.kind, "review_storyboard")
                 self.assertEqual(artifact.unit_count, 2)
                 self.assertTrue(artifact.path.exists())
@@ -69,13 +65,9 @@ class PreviewVideoTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_root = Path(tmp_dir)
-            static_root = tmp_root / "static"
-            asset_dir = static_root / "assets"
-            asset_dir.mkdir(parents=True, exist_ok=True)
-            (asset_dir / "signing-avatar.png").write_bytes(b"fake-png")
             with mock.patch("qsign_translator.preview_video.shutil.which", return_value=None):
                 with self.assertRaises(PreviewVideoUnavailable):
-                    build_review_video(job, static_root=static_root, output_root=tmp_root / "out")
+                    build_review_video(job, output_root=tmp_root / "out")
 
 
 if __name__ == "__main__":

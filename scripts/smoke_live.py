@@ -55,6 +55,23 @@ def _record(results: list[SmokeResult], name: str, ok: bool, detail: str) -> Non
     results.append(SmokeResult(name=name, ok=ok, detail=detail))
 
 
+def _request_bytes(
+    base_url: str,
+    path: str,
+    *,
+    method: str = "GET",
+    headers: dict[str, str] | None = None,
+    timeout: int = 20,
+) -> tuple[int, bytes, dict[str, str]]:
+    request = Request(
+        base_url.rstrip("/") + path,
+        headers=dict(headers or {}),
+        method=method,
+    )
+    with urlopen(request, timeout=timeout) as response:
+        return response.status, response.read(), dict(response.headers)
+
+
 def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[SmokeResult]:
     results: list[SmokeResult] = []
 
@@ -150,6 +167,29 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
             )
         except REQUEST_EXCEPTIONS as exc:
             _record(results, "review_video_head", False, str(exc))
+
+        try:
+            status, payload, headers = _request_bytes(
+                base_url,
+                f"/v1/jobs/{job_id}/review-video",
+                timeout=timeout,
+            )
+            content_type = headers.get("content-type", "")
+            preview_kind = headers.get("x-qsign-preview-kind", "")
+            ok = (
+                status == 200
+                and content_type.startswith("video/mp4")
+                and bool(preview_kind)
+                and len(payload) > 128
+            )
+            _record(
+                results,
+                "review_video_get",
+                ok,
+                f"{status} {content_type} bytes={len(payload)} kind={preview_kind or '-'}",
+            )
+        except REQUEST_EXCEPTIONS as exc:
+            _record(results, "review_video_get", False, str(exc))
 
         try:
             status, payload, _ = _request(

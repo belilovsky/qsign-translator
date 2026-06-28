@@ -344,7 +344,6 @@ def translation_job_review_video(job_id: str, request: Request) -> FileResponse 
     try:
         artifact = build_review_video(
             job,
-            static_root=STATIC_ROOT,
             output_root=GENERATED_PREVIEW_ROOT,
         )
     except PreviewVideoUnavailable as exc:

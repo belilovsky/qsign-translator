@@ -17,6 +17,7 @@ PREVIEW_HEIGHT = 360
 PREVIEW_FONT_SIZE = 16
 PREVIEW_FRAME_RATE = 10
 FFMPEG_TIMEOUT_SECONDS = 8
+PREVIEW_BACKGROUND_COLOR = "#eef5f1"
 
 
 @dataclass(frozen=True)
@@ -30,7 +31,6 @@ class PreviewVideoArtifact:
 def build_review_video(
     job: dict[str, object],
     *,
-    static_root: Path,
     output_root: Path,
 ) -> PreviewVideoArtifact:
     """Собирает честное обзорное видео черновика.
@@ -42,10 +42,6 @@ def build_review_video(
     ffmpeg_path = shutil.which("ffmpeg")
     if not ffmpeg_path:
         raise PreviewVideoUnavailable("ffmpeg is not installed")
-
-    avatar_path = static_root / "assets" / "signing-avatar.png"
-    if not avatar_path.exists():
-        raise PreviewVideoUnavailable("preview avatar asset is missing")
 
     units = list(job.get("units") or [])
     if not units:
@@ -70,7 +66,6 @@ def build_review_video(
         try:
             _render_preview_video(
                 ffmpeg_path=ffmpeg_path,
-                avatar_path=avatar_path,
                 subtitles_path=subtitles_path,
                 output_path=tmp_output,
                 duration_seconds=_duration_seconds(units),
@@ -109,7 +104,6 @@ def _job_signature(job: dict[str, object]) -> str:
 def _render_preview_video(
     *,
     ffmpeg_path: str,
-    avatar_path: Path,
     subtitles_path: Path,
     output_path: Path,
     duration_seconds: float,
@@ -121,12 +115,14 @@ def _render_preview_video(
         command = [
             ffmpeg_path,
             "-y",
-            "-loop",
-            "1",
+            "-f",
+            "lavfi",
+            "-i",
+            f"color=c={PREVIEW_BACKGROUND_COLOR}:s={PREVIEW_WIDTH}x{PREVIEW_HEIGHT}:r={PREVIEW_FRAME_RATE}",
+            "-frames:v",
+            str(max(1, int(duration_seconds * PREVIEW_FRAME_RATE))),
             "-framerate",
             str(PREVIEW_FRAME_RATE),
-            "-i",
-            str(avatar_path),
             "-vf",
             filter_value,
             "-t",
@@ -229,15 +225,8 @@ def _build_filter(subtitles_path: Path) -> str:
         "Alignment=2,"
         "MarginV=26"
     )
-    return (
-        f"scale={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:force_original_aspect_ratio=decrease,"
-        f"pad={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=white,"
-        f"subtitles={subtitle_value}:force_style='{style}'"
-    )
+    return f"subtitles={subtitle_value}:force_style='{style}'"
 
 
 def _build_fallback_filter() -> str:
-    return (
-        f"scale={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:force_original_aspect_ratio=decrease,"
-        f"pad={PREVIEW_WIDTH}:{PREVIEW_HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=white"
-    )
+    return "null"
