@@ -1,6 +1,6 @@
 # QSign Translator
 
-Open RU/KZ sign-planning prototype for transparent sign-language draft output,
+Open RU/KZ/EN sign-planning prototype for transparent sign-language draft output,
 review workflows, and future video-generation handoff.
 
 This repository stays intentionally narrow. It focuses on the product core and
@@ -10,7 +10,7 @@ keeps heavy ASR and signer-avatar generation behind explicit adapters:
 audio / video / text
   -> ASR adapter
   -> text normalization
-  -> RU/KZ language routing
+  -> RU/KZ/EN language routing
   -> text-to-gloss / sign plan
   -> reviewable sign plan
   -> video readiness / render manifest

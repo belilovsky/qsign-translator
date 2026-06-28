@@ -33,6 +33,35 @@ RUSSIAN_DACTYL = {
     "я": "DACTYL_YA",
 }
 
+EN_DACTYL = {
+    "a": "DACTYL_A",
+    "b": "DACTYL_B",
+    "c": "DACTYL_TSE",
+    "d": "DACTYL_D",
+    "e": "DACTYL_E",
+    "f": "DACTYL_F",
+    "g": "DACTYL_G",
+    "h": "DACTYL_H",
+    "i": "DACTYL_I",
+    "j": "DACTYL_J",
+    "k": "DACTYL_KA",
+    "l": "DACTYL_L",
+    "m": "DACTYL_EM",
+    "n": "DACTYL_EN",
+    "o": "DACTYL_O",
+    "p": "DACTYL_P",
+    "q": "DACTYL_Q",
+    "r": "DACTYL_R",
+    "s": "DACTYL_ES",
+    "t": "DACTYL_TE",
+    "u": "DACTYL_U",
+    "v": "DACTYL_VE",
+    "w": "DACTYL_W",
+    "x": "DACTYL_X",
+    "y": "DACTYL_Y",
+    "z": "DACTYL_Z",
+}
+
 KAZAKH_TO_BASE = {
     "ә": ["а", "э"],
     "ғ": ["г"],
@@ -53,8 +82,7 @@ def spell_token(token: str) -> list[str]:
     for char in token.lower().replace("ё", "е"):
         chars = KAZAKH_TO_BASE.get(char, [char])
         for mapped in chars:
-            sign = RUSSIAN_DACTYL.get(mapped)
+            sign = RUSSIAN_DACTYL.get(mapped) or EN_DACTYL.get(mapped)
             if sign:
                 signs.append(sign)
     return signs
-

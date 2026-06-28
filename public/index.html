@@ -9,7 +9,7 @@
     />
     <title>QSign Translator</title>
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/static/styles.css?v=20260627e" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260628a" />
   </head>
   <body>
     <div class="app-shell">
@@ -28,7 +28,7 @@
           </span>
         </a>
         <nav class="topnav" aria-label="Основная навигация">
-          <span>Русский и казахский</span>
+          <span>RU, KZ, EN</span>
           <span>Черновик жестового перевода</span>
           <span class="version">Beta</span>
         </nav>
@@ -37,9 +37,10 @@
             <span class="status-dot"></span>
             <span id="serviceStatusLabel">Проверка сервиса</span>
           </span>
-          <div class="segmented" role="group" aria-label="Язык входного текста">
+              <div class="segmented" role="group" aria-label="Язык входного текста">
             <button class="active" type="button" data-language="ru" aria-pressed="true">RU</button>
             <button type="button" data-language="kk" aria-pressed="false">KZ</button>
+            <button type="button" data-language="en" aria-pressed="false">EN</button>
           </div>
           <button class="icon-button" id="settingsButton" type="button" aria-label="Источники и статус">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -473,6 +474,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260627f" defer></script>
+    <script src="/static/app.js?v=20260628a" defer></script>
   </body>
 </html>

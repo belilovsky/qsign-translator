@@ -167,6 +167,134 @@
       "source": "seed:manual",
       "confidence": 0.78,
       "clip_id": "rsl_hello_formal"
+    },
+    {
+      "token": "hello",
+      "gloss": "HELLO",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": "asl_hello"
+    },
+    {
+      "token": "hi",
+      "gloss": "HELLO",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": "asl_hello"
+    },
+    {
+      "token": "please",
+      "gloss": "PLEASE",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.7,
+      "clip_id": null
+    },
+    {
+      "token": "thank",
+      "gloss": "THANK_YOU",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": "asl_thank_you"
+    },
+    {
+      "token": "thanks",
+      "gloss": "THANK_YOU",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": "asl_thank_you"
+    },
+    {
+      "token": "help",
+      "gloss": "HELP",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.75,
+      "clip_id": "rsl_help"
+    },
+    {
+      "token": "need",
+      "gloss": "NEED",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": null
+    },
+    {
+      "token": "want",
+      "gloss": "WANT",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": null
+    },
+    {
+      "token": "where",
+      "gloss": "WHERE",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": null
+    },
+    {
+      "token": "go",
+      "gloss": "GO",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.7,
+      "clip_id": null
+    },
+    {
+      "token": "come",
+      "gloss": "COME",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.7,
+      "clip_id": null
+    },
+    {
+      "token": "stop",
+      "gloss": "STOP",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": "asl_stop"
+    },
+    {
+      "token": "wait",
+      "gloss": "WAIT",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.72,
+      "clip_id": null
+    },
+    {
+      "token": "good",
+      "gloss": "GOOD",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.7,
+      "clip_id": null
+    },
+    {
+      "token": "bad",
+      "gloss": "BAD",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.7,
+      "clip_id": null
+    },
+    {
+      "token": "thank you",
+      "gloss": "THANK_YOU",
+      "language": "en",
+      "source": "seed_asl_minimal",
+      "confidence": 0.74,
+      "clip_id": "asl_thank_you"
     }
   ]
 }

@@ -45,7 +45,7 @@ const sampleSources = [
 
 const steps = [
   { title: "Текст", description: "Берем введенную фразу или расшифровку аудио." },
-  { title: "Язык", description: "Определяем русский или казахский текст и готовим его к разбору." },
+  { title: "Язык", description: "Проверяем выбранный язык и готовим текст к разбору." },
   { title: "Жесты", description: "Подбираем известные жесты и отмечаем спорные места." },
   { title: "Показ", description: "Собираем прозрачный черновик для проверки человеком." },
 ];
@@ -252,11 +252,17 @@ function syncClearButton() {
 }
 
 function setInputLanguage(language) {
-  state.inputLanguage = language === "kk" ? "kk" : "ru";
+  const normalized = String(language || "ru").toLowerCase();
+  state.inputLanguage = normalized === "kk" || normalized === "en" ? normalized : "ru";
   const isKazakh = state.inputLanguage === "kk";
+  const isEnglish = state.inputLanguage === "en";
   inputText.lang = state.inputLanguage;
   resultTranscript.lang = state.inputLanguage;
-  inputText.placeholder = isKazakh ? "Қысқа қазақша мәтінді енгізіңіз" : "Введите короткий русский текст";
+  inputText.placeholder = isKazakh
+    ? "Қысқа қазақша мәтінді енгізіңіз"
+    : isEnglish
+      ? "Enter short English phrase"
+      : "Введите короткий русский текст";
 }
 
 function setUploadState(nextState, title, status) {
@@ -593,7 +599,9 @@ async function loadAIVideoBrief(jobId) {
 }
 
 function showUnsavedDependentState() {
+  state.lastAIBrief = null;
   setVideoPreviewState(false, "Сохранение записи недоступно: обзорное видео не собирается.");
+  resetAIBrief();
   renderRenderPlanSummary(
     "Без сохраненной записи нельзя проверить готовность к сборке видео.",
     ["готовность: нужна запись", "есть фрагментов: —", "нужно добавить: —", "выпуск: нет"]
@@ -1079,6 +1087,14 @@ async function generatePlan() {
     inputText.focus();
     return;
   }
+  state.lastAIBrief = null;
+  state.aiBriefMode = "universal_prompt";
+  syncAIBriefModeButtons();
+  renderAIBriefSummary(
+    "Готовим пакет для AI-видео...",
+    "Сохраните черновик, затем здесь появится свежий brief.",
+    false
+  );
   state.renderPlanRequestId += 1;
   generateButton.disabled = true;
   generateButton.textContent = "Собираем...";
@@ -1087,11 +1103,12 @@ async function generatePlan() {
     const response = await fetch("/v1/translate/text", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, language: state.inputLanguage }),
     });
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const plan = await response.json();
     renderPlan(plan);
+    state.lastAIBrief = null;
     const jobId = plan?.metadata?.job_id;
     if (jobId) {
       await loadReviewVideo(jobId);
@@ -1116,6 +1133,7 @@ async function generatePlan() {
       ],
       warnings: ["api_unavailable"],
     });
+    resetAIBrief();
     resetRenderPlanSummary();
     setService("bad", "ошибка сервиса");
   } finally {
@@ -1151,6 +1169,14 @@ async function uploadAudio(file) {
       return;
     }
     inputText.value = data.text || "";
+    if (data.language) {
+      setInputLanguage(data.language);
+      document.querySelectorAll("[data-language]").forEach((item) => {
+        const isCurrent = item.dataset.language === state.inputLanguage;
+        item.classList.toggle("active", isCurrent);
+        item.setAttribute("aria-pressed", String(isCurrent));
+      });
+    }
     updateCharCount();
     setUploadState("success", "Текст получен", data.language ? `Язык: ${data.language}` : file.name);
     if (inputText.value.trim()) await generatePlan();

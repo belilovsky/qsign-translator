@@ -71,7 +71,15 @@
       "languages": ["kk", "ru", "krsl"],
       "status": "needs_access_check",
       "license_note": "Paper reports large corpus; downloadable data and terms require author/project confirmation."
+    },
+    {
+      "id": "seed_asl_minimal",
+      "name": "Seed ASL candidate phrases",
+      "url": "https://github.com/belilovsky/qsign-translator/tree/main",
+      "task": "manual_english_seed",
+      "languages": ["en"],
+      "status": "needs_review",
+      "license_note": "Internal prototype seed list for common English phrases and common public UI prompts."
     }
   ]
 }
-

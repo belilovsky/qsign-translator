@@ -48,6 +48,7 @@ SUPPORTED_RENDERED_VIDEO_TYPES = {"video/mp4": ".mp4"}
 
 class TextTranslateRequest(BaseModel):
     text: str = Field(min_length=1, max_length=5000)
+    language: str | None = Field(default=None, min_length=1, max_length=20)
 
 
 class FeedbackRequest(BaseModel):
@@ -166,11 +167,11 @@ def ready(request: Request, response: Response) -> dict[str, object] | Response:
 
 @app.post("/v1/translate/text")
 def translate_text(request: TextTranslateRequest) -> dict[str, object]:
-    return _plan_response(request.text, input_type="text")
+    return _plan_response(request.text, input_type="text", language_hint=request.language)
 
 
-def _plan_response(text: str, input_type: str) -> dict[str, object]:
-    plan = planner.plan(text)
+def _plan_response(text: str, input_type: str, language_hint: str | None = None) -> dict[str, object]:
+    plan = planner.plan(text, language_hint=language_hint)
     response = plan.to_dict()
     metadata = dict(response.get("metadata") or {})
     try:

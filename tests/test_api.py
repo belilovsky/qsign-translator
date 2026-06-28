@@ -69,6 +69,22 @@ class ApiTests(unittest.TestCase):
         self.assertIn("persistence_error", data["metadata"])
         self.assertGreaterEqual(len(data["units"]), 1)
 
+    def test_text_translation_uses_language_hint(self) -> None:
+        response = self.client.post(
+            "/v1/translate/text",
+            json={"text": "Hello", "language": "en"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["language"], "en")
+
+    def test_text_translation_detects_english_without_hint(self) -> None:
+        response = self.client.post(
+            "/v1/translate/text",
+            json={"text": "Hello"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["language"], "en")
+
     def test_text_translation_returns_job_metadata_when_persisted(self) -> None:
         with mock.patch("qsign_translator.api.db.record_translation_job", return_value="job-1"):
             response = self.client.post(

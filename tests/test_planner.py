@@ -103,6 +103,18 @@ class SignPlannerTests(unittest.TestCase):
         self.assertIn("seed", data["metadata"]["source_ids"])
         self.assertIn("fallback", data["metadata"]["source_ids"])
 
+    def test_english_known_word_lookup(self) -> None:
+        data = self.planner.plan("Hello thank you", language_hint="en").to_dict()
+        self.assertEqual(data["language"], "en")
+        self.assertEqual([unit["gloss"] for unit in data["units"]], ["HELLO", "THANK_YOU"])
+        self.assertEqual([unit["kind"] for unit in data["units"]], ["gloss", "gloss"])
+
+    def test_language_scopes_do_not_leak_cross_language_matches(self) -> None:
+        data = self.planner.plan("Hello", language_hint="ru").to_dict()
+        self.assertEqual(data["language"], "ru")
+        self.assertEqual(data["units"][0]["kind"], "dactyl")
+        self.assertEqual(data["units"][0]["source"], "fallback:dactyl")
+
     def test_trace_explains_pipeline(self) -> None:
         data = self.planner.plan("Привет Александр").to_dict()
         trace = data["trace"]
