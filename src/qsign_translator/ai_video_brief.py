@@ -58,6 +58,7 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
     master_prompt = _build_master_prompt(
         language=language,
         review_status=review_status,
+        pipeline_status=pipeline_status,
         risk_domains=risk_domains,
         duration_seconds=duration_seconds,
         units=unit_briefs,
@@ -69,6 +70,7 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
         language=language,
         risk_domains=risk_domains,
         review_status=review_status,
+        pipeline_status=pipeline_status,
         units=unit_briefs,
         missing_segments=missing_segments,
         resolved_segments=resolved_segments,
@@ -223,6 +225,7 @@ def _build_master_prompt(
     *,
     language: str,
     review_status: str,
+    pipeline_status: str,
     risk_domains: list[str],
     duration_seconds: float,
     units: list[VideoUnitBrief],
@@ -245,7 +248,7 @@ def _build_master_prompt(
             f"Source text: {input_text}\n"
             f"Target signing route: {_sign_language_label(language)}.\n"
             f"Review status: {review_status}. Keep the job in review-only state.\n"
-            f"Pipeline status: {pipeline_status_from_review(review_status, units)}.\n"
+            f"Pipeline status: {pipeline_status}.\n"
             f"Planned duration reference: about {duration_seconds:.1f} seconds.\n"
             f"{risk_clause}\n"
             "Blockers:\n"
@@ -261,7 +264,7 @@ def _build_master_prompt(
         f"Source text: {input_text}\n"
         f"Target signing route: {_sign_language_label(language)}.\n"
         f"Review status: {review_status}. This is an AI draft, not a certified interpreter output.\n"
-        f"Pipeline status: {pipeline_status_from_review(review_status, units)}.\n"
+        f"Pipeline status: {pipeline_status}.\n"
         f"Target duration: about {duration_seconds:.1f} seconds.\n"
         "Visual direction: one signer only, centered medium shot, hands always visible, neutral studio background, "
         "no camera moves, no cuts, no props, no decorative motion graphics.\n"
@@ -288,6 +291,7 @@ def _build_operator_task(
     language: str,
     risk_domains: list[str],
     review_status: str,
+    pipeline_status: str,
     units: list[VideoUnitBrief],
     missing_segments: int,
     resolved_segments: int,
@@ -303,6 +307,7 @@ def _build_operator_task(
         f"- Produce one {language} draft signer video from the provided sign plan.\n"
         f"- Use the unit list exactly in order ({len(units)} units total).\n"
         f"- Respect review status: {review_status}.\n"
+        f"- Current pipeline status: {pipeline_status}.\n"
         f"- Clip-backed coverage available internally: {resolved_segments}; missing lexical coverage: {missing_segments}.\n"
         f"- High-risk domains: {', '.join(risk_domains) if risk_domains else 'none flagged'}.\n"
         f"{route_line}\n"
@@ -311,15 +316,6 @@ def _build_operator_task(
         "- Final delivery should be one reviewable mp4 plus the exact source captions.\n"
         "- If blockers remain, keep the package in draft state and route it back to reviewer operations."
     )
-
-
-def pipeline_status_from_review(review_status: str, units: list[VideoUnitBrief]) -> str:
-    if review_status == "approved":
-        if any(unit.kind != "gloss" or not unit.clip_id for unit in units):
-            return "approved_with_fallback_or_missing_assets"
-        return "approved_ready_for_render"
-    return "awaiting_signer_review"
-
 
 def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]:
     prompts = dict(brief.get("prompts") or {})

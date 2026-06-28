@@ -37,6 +37,8 @@ class AIVideoBriefTests(unittest.TestCase):
         self.assertEqual(brief["summary"]["render_readiness"], "blocked")
         self.assertEqual(brief["summary"]["render_mode"], "review_operator_only")
         self.assertFalse(brief["summary"]["generic_avatar_allowed"])
+        self.assertIn("Pipeline status: awaiting_signer_review.", brief["prompts"]["master_prompt"])
+        self.assertIn("- Current pipeline status: awaiting_signer_review.", brief["prompts"]["operator_task"])
         self.assertIn("review status is not approved by signer", brief["summary"]["render_blockers"])
         self.assertEqual(brief["video_spec"]["fps"], 25)
         self.assertEqual(brief["units"][1]["kind"], "dactyl")
@@ -85,9 +87,34 @@ class AIVideoBriefTests(unittest.TestCase):
         self.assertEqual(brief["summary"]["render_mode"], "strict_avatar_prompt")
         self.assertTrue(brief["summary"]["generic_avatar_allowed"])
         self.assertEqual(brief["summary"]["target_output_kind"], "avatar_video_prompt_package")
+        self.assertIn("Pipeline status: ready_for_render.", brief["prompts"]["master_prompt"])
+        self.assertIn("- Current pipeline status: ready_for_render.", brief["prompts"]["operator_task"])
         self.assertIn("Generate a single clean sign-language draft video for human review", brief["prompts"]["master_prompt"])
         self.assertIn("Generic sign-avatar generation is allowed", brief["prompts"]["operator_task"])
         self.assertIn("generic_avatar_allowed: yes", brief["exports"]["render_contract"]["text"])
+
+    def test_preserves_render_plan_pipeline_status_when_publish_gate_is_further_along(self) -> None:
+        job = {
+            "id": "job-publish",
+            "input_text": "Привет",
+            "detected_language": "ru",
+            "review_status": "approved",
+            "risk_domains": [],
+            "units": [
+                {"position": 1, "kind": "gloss", "source_token": "привет", "gloss": "HELLO", "clip_id": "rsl_hello"},
+            ],
+        }
+        render_plan = {
+            "pipeline_status": "ready_for_publish",
+            "publish_gate": {"blockers": []},
+            "summary": {"resolved_segments": 1, "missing_segments": 0},
+        }
+
+        brief = build_ai_video_brief(job, render_plan)
+
+        self.assertEqual(brief["summary"]["pipeline_status"], "ready_for_publish")
+        self.assertIn("Pipeline status: ready_for_publish.", brief["prompts"]["master_prompt"])
+        self.assertIn("- Current pipeline status: ready_for_publish.", brief["prompts"]["operator_task"])
 
     def test_builds_batch_brief_for_multiple_jobs(self) -> None:
         jobs_with_render_plans = [

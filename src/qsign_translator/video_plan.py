@@ -188,8 +188,6 @@ def build_job_render_plan(job: dict[str, object], asset_root: str) -> dict[str, 
 
 
 def _next_step_for_pipeline_status(pipeline_status: str) -> str:
-    if pipeline_status == "render_uploaded_ready_for_publish":
-        return "publish_or_manual_final_qc"
     if pipeline_status == "ready_for_publish":
         return "publishable_now"
     if pipeline_status == "uploaded_video_needs_fix":
