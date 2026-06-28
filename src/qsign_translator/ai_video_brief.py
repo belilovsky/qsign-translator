@@ -308,7 +308,7 @@ def _build_operator_task(
         f"- Use the unit list exactly in order ({len(units)} units total).\n"
         f"- Respect review status: {review_status}.\n"
         f"- Current pipeline status: {pipeline_status}.\n"
-        f"- Clip-backed coverage available internally: {resolved_segments}; missing lexical coverage: {missing_segments}.\n"
+        f"- Clip-backed coverage available internally: {resolved_segments}; segments still missing clip-backed assets: {missing_segments}.\n"
         f"- High-risk domains: {', '.join(risk_domains) if risk_domains else 'none flagged'}.\n"
         f"{route_line}\n"
         "- Unknown terms must never be improvised as fluent native signs.\n"
@@ -555,7 +555,7 @@ def _build_batch_export_formats(
             "Operator constraints:",
             "- Do not merge scenes into one continuous sentence without visible separation.",
             "- Keep the same wardrobe, background, and light for batch consistency.",
-            "- Stop for manual review when any scene contains missing lexical coverage.",
+            "- Stop for manual review when any scene still lacks clip-backed video assets.",
             "- Deliver one merged mp4 plus scene timestamps for QA.",
         ]
     )
@@ -615,7 +615,7 @@ def _evaluate_render_readiness(
     if review_status != "approved":
         blockers.append("review status is not approved by signer")
     if missing_segments > 0:
-        blockers.append(f"{missing_segments} segments still have no lexical coverage")
+        blockers.append(f"{missing_segments} segments still have no clip-backed video assets")
     fallback_units = _count_fallback_units(units)
     if fallback_units:
         blockers.append(f"{fallback_units} units still depend on fallback or missing clip assets")

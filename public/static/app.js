@@ -77,6 +77,8 @@ const aiBriefModeButtons = Array.from(document.querySelectorAll("[data-brief-mod
 const riskCard = document.querySelector("#riskCard");
 const riskText = document.querySelector("#riskText");
 const subtitleBox = document.querySelector("#subtitleBox");
+const trustTitle = document.querySelector("#trustTitle");
+const trustText = document.querySelector("#trustText");
 const resultTranscript = document.querySelector("#resultTranscript");
 const transcriptMeta = document.querySelector("#transcriptMeta");
 const applyTranscriptButton = document.querySelector("#applyTranscriptButton");
@@ -662,6 +664,17 @@ function renderPlan(plan) {
   confidenceValue.textContent = confidence.toFixed(2);
   confidenceBar.style.width = `${Math.max(0, Math.min(1, confidence)) * 100}%`;
   subtitleBox.textContent = plan.input_text || "Нет текста";
+  const fallbackCount = Number(plan?.metadata?.fallback_count ?? plan?.coverage?.fallback ?? 0);
+  if (trustTitle) {
+    trustTitle.textContent = fallbackCount
+      ? "Нужна проверка черновика"
+      : "Черновик собран";
+  }
+  if (trustText) {
+    trustText.textContent = fallbackCount
+      ? "Словарная база покрыла только часть фразы или оставила подсказки. Носителю жестового языка нужно подтвердить результат."
+      : "План собран без буквенного фолбэка, но перед выпуском все равно нужна контрольная проверка носителем.";
+  }
   resultTranscript.value = plan.input_text || "";
   syncClearButton();
   syncTranscriptState();
@@ -727,6 +740,10 @@ function renderEmptyState() {
   subtitleBox.hidden = false;
   subtitleToggle.checked = true;
   subtitleBox.textContent = "Черновик появится после генерации.";
+  if (trustTitle) trustTitle.textContent = "Пока нет черновика";
+  if (trustText) {
+    trustText.textContent = "Введите короткую фразу. Система покажет, что найдено в словарях, а что нужно проверить человеком.";
+  }
   resultTranscript.value = inputText.value.trim();
   syncClearButton();
   transcriptMeta.textContent = "После первой сборки здесь можно будет быстро поправить текст и пересобрать черновик.";
