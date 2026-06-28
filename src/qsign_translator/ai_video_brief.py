@@ -408,23 +408,23 @@ def _build_export_formats(brief: dict[str, object]) -> dict[str, dict[str, str]]
     ]
     return {
         "universal_prompt": {
-            "label": "Universal prompt",
+            "label": "Универсальный пакет",
             "text": "\n".join(universal_lines),
         },
         "operator_handoff": {
-            "label": "Operator handoff",
+            "label": "Пакет для оператора",
             "text": "\n".join(operator_lines),
         },
         "json_payload": {
-            "label": "JSON payload",
+            "label": "JSON пакет",
             "text": json.dumps(brief, ensure_ascii=False, indent=2),
         },
         "render_contract": {
-            "label": "Render contract",
+            "label": "Контракт рендера",
             "text": _render_contract_text(dict(brief.get("render_contract") or {})),
         },
         "batch_storyboard": {
-            "label": "Batch storyboard",
+            "label": "Пакет сцен",
             "text": "\n".join(scene_lines),
         },
     }
@@ -567,23 +567,23 @@ def _build_batch_export_formats(
     )
     return {
         "batch_storyboard": {
-            "label": "Batch storyboard",
+            "label": "Пакет сцен",
             "text": "\n".join(storyboard_lines),
         },
         "operator_runbook": {
-            "label": "Operator runbook",
+            "label": "Операторский регламент",
             "text": "\n".join(runbook_lines),
         },
         "json_payload": {
-            "label": "JSON payload",
+            "label": "JSON пакет",
             "text": json.dumps(batch_brief, ensure_ascii=False, indent=2),
         },
         "render_contract": {
-            "label": "Render contract",
+            "label": "Контракт рендера",
             "text": _batch_render_contract_text(batch_brief),
         },
         "scene_prompts": {
-            "label": "Scene prompts",
+            "label": "Сценарные промпты",
             "text": "\n\n".join(
                 [
                     f"SCENE {index}\n{scene.get('prompts', {}).get('master_prompt') or ''}"
