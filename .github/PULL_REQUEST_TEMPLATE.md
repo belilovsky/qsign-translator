@@ -1,18 +1,12 @@
-## Что изменено
+## Summary
 
-## Тип изменения
+What changed and why?
 
-- [ ] feat: новая функциональность
-- [ ] fix: исправление бага
-- [ ] refactor: рефакторинг
-- [ ] test: тесты
-- [ ] docs: документация
-- [ ] ci: CI/CD
-- [ ] chore: обслуживание
+## Validation
 
-## Checklist
+- [ ] `./scripts/check.sh`
+- [ ] manual API or UI smoke when relevant
 
-- [ ] Тесты написаны / обновлены
-- [ ] Coverage не упал ниже 80%
-- [ ] Документация обновлена
-- [ ] `.env.example` обновлён
+## Risks
+
+What still needs caution, follow-up, or deeper verification?
