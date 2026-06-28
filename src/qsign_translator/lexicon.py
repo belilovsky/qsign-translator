@@ -19,10 +19,16 @@ class LexiconEntry:
 class Lexicon:
     def __init__(self, entries: list[LexiconEntry]) -> None:
         self._entries = {(entry.language, entry.token): entry for entry in entries}
-        self._fallback_entries = {entry.token: entry for entry in entries}
 
     def lookup(self, token: str, language: str) -> LexiconEntry | None:
-        return self._entries.get((language, token)) or self._fallback_entries.get(token)
+        """Return a strictly language-scoped lexicon match.
+
+        We intentionally avoid cross-language fallback here. Language scoping is
+        already handled by the planner; falling across languages can silently map
+        unrelated tokens and hide coverage gaps.
+        """
+
+        return self._entries.get((language, token))
 
     def export_entries(self, language: str | None = None) -> list[dict[str, object]]:
         items = []
