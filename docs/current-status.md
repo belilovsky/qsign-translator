@@ -94,7 +94,7 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 95 automated tests green;
+- 108 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
@@ -138,6 +138,9 @@ Recent validation passed with:
   signer approval, lexical coverage, or clip-backed assets are incomplete, so
   external video tools are not asked to fake fluent sign language from fallback
   tokens.
+- AI-video brief now separates lexical fallback from missing clip bindings, so
+  operator blockers more accurately distinguish language uncertainty from video
+  asset gaps.
 
 ## Readiness Rating
 

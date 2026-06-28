@@ -89,6 +89,7 @@ def build_ai_video_brief(job: dict[str, object], render_plan: dict[str, object])
             "resolved_segments": resolved_segments,
             "missing_segments": missing_segments,
             "fallback_units": _count_fallback_units(unit_briefs),
+            "unbound_clip_units": _count_units_without_clip_binding(unit_briefs),
             "pipeline_status": pipeline_status,
             "publish_blockers": publish_blockers,
             "render_readiness": render_readiness.status,
@@ -154,6 +155,7 @@ def build_ai_video_batch_brief(
             "scene_count": batch_render["scene_count"],
             "total_units": batch_render["total_units"],
             "fallback_units": batch_render["fallback_units"],
+            "unbound_clip_units": batch_render["unbound_clip_units"],
             "duration_seconds": batch_render["duration_seconds"],
             "languages": languages,
             "review_statuses": batch_render["review_statuses"],
@@ -437,6 +439,7 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
     review_statuses: list[str] = []
     total_units = 0
     fallback_units = 0
+    unbound_clip_units = 0
     publishable_scene_count = 0
     review_required_scene_count = 0
     hold_seconds = 0.4
@@ -450,6 +453,7 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
         missing_total += missing
         total_units += len(units)
         fallback_units += int(summary.get("fallback_units") or 0)
+        unbound_clip_units += int(summary.get("unbound_clip_units") or 0)
         review_status = str(summary.get("review_status") or "pending_signer_review")
         review_statuses.append(review_status)
         scene_publishable = bool(summary.get("generic_avatar_allowed"))
@@ -474,6 +478,7 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
                 "resolved_segments": resolved,
                 "missing_segments": missing,
                 "fallback_units": int(summary.get("fallback_units") or 0),
+                "unbound_clip_units": int(summary.get("unbound_clip_units") or 0),
                 "scene_publishable": scene_publishable,
                 "units": units,
             }
@@ -486,6 +491,7 @@ def _build_batch_render_structure(scene_briefs: list[dict[str, object]], *, titl
         "scene_count": len(scenes),
         "total_units": total_units,
         "fallback_units": fallback_units,
+        "unbound_clip_units": unbound_clip_units,
         "duration_seconds": round(cursor_seconds, 2),
         "transition_style": "hard_cut_with_0.4s_hold",
         "resolved_segments": resolved_total,
@@ -601,7 +607,11 @@ def _iso_now() -> str:
 
 
 def _count_fallback_units(units: list[VideoUnitBrief]) -> int:
-    return sum(1 for unit in units if unit.kind != "gloss" or not unit.clip_id)
+    return sum(1 for unit in units if unit.kind != "gloss")
+
+
+def _count_units_without_clip_binding(units: list[VideoUnitBrief]) -> int:
+    return sum(1 for unit in units if not unit.clip_id)
 
 
 def _evaluate_render_readiness(
@@ -618,7 +628,10 @@ def _evaluate_render_readiness(
         blockers.append(f"{missing_segments} segments still have no clip-backed video assets")
     fallback_units = _count_fallback_units(units)
     if fallback_units:
-        blockers.append(f"{fallback_units} units still depend on fallback or missing clip assets")
+        blockers.append(f"{fallback_units} units still depend on lexical fallback or finger-spelling")
+    unbound_clip_units = _count_units_without_clip_binding(units)
+    if unbound_clip_units:
+        blockers.append(f"{unbound_clip_units} units still have no clip binding for video assembly")
     if publish_blockers:
         blockers.extend(f"publish gate: {blocker}" for blocker in publish_blockers)
     return RenderReadiness(
@@ -642,6 +655,7 @@ def _build_single_render_contract(brief: dict[str, object]) -> dict[str, object]
         "review_status": summary.get("review_status"),
         "pipeline_status": summary.get("pipeline_status"),
         "fallback_units": summary.get("fallback_units"),
+        "unbound_clip_units": summary.get("unbound_clip_units"),
         "render_readiness": summary.get("render_readiness"),
         "render_mode": summary.get("render_mode"),
         "generic_avatar_allowed": summary.get("generic_avatar_allowed"),
@@ -679,6 +693,7 @@ def _render_contract_text(contract: dict[str, object]) -> str:
         f"review_status: {contract.get('review_status') or '-'}",
         f"pipeline_status: {contract.get('pipeline_status') or '-'}",
         f"fallback_units: {contract.get('fallback_units') or 0}",
+        f"unbound_clip_units: {contract.get('unbound_clip_units') or 0}",
         f"render_readiness: {contract.get('render_readiness') or '-'}",
         f"render_mode: {contract.get('render_mode') or '-'}",
         f"generic_avatar_allowed: {'yes' if contract.get('generic_avatar_allowed') else 'no'}",
@@ -708,6 +723,7 @@ def _batch_render_contract_text(batch_brief: dict[str, object]) -> str:
         f"publishable_scene_count: {summary.get('publishable_scene_count') or 0}",
         f"review_required_scene_count: {summary.get('review_required_scene_count') or 0}",
         f"fallback_units: {summary.get('fallback_units') or 0}",
+        f"unbound_clip_units: {summary.get('unbound_clip_units') or 0}",
         f"duration_seconds: {summary.get('duration_seconds') or 0}",
         "",
         "SCENE CONTRACT",
@@ -716,6 +732,7 @@ def _batch_render_contract_text(batch_brief: dict[str, object]) -> str:
         lines.append(
             f"- scene {scene.get('scene_number')}: publishable={'yes' if scene.get('scene_publishable') else 'no'} | "
             f"fallback_units={scene.get('fallback_units') or 0} | "
+            f"unbound_clip_units={scene.get('unbound_clip_units') or 0} | "
             f"start={scene.get('start_time_seconds')} end={scene.get('end_time_seconds')} | "
             f"text={scene.get('input_text')}"
         )
