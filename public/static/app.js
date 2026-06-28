@@ -539,7 +539,20 @@ async function loadReviewVideo(jobId, generationRequestId = 0) {
   }
   setVideoPreviewState(false, "Собираем обзорное видео черновика.");
   const url = `/v1/jobs/${jobId}/review-video?ts=${Date.now()}`;
+  const previewAvailability = await preflightReviewVideo(url, requestId, generationRequestId);
+  if (requestId !== state.previewVideoRequestId) {
+    return;
+  }
+  if (generationRequestId && generationRequestId !== state.generationRequestId) {
+    return;
+  }
+  if (!previewAvailability.ok) {
+    clearPreviewVideo();
+    setVideoPreviewState(false, previewAvailability.message);
+    return;
+  }
   await new Promise((resolve) => {
+    let timeoutId = 0;
     const handleReady = () => {
       cleanup();
       if (requestId !== state.previewVideoRequestId) {
@@ -568,14 +581,45 @@ async function loadReviewVideo(jobId, generationRequestId = 0) {
       resolve();
     };
     const cleanup = () => {
+      window.clearTimeout(timeoutId);
       previewVideo.removeEventListener("loadedmetadata", handleReady);
       previewVideo.removeEventListener("error", handleError);
     };
     previewVideo.addEventListener("loadedmetadata", handleReady, { once: true });
     previewVideo.addEventListener("error", handleError, { once: true });
+    timeoutId = window.setTimeout(handleError, 3500);
     previewVideo.src = url;
     previewVideo.load();
   });
+}
+
+async function preflightReviewVideo(url, requestId, generationRequestId) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 2500);
+  try {
+    const response = await fetch(url, {
+      method: "HEAD",
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (requestId !== state.previewVideoRequestId) {
+      return { ok: false, message: "Обзорное видео пока не собрано." };
+    }
+    if (generationRequestId && generationRequestId !== state.generationRequestId) {
+      return { ok: false, message: "Обзорное видео пока не собрано." };
+    }
+    if (response.ok) {
+      return { ok: true, message: "" };
+    }
+    if (response.status === 404 || response.status === 503) {
+      return { ok: false, message: "Обзорное видео пока не собрано." };
+    }
+    return { ok: false, message: "Не удалось загрузить обзорное видео." };
+  } catch {
+    return { ok: false, message: "Обзорное видео пока не собрано." };
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 async function loadAIVideoBrief(jobId, generationRequestId = 0) {

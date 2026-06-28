@@ -9,6 +9,7 @@ try:
     from fastapi.testclient import TestClient
 
     from qsign_translator.api import app
+    from qsign_translator.preview_video import PreviewVideoUnavailable
 except Exception as exc:  # pragma: no cover - optional API extra
     TestClient = None
     import_error = exc
@@ -71,7 +72,22 @@ class ReviewVideoApiTests(unittest.TestCase):
         self.assertEqual(response.headers["x-qsign-preview-kind"], "review_storyboard")
         self.assertEqual(response.headers["x-qsign-preview-units"], "1")
         self.assertEqual(response.content, b"")
-        build_video.assert_not_called()
+        build_video.assert_called_once()
+
+    def test_review_video_head_returns_503_when_preview_is_unavailable(self) -> None:
+        job = {
+            "id": "job-1",
+            "units": [{"position": 1, "kind": "gloss", "source_token": "привет"}],
+        }
+        with (
+            mock.patch("qsign_translator.api.db.get_translation_job", return_value=job),
+            mock.patch(
+                "qsign_translator.api.build_review_video",
+                side_effect=PreviewVideoUnavailable("preview missing"),
+            ),
+        ):
+            response = self.client.head("/v1/jobs/job-1/review-video")
+        self.assertEqual(response.status_code, 503)
 
     def test_review_video_returns_not_found_for_missing_job(self) -> None:
         with mock.patch("qsign_translator.api.db.get_translation_job", return_value=None):
