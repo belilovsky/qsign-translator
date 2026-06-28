@@ -1324,12 +1324,38 @@ async function sendFeedback(feedbackType) {
 
 function renderSources(items) {
   clearNode(sourceRows);
-  items.slice(0, 8).forEach((source) => {
-    const languages = Array.isArray(source.languages) ? source.languages.join(", ") : source.languages;
+  const visibleItems = Array.isArray(items) ? items.slice(0, 8) : [];
+  if (!visibleItems.length) {
+    const row = document.createElement("tr");
+    const emptyCell = appendTextElement(row, "td", "source-empty", "Источники пока не загружены.");
+    emptyCell.colSpan = 4;
+    sourceRows.append(row);
+    return;
+  }
+  visibleItems.forEach((source) => {
+    const languages = formatSourceLanguages(source.languages);
     const statusLabel = formatStatus(source.status);
     const row = document.createElement("tr");
-    const nameCell = appendTextElement(row, "td", "", source.name || source.id || "");
+    const nameCell = document.createElement("td");
     nameCell.dataset.label = "Источник";
+    const nameWrap = document.createElement("div");
+    nameWrap.className = "source-name";
+    if (source.url) {
+      const sourceLink = document.createElement("a");
+      sourceLink.className = "source-link";
+      sourceLink.href = String(source.url);
+      sourceLink.target = "_blank";
+      sourceLink.rel = "noopener noreferrer";
+      sourceLink.textContent = String(source.name || source.id || "");
+      nameWrap.append(sourceLink);
+    } else {
+      appendTextElement(nameWrap, "span", "source-link", source.name || source.id || "");
+    }
+    if (source.license_note) {
+      appendTextElement(nameWrap, "span", "source-note", formatSourceNote(source.license_note));
+    }
+    nameCell.append(nameWrap);
+    row.append(nameCell);
     const taskCell = appendTextElement(row, "td", "", formatTask(source.task));
     taskCell.dataset.label = "Тип";
     taskCell.title = String(source.task || "");
@@ -1338,8 +1364,10 @@ function renderSources(items) {
     const statusCell = document.createElement("td");
     statusCell.dataset.label = "Статус";
     const badge = appendTextElement(statusCell, "span", "status-badge", statusLabel);
-    badge.title = String(source.status || "");
+    badge.title = statusLabel;
     if (source.status === "verified") badge.classList.add("verified");
+    if (source.status === "needs_license_check") badge.classList.add("needs-license");
+    if (source.status === "needs_access_check") badge.classList.add("needs-access");
     row.append(statusCell);
     sourceRows.append(row);
   });
@@ -1347,9 +1375,9 @@ function renderSources(items) {
 
 function formatStatus(status) {
   if (status === "verified") return "проверено";
-  if (status === "needs_access_check") return "доступ";
-  if (status === "needs_license_check") return "лицензия";
-  return String(status || "unknown").replace(/^needs_/, "").replace(/_check$/, "").replaceAll("_", " ");
+  if (status === "needs_access_check") return "нужен доступ";
+  if (status === "needs_license_check") return "нужна лицензия";
+  return String(status || "неизвестно").replace(/^needs_/, "").replace(/_check$/, "").replaceAll("_", " ");
 }
 
 function formatUnitKind(kind) {
@@ -1556,16 +1584,61 @@ function syncTranscriptState() {
 
 function formatTask(task) {
   const labels = {
-    rsl_dataset_models: "база жестов",
+    rsl_dataset_models: "лексическая база",
     rsl_isolated_recognition: "распознавание",
     rsl_dactyl: "дактиль",
     rsl_encoder_pretrain: "модель жестов",
-    text_to_rsl_video: "видео жестов",
+    text_to_rsl_video: "сборка видео",
     framework: "открытый код",
-    krsl_dataset_nonmanual: "маркеры KZ",
-    krsl_large_corpus: "корпус KZ",
+    asl_lexical_database: "лексическая база",
+    asl_dataset: "датасет ASL",
+    krsl_dataset_nonmanual: "маркеры KRSL",
+    krsl_large_corpus: "корпус KRSL",
   };
   return labels[task] || String(task || "").replaceAll("_", " ");
+}
+
+function formatSourceLanguages(languages) {
+  const values = Array.isArray(languages) ? languages : [languages];
+  const labels = {
+    ru: "RU",
+    kk: "KZ",
+    kz: "KZ",
+    en: "EN",
+    rsl: "RSL",
+    asl: "ASL",
+    krsl: "KRSL",
+    multi: "multi",
+  };
+  return values
+    .map((value) => labels[String(value || "").toLowerCase()] || String(value || "").toUpperCase())
+    .filter(Boolean)
+    .join(", ");
+}
+
+function formatSourceNote(note) {
+  const value = String(note || "").trim();
+  const exact = {
+    "Public pages state a CC BY-SA 4.0 variant; exact data/model terms require file-level review.":
+      "На публичных страницах указан вариант CC BY-SA 4.0; точные условия для данных и моделей нужно проверить по файлам.",
+    "Repository LICENSE is Creative Commons Attribution-ShareAlike 4.0.":
+      "В репозитории указана лицензия Creative Commons Attribution-ShareAlike 4.0.",
+    "Repository code is Apache 2.0; dataset and weights require separate review.":
+      "Код репозитория под Apache 2.0; датасет и веса нужно проверить отдельно.",
+    "Code follows MimicMotion Apache 2.0; third-party weights and Slovo-derived assets require separate review.":
+      "Код опирается на MimicMotion Apache 2.0; сторонние веса и материалы на базе Slovo нужно проверить отдельно.",
+    "Apache 2.0.":
+      "Лицензия Apache 2.0.",
+    "Academic lexical database; use as metadata/research candidate only until terms are reviewed.":
+      "Академическая лексическая база; использовать только как исследовательский источник, пока условия не проверены.",
+    "Research dataset candidate for ASL translation experiments; exact reuse terms require review.":
+      "Исследовательский датасет для экспериментов с ASL; точные условия повторного использования нужно проверить.",
+    "Academic dataset terms require review before reuse.":
+      "Условия академического датасета нужно проверить до повторного использования.",
+    "Paper reports large corpus; downloadable data and terms require author/project confirmation.":
+      "В статье описан большой корпус; доступные данные и условия использования нужно подтвердить у авторов проекта.",
+  };
+  return exact[value] || value;
 }
 
 async function loadHealthAndSources() {

@@ -1614,6 +1614,35 @@ tr:last-child td {
   border-bottom: 0;
 }
 
+.source-name {
+  display: grid;
+  gap: 4px;
+}
+
+.source-link {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+.source-link:hover,
+.source-link:focus-visible {
+  color: var(--green-strong);
+  text-decoration: underline;
+}
+
+.source-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.source-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .status-badge {
   display: inline-flex;
   width: fit-content;
@@ -1632,6 +1661,16 @@ tr:last-child td {
 .status-badge.verified {
   background: var(--green-soft);
   color: var(--green);
+}
+
+.status-badge.needs-license {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.status-badge.needs-access {
+  background: var(--blue-soft);
+  color: var(--blue);
 }
 
 .footer {

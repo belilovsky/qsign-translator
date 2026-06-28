@@ -141,6 +141,8 @@ Recent validation passed with:
 - AI-video brief now separates lexical fallback from missing clip bindings, so
   operator blockers more accurately distinguish language uncertainty from video
   asset gaps.
+- source registry UI now shows canonical links, normalized language labels, and
+  human-readable license/access notes instead of a raw registry dump.
 
 ## Readiness Rating
 
