@@ -17,6 +17,7 @@ const state = {
   lastAIBrief: null,
   aiBriefMode: "universal_prompt",
   aiBriefRequestId: 0,
+  generationRequestId: 0,
   videoPreviewReady: false,
   previewVideoRequestId: 0,
   renderPlanRequestId: 0,
@@ -524,11 +525,14 @@ function applyLoadedVideoState(label) {
   }
 }
 
-async function loadReviewVideo(jobId) {
+async function loadReviewVideo(jobId, generationRequestId = 0) {
   const requestId = ++state.previewVideoRequestId;
   clearPreviewVideo();
   if (!jobId) {
     setVideoPreviewState(false, "Без сохраненной записи обзорное видео не собирается.");
+    return;
+  }
+  if (generationRequestId && generationRequestId !== state.generationRequestId) {
     return;
   }
   setVideoPreviewState(false, "Собираем обзорное видео черновика.");
@@ -540,12 +544,20 @@ async function loadReviewVideo(jobId) {
         resolve();
         return;
       }
+      if (generationRequestId && generationRequestId !== state.generationRequestId) {
+        resolve();
+        return;
+      }
       applyLoadedVideoState("Доступно обзорное видео черновика.");
       resolve();
     };
     const handleError = () => {
       cleanup();
       if (requestId !== state.previewVideoRequestId) {
+        resolve();
+        return;
+      }
+      if (generationRequestId && generationRequestId !== state.generationRequestId) {
         resolve();
         return;
       }
@@ -564,8 +576,11 @@ async function loadReviewVideo(jobId) {
   });
 }
 
-async function loadAIVideoBrief(jobId) {
+async function loadAIVideoBrief(jobId, generationRequestId = 0) {
   const requestId = ++state.aiBriefRequestId;
+  if (generationRequestId && generationRequestId !== state.generationRequestId) {
+    return;
+  }
   if (!jobId) {
     renderAIBriefSummary(
       "Экспорт для AI-видео доступен только после сохранения записи.",
@@ -582,13 +597,16 @@ async function loadAIVideoBrief(jobId) {
   try {
     const response = await fetch(`/v1/jobs/${jobId}/ai-video-brief`);
     if (requestId !== state.aiBriefRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const data = await response.json();
     if (requestId !== state.aiBriefRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     state.lastAIBrief = data;
     renderAIBriefData();
   } catch {
     if (requestId !== state.aiBriefRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     state.lastAIBrief = null;
     renderAIBriefSummary(
       "Пакет для AI-видео пока не получен.",
@@ -689,8 +707,10 @@ function renderPlan(plan) {
 }
 
 function renderEmptyState() {
+  state.generationRequestId += 1;
   state.renderPlanRequestId += 1;
   state.previewVideoRequestId += 1;
+  state.aiBriefRequestId += 1;
   state.lastPlan = null;
   state.lastRenderPlan = null;
   state.videoPreviewReady = false;
@@ -749,8 +769,10 @@ function renderEmptyState() {
 
 function markPlanStale() {
   if (!state.lastPlan) return;
+  state.generationRequestId += 1;
   state.renderPlanRequestId += 1;
   state.previewVideoRequestId += 1;
+  state.aiBriefRequestId += 1;
   resultPanel.classList.add("is-stale");
   state.submittedFeedbackType = null;
   clearPreviewVideo();
@@ -947,10 +969,13 @@ function formatAdapterStatus(status) {
   return String(status || "не задан");
 }
 
-async function loadRenderPlan(jobId) {
+async function loadRenderPlan(jobId, generationRequestId = 0) {
   const requestId = ++state.renderPlanRequestId;
   if (!jobId) {
     resetRenderPlanSummary();
+    return;
+  }
+  if (generationRequestId && generationRequestId !== state.generationRequestId) {
     return;
   }
   renderRenderPlanSummary(
@@ -963,9 +988,11 @@ async function loadRenderPlan(jobId) {
     const response = await fetch(`/v1/jobs/${jobId}/render-plan`, { signal: controller.signal });
     window.clearTimeout(timeoutId);
     if (requestId !== state.renderPlanRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const data = await response.json();
     if (requestId !== state.renderPlanRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     state.lastRenderPlan = data;
     const adapterStatus = formatAdapterStatus(data?.adapter?.adapter_status);
     const resolved = Number(data?.summary?.resolved_segments ?? 0);
@@ -991,6 +1018,7 @@ async function loadRenderPlan(jobId) {
   } catch {
     window.clearTimeout(timeoutId);
     if (requestId !== state.renderPlanRequestId) return;
+    if (generationRequestId && generationRequestId !== state.generationRequestId) return;
     renderRenderPlanSummary(
       "Готовность видео пока не получена. Черновик сохранен, проверьте позже.",
       ["готовность: ошибка", "есть фрагментов: ?", "нужно добавить: ?", "выпуск: нет"]
@@ -1087,15 +1115,20 @@ async function generatePlan() {
     inputText.focus();
     return;
   }
+  const generationId = ++state.generationRequestId;
+  state.renderPlanRequestId += 1;
+  state.previewVideoRequestId += 1;
+  state.aiBriefRequestId += 1;
+  state.lastRenderPlan = null;
   state.lastAIBrief = null;
   state.aiBriefMode = "universal_prompt";
   syncAIBriefModeButtons();
+  resetRenderPlanSummary();
   renderAIBriefSummary(
     "Готовим пакет для AI-видео...",
     "Сохраните черновик, затем здесь появится свежий brief.",
     false
   );
-  state.renderPlanRequestId += 1;
   generateButton.disabled = true;
   generateButton.textContent = "Собираем...";
   renderSteps(2);
@@ -1105,19 +1138,25 @@ async function generatePlan() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ text, language: state.inputLanguage }),
     });
+    if (generationId !== state.generationRequestId) return;
     if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
     const plan = await response.json();
+    if (generationId !== state.generationRequestId) return;
     renderPlan(plan);
     state.lastAIBrief = null;
     const jobId = plan?.metadata?.job_id;
     if (jobId) {
-      await loadReviewVideo(jobId);
-      await Promise.allSettled([loadRenderPlan(jobId), loadAIVideoBrief(jobId)]);
+      await loadReviewVideo(jobId, generationId);
+      await Promise.allSettled([loadRenderPlan(jobId, generationId), loadAIVideoBrief(jobId, generationId)]);
     } else {
+      if (generationId !== state.generationRequestId) return;
       showUnsavedDependentState();
     }
-    setService("ok", "работает");
+    if (generationId === state.generationRequestId) {
+      setService("ok", "работает");
+    }
   } catch (error) {
+    if (generationId !== state.generationRequestId) return;
     renderPlan({
       input_text: text,
       language: "unknown",
@@ -1137,6 +1176,7 @@ async function generatePlan() {
     resetRenderPlanSummary();
     setService("bad", "ошибка сервиса");
   } finally {
+    if (generationId !== state.generationRequestId) return;
     generateButton.disabled = false;
     setGenerateButtonIdle();
   }

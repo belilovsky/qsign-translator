@@ -2,6 +2,19 @@
 
 All notable QSign Translator changes are summarized here.
 
+## 0.2.1 - 2026-06-28
+
+- Fixed mixed and Latin Kazakh routing:
+  - `detect_language` now resolves more deterministic Kazakh routes when Latin
+    Kazakh cues are present.
+  - planner transliteration helpers now attempt Kazakh Latin → Cyrillic conversion
+    before fallback for better short-token/phrase coverage.
+- Fixed stale UI state on repeated generation:
+  - generation runs now carry a generation scope token so async plan, render-plan,
+    and AI-brief/video-load flows cannot overwrite current work after rerun.
+- Updated docs: `docs/current-status.md` includes the latest verification totals and
+  explicit note about regeneration stability.
+
 ## 0.2.0 - 2026-06-27
 
 - Added a responsive public UI for transparent draft sign-plan generation.

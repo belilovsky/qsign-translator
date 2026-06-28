@@ -109,11 +109,22 @@ class SignPlannerTests(unittest.TestCase):
         self.assertEqual([unit["gloss"] for unit in data["units"]], ["HELLO", "THANK_YOU"])
         self.assertEqual([unit["kind"] for unit in data["units"]], ["gloss", "gloss"])
 
+    def test_latin_kazakh_text_routes_to_kk(self) -> None:
+        data = self.planner.plan("salam dostar").to_dict()
+        self.assertEqual(data["language"], "kk")
+        self.assertEqual(data["units"][0]["gloss"], "HELLO")
+        self.assertIn("dactyl", [unit["kind"] for unit in data["units"]])
+
     def test_language_scopes_do_not_leak_cross_language_matches(self) -> None:
         data = self.planner.plan("Hello", language_hint="ru").to_dict()
         self.assertEqual(data["language"], "ru")
         self.assertEqual(data["units"][0]["kind"], "dactyl")
         self.assertEqual(data["units"][0]["source"], "fallback:dactyl")
+
+    def test_mixed_script_input_is_deterministically_routed(self) -> None:
+        data = self.planner.plan("Hello мен керек").to_dict()
+        self.assertEqual(data["language"], "kk")
+        self.assertIn("NEED", [unit.gloss for unit in self.planner.plan("Hello мен керек").units])
 
     def test_trace_explains_pipeline(self) -> None:
         data = self.planner.plan("Привет Александр").to_dict()

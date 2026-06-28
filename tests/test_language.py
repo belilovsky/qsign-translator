@@ -10,7 +10,13 @@ class LanguageTests(unittest.TestCase):
         self.assertEqual(detect_language("hello world"), "en")
 
     def test_detects_mixed_script_text(self) -> None:
-        self.assertEqual(detect_language("Hello мир"), "mixed")
+        self.assertEqual(detect_language("Hello мир"), "en")
+
+    def test_detects_latin_kazakh_words_as_kazakh(self) -> None:
+        self.assertEqual(detect_language("salam dostar"), "kk")
+
+    def test_latin_english_phrase_not_falsely_routed_to_kk(self) -> None:
+        self.assertEqual(detect_language("the men are here"), "en")
 
     def test_detects_kazakh_text(self) -> None:
         self.assertEqual(detect_language("Қалайсыз"), "kk")

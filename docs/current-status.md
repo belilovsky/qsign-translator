@@ -94,7 +94,7 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 91 automated tests green;
+- 95 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
@@ -102,6 +102,8 @@ Recent validation passed with:
 - deterministic language route now routes Kazakh without explicit Kazakh-specific
   characters when common Kazakh lexical markers are present (`мен`, `керек`, etc.),
   and EN/KK seed coverage is expanded for common short phrases.
+- repeated regeneration in the same session updates dependent draft artifacts
+  (plan, render-plan, AI video brief) without stale cross-run overwrites.
 - deterministic runtime lexicon rebuild from curated overrides plus archived
   Slovo assets.
 - live footer attribution now points back to `qdev.run` in a muted, non-promotional style.

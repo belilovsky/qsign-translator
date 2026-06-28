@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .dactyl import spell_token
-from .language import detect_language, normalize_language_hint
+from .language import (
+    detect_language,
+    normalize_language_hint,
+    resolve_mixed_language,
+    transliterate_kazakh_latin_to_cyrillic,
+)
 from .lexicon import Lexicon
 from .normalize import normalize_for_lookup, tokenize
 from .risk import detect_risk_domains
@@ -252,6 +257,8 @@ class SignPlanner:
 
     def plan(self, text: str, language_hint: str | None = None) -> SignPlan:
         language = normalize_language_hint(language_hint) or detect_language(text)
+        if language == "mixed":
+            language = resolve_mixed_language(text)
         units: list[SignUnit] = []
         tokens = tokenize(text)
         index = 0
@@ -293,6 +300,24 @@ class SignPlanner:
                 )
                 continue
 
+            if language == "kk":
+                latin_variant = transliterate_kazakh_latin_to_cyrillic(token)
+                latin_entry = self.lexicon.lookup(normalize_for_lookup(latin_variant), language)
+                if latin_entry:
+                    if latin_entry.gloss == "OMIT":
+                        continue
+                    units.append(
+                        SignUnit(
+                            kind="gloss",
+                            source_token=token,
+                            gloss=latin_entry.gloss,
+                            confidence=latin_entry.confidence,
+                            source=latin_entry.source,
+                            clip_id=latin_entry.clip_id,
+                        )
+                    )
+                    continue
+
             dactyl_units = spell_token(token)
             if dactyl_units:
                 units.append(
@@ -328,6 +353,14 @@ class SignPlanner:
             entry = self.lexicon.lookup(phrase, language)
             if entry:
                 return " ".join(tokens[index : index + size]), entry, size
+            if language == "kk":
+                transliterated = " ".join(
+                    normalize_for_lookup(transliterate_kazakh_latin_to_cyrillic(token))
+                    for token in tokens[index : index + size]
+                )
+                transliterated_entry = self.lexicon.lookup(transliterated, language)
+                if transliterated_entry:
+                    return " ".join(tokens[index : index + size]), transliterated_entry, size
         return None
 
 
