@@ -17,6 +17,10 @@ else:
     import_error = None
 
 
+def fake_mp4_bytes() -> bytes:
+    return b"\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom"
+
+
 @unittest.skipIf(TestClient is None, f"API dependencies are not installed: {import_error!r}")
 class ApiTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -32,6 +36,17 @@ class ApiTests(unittest.TestCase):
             with self.subTest(path=path):
                 response = self.client.head(path)
                 self.assertLess(response.status_code, 500)
+
+    def test_health_ready_head_returns_503_for_configured_but_unready_database(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(database_url="postgres://db", review_token=None)),
+            mock.patch(
+                "qsign_translator.api.db.readiness",
+                return_value={"configured": True, "ok": False, "reason": "db down"},
+            ),
+        ):
+            response = self.client.head("/health/ready")
+        self.assertEqual(response.status_code, 503)
 
     def test_audio_rejects_unsupported_type(self) -> None:
         response = self.client.post(
@@ -263,7 +278,7 @@ class ApiTests(unittest.TestCase):
             ):
                 response = self.client.post(
                     "/v1/review/jobs/job-1/rendered-video",
-                    content=b"fake-mp4",
+                    content=fake_mp4_bytes(),
                     headers={
                         "x-qsign-review-token": "secret",
                         "content-type": "video/mp4",
@@ -273,6 +288,24 @@ class ApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["output_status"], "ready")
+
+    def test_review_job_rendered_video_upload_rejects_fake_mp4_payload(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch(
+                "qsign_translator.api.db.get_translation_job",
+                return_value={"id": "job-1"},
+            ),
+        ):
+            response = self.client.post(
+                "/v1/review/jobs/job-1/rendered-video",
+                content=b"fake-mp4",
+                headers={
+                    "x-qsign-review-token": "secret",
+                    "content-type": "video/mp4",
+                },
+            )
+        self.assertEqual(response.status_code, 415)
 
     def test_review_feedback_endpoint_lists_events(self) -> None:
         with (

@@ -35,6 +35,7 @@ import json
 
 MAX_AUDIO_BYTES = 50 * 1024 * 1024
 MAX_RENDERED_VIDEO_BYTES = 250 * 1024 * 1024
+MIN_MP4_HEADER_BYTES = 12
 SUPPORTED_AUDIO_TYPES = {
     "audio/aac": ".aac",
     "audio/mp4": ".m4a",
@@ -204,6 +205,19 @@ def _fallback_lexicon_payload() -> list[dict[str, object]]:
     return load_default_lexicon().export_entries()
 
 
+def _clamp_limit(value: int, *, minimum: int, maximum: int) -> int:
+    return max(minimum, min(value, maximum))
+
+
+def _looks_like_mp4(payload: bytes) -> bool:
+    if len(payload) < MIN_MP4_HEADER_BYTES:
+        return False
+    box_size = int.from_bytes(payload[0:4], "big", signed=False)
+    if box_size < 8:
+        return False
+    return payload[4:8] == b"ftyp"
+
+
 @app.post("/v1/transcribe/audio")
 async def transcribe_audio(request: Request) -> dict[str, object]:
     content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
@@ -259,26 +273,26 @@ async def transcribe_audio(request: Request) -> dict[str, object]:
 @app.get("/v1/sources")
 def sources(limit: int = 100) -> dict[str, object]:
     try:
-        rows = db.list_sources(limit=max(1, min(limit, 500)))
+        rows = db.list_sources(limit=_clamp_limit(limit, minimum=1, maximum=500))
     except db.DatabaseUnavailable as exc:
         rows = _fallback_sources_payload()
         if not rows:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
-        rows = rows[: max(1, min(limit, 500))]
+        rows = rows[: _clamp_limit(limit, minimum=1, maximum=500)]
     return {"items": rows, "count": len(rows)}
 
 
 @app.get("/v1/lexicon")
 def lexicon(language: str | None = None, limit: int = 200) -> dict[str, object]:
     try:
-        rows = db.list_lexicon(language=language, limit=max(1, min(limit, 1000)))
+        rows = db.list_lexicon(language=language, limit=_clamp_limit(limit, minimum=1, maximum=1000))
     except db.DatabaseUnavailable as exc:
         if not default_lexicon_path().exists():
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         rows = _fallback_lexicon_payload()
         if language:
             rows = [row for row in rows if row["language"] == language]
-        rows = rows[: max(1, min(limit, 1000))]
+        rows = rows[: _clamp_limit(limit, minimum=1, maximum=1000)]
     return {"items": rows, "count": len(rows)}
 
 
@@ -427,7 +441,7 @@ def review_jobs(
     try:
         items = db.list_translation_jobs(
             review_status=review_status,
-            limit=max(1, min(limit, 200)),
+            limit=_clamp_limit(limit, minimum=1, maximum=200),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -456,7 +470,10 @@ def review_feedback(
 ) -> dict[str, object]:
     require_review_access(request)
     try:
-        items = db.list_feedback_events(job_id=job_id, limit=max(1, min(limit, 200)))
+        items = db.list_feedback_events(
+            job_id=job_id,
+            limit=_clamp_limit(limit, minimum=1, maximum=200),
+        )
     except db.DatabaseUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"items": items, "count": len(items)}
@@ -468,7 +485,10 @@ def review_audit(
 ) -> dict[str, object]:
     require_review_access(request)
     try:
-        items = db.list_audit_events(job_id=job_id, limit=max(1, min(limit, 300)))
+        items = db.list_audit_events(
+            job_id=job_id,
+            limit=_clamp_limit(limit, minimum=1, maximum=300),
+        )
     except db.DatabaseUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"items": items, "count": len(items)}
@@ -480,7 +500,10 @@ def review_sessions(
 ) -> dict[str, object]:
     require_review_access(request)
     try:
-        items = db.list_review_sessions(job_id=job_id, limit=max(1, min(limit, 200)))
+        items = db.list_review_sessions(
+            job_id=job_id,
+            limit=_clamp_limit(limit, minimum=1, maximum=200),
+        )
     except db.DatabaseUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"items": items, "count": len(items)}
@@ -552,6 +575,8 @@ async def upload_rendered_video(job_id: str, request: Request) -> dict[str, obje
         raise HTTPException(status_code=400, detail="Rendered video is empty")
     if len(body) > MAX_RENDERED_VIDEO_BYTES:
         raise HTTPException(status_code=413, detail="Rendered video is too large")
+    if not _looks_like_mp4(body):
+        raise HTTPException(status_code=415, detail="Rendered video payload is not a valid MP4")
     output_path = uploaded_render_path(job_id)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = output_path.with_name(f"{output_path.stem}-{uuid4().hex}.tmp")
