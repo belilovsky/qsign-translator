@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import secrets
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 from uuid import uuid4
 
@@ -186,6 +187,19 @@ def _plan_response(text: str, input_type: str, language_hint: str | None = None)
     return response
 
 
+@lru_cache(maxsize=1)
+def _fallback_sources_payload() -> list[dict[str, object]]:
+    registry_path = Path(__file__).resolve().parents[2] / "data" / "source_registry.json"
+    if not registry_path.exists():
+        return []
+    return list(json.loads(registry_path.read_text(encoding="utf-8"))["sources"])
+
+
+@lru_cache(maxsize=1)
+def _fallback_lexicon_payload() -> list[dict[str, object]]:
+    return load_default_lexicon().export_entries()
+
+
 @app.post("/v1/transcribe/audio")
 async def transcribe_audio(request: Request) -> dict[str, object]:
     content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
@@ -243,10 +257,10 @@ def sources(limit: int = 100) -> dict[str, object]:
     try:
         rows = db.list_sources(limit=max(1, min(limit, 500)))
     except db.DatabaseUnavailable as exc:
-        registry_path = Path(__file__).resolve().parents[2] / "data" / "source_registry.json"
-        if not registry_path.exists():
+        rows = _fallback_sources_payload()
+        if not rows:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
-        rows = json.loads(registry_path.read_text(encoding="utf-8"))["sources"]
+        rows = rows[: max(1, min(limit, 500))]
     return {"items": rows, "count": len(rows)}
 
 
@@ -255,10 +269,9 @@ def lexicon(language: str | None = None, limit: int = 200) -> dict[str, object]:
     try:
         rows = db.list_lexicon(language=language, limit=max(1, min(limit, 1000)))
     except db.DatabaseUnavailable as exc:
-        lexicon_path = default_lexicon_path()
-        if not lexicon_path.exists():
+        if not default_lexicon_path().exists():
             raise HTTPException(status_code=503, detail=str(exc)) from exc
-        rows = json.loads(lexicon_path.read_text(encoding="utf-8"))["entries"]
+        rows = _fallback_lexicon_payload()
         if language:
             rows = [row for row in rows if row["language"] == language]
         rows = rows[: max(1, min(limit, 1000))]

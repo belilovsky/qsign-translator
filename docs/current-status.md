@@ -104,6 +104,13 @@ Recent validation passed with:
   and EN/KK seed coverage is expanded for common short phrases.
 - repeated regeneration in the same session updates dependent draft artifacts
   (plan, render-plan, AI video brief) without stale cross-run overwrites.
+- planner hot-path work is now cached and de-duplicated:
+  deterministic tokenization, normalization, language detection, transliteration,
+  and dactyl fallback no longer repeat unnecessary work across common requests.
+- API fallback reads for source registry and lexicon export are now cached in-process,
+  reducing repeated JSON parsing when database-backed endpoints are unavailable.
+- repository now includes `scripts/benchmark_planner.py` and `make benchmark`
+  for lightweight performance regression checks during future iterations.
 - deterministic runtime lexicon rebuild from curated overrides plus archived
   Slovo assets.
 - live footer attribution now points back to `qdev.run` in a muted, non-promotional style.

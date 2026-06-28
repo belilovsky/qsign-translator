@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 
@@ -29,7 +30,26 @@ class Lexicon:
 
         return self._entries.get((language, token))
 
+    def export_entries(self, language: str | None = None) -> list[dict[str, object]]:
+        items = []
+        for entry in self._entries.values():
+            if language and entry.language != language:
+                continue
+            items.append(
+                {
+                    "token": entry.token,
+                    "gloss": entry.gloss,
+                    "language": entry.language,
+                    "source": entry.source,
+                    "confidence": entry.confidence,
+                    "clip_id": entry.clip_id,
+                }
+            )
+        items.sort(key=lambda item: (str(item["language"]), str(item["token"])))
+        return items
 
+
+@lru_cache(maxsize=4)
 def load_lexicon(path: Path) -> Lexicon:
     data = json.loads(path.read_text(encoding="utf-8"))
     entries = [LexiconEntry(**item) for item in data["entries"]]

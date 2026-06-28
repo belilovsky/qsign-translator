@@ -12,6 +12,13 @@ All notable QSign Translator changes are summarized here.
 - Fixed stale UI state on repeated generation:
   - generation runs now carry a generation scope token so async plan, render-plan,
     and AI-brief/video-load flows cannot overwrite current work after rerun.
+- Improved core performance discipline:
+  - cached deterministic tokenization, normalization, language detection,
+    transliteration, and dactyl fallback work;
+  - reduced repeated planner recomputation for phrase matching and plan metadata;
+  - cached API fallback export payloads for lexicon and source-registry reads.
+- Added `scripts/benchmark_planner.py` plus `make benchmark` for lightweight
+  performance regression checks.
 - Updated docs: `docs/current-status.md` includes the latest verification totals and
   explicit note about regeneration stability.
 
