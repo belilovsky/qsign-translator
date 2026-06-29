@@ -38,6 +38,7 @@ const state = {
   reviewLanguageFilter: "",
   reviewSearchQuery: "",
   reviewSystemStatus: null,
+  reviewCoverageReport: null,
 };
 
 const defaultUploadCopy = {
@@ -1809,6 +1810,20 @@ function renderReviewSystemStatus(data) {
         .join(" · ")
     );
   }
+  const topFallbacks = Array.isArray(state.reviewCoverageReport?.top_fallbacks)
+    ? state.reviewCoverageReport.top_fallbacks
+    : [];
+  if (topFallbacks.length) {
+    appendTextElement(
+      meta,
+      "p",
+      "",
+      `Частые fallback: ${topFallbacks
+        .slice(0, 5)
+        .map((item) => `${String(item.source_token || "—")} (${item.hits})`)
+        .join(", ")}`
+    );
+  }
   reviewSystemSummary.append(meta);
 }
 
@@ -2174,6 +2189,8 @@ async function loginReviewSession() {
       throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
     }
     await refreshReviewIdentity();
+    saveReviewToken("");
+    reviewTokenInput.value = "";
     await loadReviewSystemStatus();
     reviewIdentityBanner.textContent = "Сессия ревью открыта.";
     await loadReviewDashboard();
@@ -2194,6 +2211,7 @@ async function logoutReviewSession() {
   state.reviewAuditEvents = [];
   state.reviewLexiconSuggestions = [];
   state.reviewSystemStatus = null;
+  state.reviewCoverageReport = null;
   renderReviewIdentity();
   renderReviewSystemStatus(null);
   renderReviewSummary([]);
@@ -2205,17 +2223,23 @@ async function logoutReviewSession() {
 async function loadReviewSystemStatus() {
   if (!hasReviewAccess()) {
     state.reviewSystemStatus = null;
+    state.reviewCoverageReport = null;
     renderReviewSystemStatus(null);
     return;
   }
   try {
-    const response = await fetch("/v1/review/system-status", { headers: reviewHeaders() });
-    if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
-    const data = await response.json();
+    const [systemResponse, coverageResponse] = await Promise.all([
+      fetch("/v1/review/system-status", { headers: reviewHeaders() }),
+      fetch("/v1/review/coverage-report?limit_jobs=200&limit_terms=20", { headers: reviewHeaders() }),
+    ]);
+    if (!systemResponse.ok) throw new Error(`Сервис вернул ошибку ${systemResponse.status}`);
+    const data = await systemResponse.json();
     state.reviewSystemStatus = data;
+    state.reviewCoverageReport = coverageResponse.ok ? (await coverageResponse.json()).report || null : null;
     renderReviewSystemStatus(data);
   } catch {
     state.reviewSystemStatus = null;
+    state.reviewCoverageReport = null;
     renderReviewSystemStatus(null);
   }
 }

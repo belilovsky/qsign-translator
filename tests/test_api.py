@@ -271,10 +271,8 @@ class ApiTests(unittest.TestCase):
                 json={"token": "secret", "role": "operator"},
             )
             cookie = login_response.cookies.get("qsign_review_session")
-            response = self.client.get(
-                "/v1/review/me",
-                cookies={"qsign_review_session": cookie},
-            )
+            self.client.cookies.set("qsign_review_session", cookie)
+            response = self.client.get("/v1/review/me")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["actor"]["role"], "operator")
 
