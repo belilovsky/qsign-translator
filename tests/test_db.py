@@ -121,6 +121,24 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(rows[0]["id"], "job-1")
         self.assertEqual(cursor.calls[0][1], ("pending_signer_review", 10))
 
+    def test_list_translation_jobs_supports_compound_filters(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            db.list_translation_jobs(
+                review_status="pending_signer_review",
+                publish_status="draft",
+                detected_language="ru",
+                search_query="Привет",
+                limit=20,
+            )
+
+        self.assertEqual(
+            cursor.calls[0][1],
+            ("pending_signer_review", "draft", "ru", "%Привет%", 20),
+        )
+
     def test_get_translation_job_treats_invalid_uuid_as_missing(self) -> None:
         cursor = InvalidUuidCursor()
         connection = FakeConnection(cursor)
@@ -260,6 +278,37 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertEqual(rows[0]["job_id"], "job-1")
         self.assertEqual(cursor.calls[0][1], ("job-1", 10))
+
+    def test_create_lexicon_suggestion_writes_event(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            row = db.create_lexicon_suggestion(
+                job_id="job-1",
+                unit_position=2,
+                source_token="Александр",
+                suggested_gloss="ALEXANDER",
+                suggested_language="ru",
+                reason="Пока уходит в fallback.",
+                created_by_role="linguist",
+            )
+
+        self.assertEqual(row["id"], "job-1")
+        self.assertTrue(connection.committed)
+        self.assertIn("INSERT INTO lexicon_suggestions", cursor.calls[0][0])
+        self.assertEqual(cursor.calls[0][1][0], "job-1")
+        self.assertEqual(cursor.calls[0][1][1], 2)
+
+    def test_list_lexicon_suggestions_filters_by_job_and_status(self) -> None:
+        cursor = FakeCursor()
+        connection = FakeConnection(cursor)
+
+        with mock.patch("qsign_translator.db.connect", return_value=connection):
+            rows = db.list_lexicon_suggestions(job_id="job-1", status="open", limit=10)
+
+        self.assertEqual(rows[0]["job_id"], "job-1")
+        self.assertEqual(cursor.calls[0][1], ("job-1", "open", 10))
 
 
 if __name__ == "__main__":

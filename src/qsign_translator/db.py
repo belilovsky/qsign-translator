@@ -27,6 +27,14 @@ VALID_PUBLISH_STATUSES = {
     "needs_video_fix",
     "rejected",
 }
+VALID_REVIEWER_ROLES = {
+    "admin",
+    "reviewer",
+    "linguist",
+    "operator",
+    "native_signer",
+}
+VALID_LEXICON_SUGGESTION_STATUSES = {"open", "accepted", "rejected", "applied"}
 POSTGRES_INVALID_TEXT_REPRESENTATION = "22P02"
 
 
@@ -265,71 +273,68 @@ def get_translation_job(job_id: str) -> dict[str, Any] | None:
 
 def list_translation_jobs(
     review_status: str | None = None,
+    publish_status: str | None = None,
+    detected_language: str | None = None,
+    search_query: str | None = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
     if review_status and review_status not in VALID_REVIEW_STATUSES:
         raise ValueError("Unsupported review status")
+    if publish_status and publish_status not in VALID_PUBLISH_STATUSES:
+        raise ValueError("Unsupported publish status")
     with connect() as conn:
         with conn.cursor() as cur:
+            conditions: list[str] = []
+            params: list[Any] = []
             if review_status:
-                cur.execute(
-                    """
-                    SELECT
-                        id,
-                        input_type,
-                        input_text,
-                        detected_language,
-                        status,
-                        output_kind,
-                        output_status,
-                        confidence,
-                        warnings,
-                        review_status,
-                        publish_status,
-                        risk_domains,
-                        source_ids,
-                        fallback_count,
-                        unknown_token_count,
-                        created_at,
-                        updated_at
-                    FROM translation_jobs
-                    WHERE review_status = %s
-                    ORDER BY created_at DESC
-                    LIMIT %s
-                    """,
-                    (review_status, limit),
-                )
-            else:
-                cur.execute(
-                    """
-                    SELECT
-                        id,
-                        input_type,
-                        input_text,
-                        detected_language,
-                        status,
-                        output_kind,
-                        output_status,
-                        confidence,
-                        warnings,
-                        review_status,
-                        publish_status,
-                        risk_domains,
-                        source_ids,
-                        fallback_count,
-                        unknown_token_count,
-                        created_at,
-                        updated_at
-                    FROM translation_jobs
-                    ORDER BY created_at DESC
-                    LIMIT %s
-                    """,
-                    (limit,),
-                )
+                conditions.append("review_status = %s")
+                params.append(review_status)
+            if publish_status:
+                conditions.append("publish_status = %s")
+                params.append(publish_status)
+            if detected_language:
+                conditions.append("detected_language = %s")
+                params.append(detected_language)
+            if search_query:
+                conditions.append("COALESCE(input_text, '') ILIKE %s")
+                params.append(f"%{search_query}%")
+            where_sql = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+            cur.execute(
+                f"""
+                SELECT
+                    id,
+                    input_type,
+                    input_text,
+                    detected_language,
+                    status,
+                    output_kind,
+                    output_status,
+                    confidence,
+                    warnings,
+                    review_status,
+                    publish_status,
+                    risk_domains,
+                    source_ids,
+                    fallback_count,
+                    unknown_token_count,
+                    created_at,
+                    updated_at
+                FROM translation_jobs
+                {where_sql}
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (*params, limit),
+            )
             return [_stringify_id(row) for row in cur.fetchall()]
 
 
-def update_review_status(job_id: str, review_status: str) -> dict[str, Any] | None:
+def update_review_status(
+    job_id: str,
+    review_status: str,
+    *,
+    actor_role: str = "reviewer",
+) -> dict[str, Any] | None:
     if review_status not in VALID_REVIEW_STATUSES:
         raise ValueError("Unsupported review status")
     with connect() as conn:
@@ -371,7 +376,7 @@ def update_review_status(job_id: str, review_status: str) -> dict[str, Any] | No
                     cur,
                     job_id=job_id,
                     event_type="review_status_updated",
-                    actor_role="reviewer",
+                    actor_role=actor_role,
                     detail={"review_status": review_status},
                 )
         conn.commit()
@@ -744,6 +749,217 @@ def list_audit_events(job_id: str | None = None, limit: int = 100) -> list[dict[
                     (limit,),
                 )
             return [_stringify_id(row, extra_uuid_fields=("job_id",)) for row in cur.fetchall()]
+
+
+def review_metrics(limit: int = 500) -> dict[str, Any]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    count(*) AS total_jobs,
+                    count(*) FILTER (WHERE review_status = 'pending_signer_review') AS pending_jobs,
+                    count(*) FILTER (WHERE review_status = 'needs_edit') AS needs_edit_jobs,
+                    count(*) FILTER (WHERE review_status = 'approved') AS approved_jobs,
+                    count(*) FILTER (WHERE publish_status = 'publishable') AS publishable_jobs,
+                    COALESCE(sum(fallback_count), 0) AS fallback_units,
+                    COALESCE(sum(unknown_token_count), 0) AS unknown_tokens
+                FROM (
+                    SELECT *
+                    FROM translation_jobs
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                ) recent_jobs
+                """,
+                (limit,),
+            )
+            totals = dict(cur.fetchone() or {})
+            cur.execute(
+                """
+                SELECT
+                    COALESCE(detected_language, 'unknown') AS language,
+                    count(*) AS jobs,
+                    COALESCE(sum(fallback_count), 0) AS fallback_units,
+                    COALESCE(sum(unknown_token_count), 0) AS unknown_tokens
+                FROM (
+                    SELECT *
+                    FROM translation_jobs
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                ) recent_jobs
+                GROUP BY COALESCE(detected_language, 'unknown')
+                ORDER BY jobs DESC, language ASC
+                """,
+                (limit,),
+            )
+            by_language = [dict(row) for row in cur.fetchall()]
+    return {"limit": limit, "totals": totals, "by_language": by_language}
+
+
+def review_coverage_report(*, limit_jobs: int = 500, limit_terms: int = 50) -> dict[str, Any]:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                WITH recent_jobs AS (
+                    SELECT id, detected_language
+                    FROM translation_jobs
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                ),
+                fallback_units AS (
+                    SELECT
+                        COALESCE(rj.detected_language, 'unknown') AS language,
+                        spu.source_token,
+                        spu.kind
+                    FROM sign_plan_units spu
+                    JOIN recent_jobs rj ON rj.id = spu.job_id
+                    WHERE spu.kind <> 'gloss'
+                )
+                SELECT
+                    language,
+                    source_token,
+                    kind,
+                    count(*) AS hits
+                FROM fallback_units
+                GROUP BY language, source_token, kind
+                ORDER BY hits DESC, language ASC, source_token ASC
+                LIMIT %s
+                """,
+                (limit_jobs, limit_terms),
+            )
+            top_fallbacks = [dict(row) for row in cur.fetchall()]
+    return {
+        "limit_jobs": limit_jobs,
+        "limit_terms": limit_terms,
+        "top_fallbacks": top_fallbacks,
+    }
+
+
+def list_lexicon_suggestions(
+    job_id: str | None = None,
+    status: str | None = None,
+    limit: int = 100,
+) -> list[dict[str, Any]]:
+    if status and status not in VALID_LEXICON_SUGGESTION_STATUSES:
+        raise ValueError("Unsupported lexicon suggestion status")
+    with connect() as conn:
+        with conn.cursor() as cur:
+            conditions: list[str] = []
+            params: list[Any] = []
+            if job_id:
+                conditions.append("job_id = %s")
+                params.append(job_id)
+            if status:
+                conditions.append("status = %s")
+                params.append(status)
+            where_sql = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+            try:
+                cur.execute(
+                    f"""
+                    SELECT
+                        id,
+                        job_id,
+                        unit_position,
+                        source_token,
+                        suggested_gloss,
+                        suggested_language,
+                        suggested_clip_id,
+                        reason,
+                        status,
+                        created_by_role,
+                        created_at,
+                        updated_at
+                    FROM lexicon_suggestions
+                    {where_sql}
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                    """,
+                    (*params, limit),
+                )
+            except Exception as exc:
+                if job_id and _is_invalid_text_representation(exc):
+                    return []
+                raise
+            return [_stringify_id(row, extra_uuid_fields=("job_id",)) for row in cur.fetchall()]
+
+
+def create_lexicon_suggestion(
+    *,
+    job_id: str,
+    unit_position: int,
+    source_token: str,
+    suggested_gloss: str,
+    suggested_language: str,
+    suggested_clip_id: str | None = None,
+    reason: str | None = None,
+    created_by_role: str,
+) -> dict[str, Any] | None:
+    if created_by_role not in VALID_REVIEWER_ROLES:
+        raise ValueError("Unsupported reviewer role")
+    with connect() as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO lexicon_suggestions (
+                        job_id,
+                        unit_position,
+                        source_token,
+                        suggested_gloss,
+                        suggested_language,
+                        suggested_clip_id,
+                        reason,
+                        created_by_role
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING
+                        id,
+                        job_id,
+                        unit_position,
+                        source_token,
+                        suggested_gloss,
+                        suggested_language,
+                        suggested_clip_id,
+                        reason,
+                        status,
+                        created_by_role,
+                        created_at,
+                        updated_at
+                    """,
+                    (
+                        job_id,
+                        unit_position,
+                        source_token,
+                        suggested_gloss,
+                        suggested_language,
+                        suggested_clip_id,
+                        reason,
+                        created_by_role,
+                    ),
+                )
+            except Exception as exc:
+                if _is_invalid_text_representation(exc):
+                    return None
+                raise
+            row = cur.fetchone()
+            if row:
+                _record_audit_event(
+                    cur,
+                    job_id=job_id,
+                    event_type="lexicon_suggestion_created",
+                    actor_role=created_by_role,
+                    detail={
+                        "unit_position": unit_position,
+                        "source_token": source_token,
+                        "suggested_gloss": suggested_gloss,
+                        "suggested_language": suggested_language,
+                    },
+                )
+        conn.commit()
+    if not row:
+        return None
+    return _stringify_id(row, extra_uuid_fields=("job_id",))
 
 
 def _record_audit_event(

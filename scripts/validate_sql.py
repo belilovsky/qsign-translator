@@ -11,6 +11,7 @@ REQUIRED_TABLES = {
     "sign_plan_units",
     "review_sessions",
     "feedback_events",
+    "lexicon_suggestions",
 }
 
 REQUIRED_SNIPPETS = {

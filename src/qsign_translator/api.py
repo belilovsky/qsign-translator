@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import os
 import secrets
+import shutil
 import tempfile
+import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -90,6 +95,21 @@ class BatchAIVideoBriefRequest(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=120)
 
 
+class ReviewLoginRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=200)
+    role: Literal["admin", "reviewer", "linguist", "operator", "native_signer"] = "operator"
+
+
+class LexiconSuggestionRequest(BaseModel):
+    job_id: str = Field(min_length=1, max_length=80)
+    unit_position: int = Field(ge=1, le=500)
+    source_token: str = Field(min_length=1, max_length=200)
+    suggested_gloss: str = Field(min_length=1, max_length=200)
+    suggested_language: Literal["ru", "kk", "en", "rsl", "krsl", "asl"]
+    suggested_clip_id: str | None = Field(default=None, max_length=200)
+    reason: str | None = Field(default=None, max_length=2000)
+
+
 app = FastAPI(
     title="QSign Translator API",
     version=__version__,
@@ -100,6 +120,7 @@ PUBLIC_ROOT = Path(__file__).resolve().parents[2] / "public"
 STATIC_ROOT = PUBLIC_ROOT / "static"
 GENERATED_PREVIEW_ROOT = Path(tempfile.gettempdir()) / "qsign-preview-videos"
 UPLOADED_RENDER_ROOT = Path(settings.generated_media_root) / "rendered-videos"
+REVIEW_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
 
 if STATIC_ROOT.exists():
     app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
@@ -307,6 +328,97 @@ def translation_job(job_id: str) -> dict[str, object]:
     return job
 
 
+def _review_session_secret() -> str | None:
+    return settings.review_session_secret or settings.review_token
+
+
+def _encode_review_session(role: str) -> str:
+    secret = _review_session_secret()
+    if not secret:
+        raise HTTPException(status_code=503, detail="Review API is not configured")
+    payload = json.dumps(
+        {
+            "role": role,
+            "issued_at": int(time.time()),
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    payload_b64 = base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+    signature = hmac.new(secret.encode("utf-8"), payload_b64.encode("utf-8"), hashlib.sha256).hexdigest()
+    return f"{payload_b64}.{signature}"
+
+
+def _decode_review_session(raw_value: str) -> dict[str, object] | None:
+    if not raw_value:
+        return None
+    secret = _review_session_secret()
+    if not secret:
+        return None
+    try:
+        payload_b64, supplied_signature = raw_value.split(".", 1)
+    except ValueError:
+        return None
+    expected_signature = hmac.new(
+        secret.encode("utf-8"),
+        payload_b64.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not secrets.compare_digest(supplied_signature, expected_signature):
+        return None
+    padded = payload_b64 + "=" * (-len(payload_b64) % 4)
+    try:
+        payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
+    except Exception:
+        return None
+    role = str(payload.get("role") or "").strip()
+    issued_at = int(payload.get("issued_at") or 0)
+    if role not in db.VALID_REVIEWER_ROLES:
+        return None
+    if issued_at <= 0 or int(time.time()) - issued_at > REVIEW_SESSION_MAX_AGE_SECONDS:
+        return None
+    return {"role": role, "issued_at": issued_at, "method": "session"}
+
+
+def _set_review_cookie(response: Response, role: str) -> None:
+    response.set_cookie(
+        key=settings.review_cookie_name,
+        value=_encode_review_session(role),
+        max_age=REVIEW_SESSION_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=settings.review_cookie_secure,
+        samesite="lax",
+        path="/",
+    )
+
+
+def _clear_review_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.review_cookie_name,
+        httponly=True,
+        secure=settings.review_cookie_secure,
+        samesite="lax",
+        path="/",
+    )
+
+
+def require_review_access(request: Request, *, allowed_roles: set[str] | None = None) -> dict[str, str]:
+    if not settings.review_token:
+        raise HTTPException(status_code=503, detail="Review API is not configured")
+    supplied = request.headers.get("x-qsign-review-token", "")
+    if supplied:
+        if not secrets.compare_digest(supplied, settings.review_token):
+            raise HTTPException(status_code=403, detail="Review API token is invalid")
+        actor = {"role": "admin", "method": "token"}
+    else:
+        actor = _decode_review_session(request.cookies.get(settings.review_cookie_name, ""))
+        if not actor:
+            raise HTTPException(status_code=403, detail="Review session is missing or invalid")
+    if allowed_roles and actor["role"] not in allowed_roles:
+        raise HTTPException(status_code=403, detail="Review session role is not allowed")
+    return actor
+
+
 @app.get("/v1/jobs/{job_id}/render-plan")
 def translation_job_render_plan(job_id: str) -> dict[str, object]:
     try:
@@ -433,16 +545,109 @@ def ai_video_batch_brief(payload: BatchAIVideoBriefRequest) -> dict[str, object]
     return build_ai_video_batch_brief(jobs_with_render_plans, title=payload.title)
 
 
+@app.post("/v1/review/login")
+def review_login(payload: ReviewLoginRequest, response: Response) -> dict[str, object]:
+    if not settings.review_token:
+        raise HTTPException(status_code=503, detail="Review API is not configured")
+    if not secrets.compare_digest(payload.token, settings.review_token):
+        raise HTTPException(status_code=403, detail="Review API token is invalid")
+    _set_review_cookie(response, payload.role)
+    return {
+        "status": "ok",
+        "actor": {
+            "role": payload.role,
+            "method": "session",
+            "session_max_age_seconds": REVIEW_SESSION_MAX_AGE_SECONDS,
+        },
+    }
+
+
+@app.post("/v1/review/logout")
+def review_logout(response: Response) -> dict[str, object]:
+    _clear_review_cookie(response)
+    return {"status": "ok"}
+
+
+@app.get("/v1/review/me")
+def review_me(request: Request) -> dict[str, object]:
+    actor = require_review_access(request)
+    return {"status": "ok", "actor": actor}
+
+
+@app.get("/v1/review/system-status")
+def review_system_status(request: Request) -> dict[str, object]:
+    actor = require_review_access(request, allowed_roles=db.VALID_REVIEWER_ROLES | {"admin"})
+    readiness = db.readiness()
+    metrics: dict[str, object] | None = None
+    if readiness.get("ok"):
+        try:
+            metrics = db.review_metrics(limit=500)
+        except db.DatabaseUnavailable:
+            metrics = None
+    preview_root_exists = GENERATED_PREVIEW_ROOT.exists()
+    uploaded_root_exists = UPLOADED_RENDER_ROOT.exists()
+    return {
+        "status": "ok",
+        "actor": actor,
+        "services": {
+            "database": readiness,
+            "ffmpeg": {"installed": bool(shutil.which("ffmpeg"))},
+            "preview_video": {
+                "root": str(GENERATED_PREVIEW_ROOT),
+                "exists": preview_root_exists,
+            },
+            "rendered_video": {
+                "root": str(UPLOADED_RENDER_ROOT),
+                "exists": uploaded_root_exists,
+            },
+            "lexicon": {
+                "fallback_export_available": default_lexicon_path().exists(),
+            },
+            "source_registry": {
+                "fallback_json_available": bool(
+                    (Path(__file__).resolve().parents[2] / "data" / "source_registry.json").exists()
+                ),
+            },
+        },
+        "review_metrics": metrics,
+    }
+
+
+@app.get("/v1/review/coverage-report")
+def review_coverage_report(
+    request: Request,
+    limit_jobs: int = 500,
+    limit_terms: int = 50,
+) -> dict[str, object]:
+    require_review_access(request, allowed_roles=db.VALID_REVIEWER_ROLES | {"admin"})
+    try:
+        return {
+            "status": "ok",
+            "report": db.review_coverage_report(
+                limit_jobs=_clamp_limit(limit_jobs, minimum=10, maximum=5000),
+                limit_terms=_clamp_limit(limit_terms, minimum=10, maximum=500),
+            ),
+        }
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
 @app.get("/v1/review/jobs")
 def review_jobs(
     request: Request,
     review_status: str | None = None,
+    publish_status: str | None = None,
+    detected_language: str | None = None,
+    q: str | None = None,
     limit: int = 50,
 ) -> dict[str, object]:
-    require_review_access(request)
+    require_review_access(request, allowed_roles=db.VALID_REVIEWER_ROLES | {"admin"})
     try:
         items = db.list_translation_jobs(
             review_status=review_status,
+            publish_status=publish_status,
+            detected_language=detected_language,
+            search_query=q,
             limit=_clamp_limit(limit, minimum=1, maximum=200),
         )
     except ValueError as exc:
@@ -454,9 +659,12 @@ def review_jobs(
 
 @app.patch("/v1/review/jobs/{job_id}")
 def review_job(job_id: str, payload: ReviewStatusRequest, request: Request) -> dict[str, object]:
-    require_review_access(request)
+    actor = require_review_access(
+        request,
+        allowed_roles={"admin", "reviewer", "operator", "linguist"},
+    )
     try:
-        job = db.update_review_status(job_id, payload.review_status)
+        job = db.update_review_status(job_id, payload.review_status, actor_role=actor["role"])
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except db.DatabaseUnavailable as exc:
@@ -470,7 +678,7 @@ def review_job(job_id: str, payload: ReviewStatusRequest, request: Request) -> d
 def review_feedback(
     request: Request, job_id: str | None = None, limit: int = 50
 ) -> dict[str, object]:
-    require_review_access(request)
+    require_review_access(request, allowed_roles=db.VALID_REVIEWER_ROLES | {"admin"})
     try:
         items = db.list_feedback_events(
             job_id=job_id,
@@ -485,7 +693,7 @@ def review_feedback(
 def review_audit(
     request: Request, job_id: str | None = None, limit: int = 100
 ) -> dict[str, object]:
-    require_review_access(request)
+    require_review_access(request, allowed_roles=db.VALID_REVIEWER_ROLES | {"admin"})
     try:
         items = db.list_audit_events(
             job_id=job_id,
@@ -500,7 +708,7 @@ def review_audit(
 def review_sessions(
     request: Request, job_id: str | None = None, limit: int = 50
 ) -> dict[str, object]:
-    require_review_access(request)
+    require_review_access(request, allowed_roles=db.VALID_REVIEWER_ROLES | {"admin"})
     try:
         items = db.list_review_sessions(
             job_id=job_id,
@@ -513,14 +721,17 @@ def review_sessions(
 
 @app.post("/v1/review/sessions")
 def create_review_session(payload: ReviewSessionRequest, request: Request) -> dict[str, object]:
-    require_review_access(request)
+    actor = require_review_access(
+        request,
+        allowed_roles={"admin", "reviewer", "operator", "linguist", "native_signer"},
+    )
     try:
         job = db.get_translation_job(payload.job_id)
         if not job:
             raise HTTPException(status_code=404, detail="Translation job not found")
         session = db.create_review_session(
             job_id=payload.job_id,
-            reviewer_role=payload.reviewer_role,
+            reviewer_role=actor["role"] if actor["method"] == "session" else payload.reviewer_role,
             reviewer_language=payload.reviewer_language,
             meaning_score=payload.meaning_score,
             sign_choice_score=payload.sign_choice_score,
@@ -536,7 +747,11 @@ def create_review_session(payload: ReviewSessionRequest, request: Request) -> di
             raise HTTPException(status_code=404, detail="Translation job not found")
         current_review_status = str(job.get("review_status") or "pending_signer_review")
         if payload.review_status:
-            updated_job = db.update_review_status(payload.job_id, payload.review_status)
+            updated_job = db.update_review_status(
+                payload.job_id,
+                payload.review_status,
+                actor_role=actor["role"],
+            )
             if not updated_job:
                 raise HTTPException(status_code=404, detail="Translation job not found")
             current_review_status = str(updated_job.get("review_status") or current_review_status)
@@ -554,7 +769,7 @@ def create_review_session(payload: ReviewSessionRequest, request: Request) -> di
 
 @app.post("/v1/review/jobs/{job_id}/rendered-video")
 async def upload_rendered_video(job_id: str, request: Request) -> dict[str, object]:
-    require_review_access(request)
+    require_review_access(request, allowed_roles={"admin", "reviewer", "operator"})
     content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
     if content_type not in SUPPORTED_RENDERED_VIDEO_TYPES:
         raise HTTPException(status_code=415, detail="Unsupported rendered video type")
@@ -607,12 +822,12 @@ async def upload_rendered_video(job_id: str, request: Request) -> dict[str, obje
 def update_job_publish_status(
     job_id: str, payload: PublishStatusRequest, request: Request
 ) -> dict[str, object]:
-    require_review_access(request)
+    actor = require_review_access(request, allowed_roles={"admin", "reviewer", "operator"})
     try:
         job = db.update_publish_status(
             job_id,
             publish_status=payload.publish_status,
-            actor_role="reviewer",
+            actor_role=actor["role"],
             note=payload.note,
         )
     except ValueError as exc:
@@ -624,12 +839,57 @@ def update_job_publish_status(
     return job
 
 
-def require_review_access(request: Request) -> None:
-    if not settings.review_token:
-        raise HTTPException(status_code=503, detail="Review API is not configured")
-    supplied = request.headers.get("x-qsign-review-token", "")
-    if not secrets.compare_digest(supplied, settings.review_token):
-        raise HTTPException(status_code=403, detail="Review API token is invalid")
+@app.get("/v1/review/lexicon-candidates")
+def review_lexicon_candidates(
+    request: Request,
+    job_id: str | None = None,
+    status: str | None = None,
+    limit: int = 100,
+) -> dict[str, object]:
+    require_review_access(request, allowed_roles=db.VALID_REVIEWER_ROLES | {"admin"})
+    try:
+        items = db.list_lexicon_suggestions(
+            job_id=job_id,
+            status=status,
+            limit=_clamp_limit(limit, minimum=1, maximum=200),
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"items": items, "count": len(items)}
+
+
+@app.post("/v1/review/lexicon-candidates")
+def create_review_lexicon_candidate(
+    payload: LexiconSuggestionRequest,
+    request: Request,
+) -> dict[str, object]:
+    actor = require_review_access(
+        request,
+        allowed_roles={"admin", "reviewer", "operator", "linguist", "native_signer"},
+    )
+    try:
+        job = db.get_translation_job(payload.job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Translation job not found")
+        suggestion = db.create_lexicon_suggestion(
+            job_id=payload.job_id,
+            unit_position=payload.unit_position,
+            source_token=payload.source_token,
+            suggested_gloss=payload.suggested_gloss,
+            suggested_language=payload.suggested_language,
+            suggested_clip_id=payload.suggested_clip_id,
+            reason=payload.reason,
+            created_by_role=actor["role"],
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except db.DatabaseUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if not suggestion:
+        raise HTTPException(status_code=404, detail="Translation job not found")
+    return {"status": "ok", "item": suggestion}
 
 
 def uploaded_render_path(job_id: str) -> Path:

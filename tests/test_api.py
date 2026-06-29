@@ -210,15 +210,22 @@ class ApiTests(unittest.TestCase):
             mock.patch(
                 "qsign_translator.api.db.list_translation_jobs",
                 return_value=[{"id": "job-1", "review_status": "pending_signer_review"}],
-            ),
+            ) as list_jobs,
         ):
             response = self.client.get(
-                "/v1/review/jobs?review_status=pending_signer_review",
+                "/v1/review/jobs?review_status=pending_signer_review&publish_status=draft&detected_language=ru&q=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82",
                 headers={"x-qsign-review-token": "secret"},
             )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["count"], 1)
         self.assertEqual(response.json()["items"][0]["id"], "job-1")
+        list_jobs.assert_called_once_with(
+            review_status="pending_signer_review",
+            publish_status="draft",
+            detected_language="ru",
+            search_query="Привет",
+            limit=50,
+        )
 
     def test_review_jobs_endpoint_requires_configured_token(self) -> None:
         with mock.patch("qsign_translator.api.settings", mock.Mock(review_token=None)):
@@ -232,6 +239,44 @@ class ApiTests(unittest.TestCase):
                 headers={"x-qsign-review-token": "wrong"},
             )
         self.assertEqual(response.status_code, 403)
+
+    def test_review_login_sets_cookie_session(self) -> None:
+        with mock.patch(
+            "qsign_translator.api.settings",
+            mock.Mock(
+                review_token="secret",
+                review_session_secret="session-secret",
+                review_cookie_name="qsign_review_session",
+                review_cookie_secure=False,
+            ),
+        ):
+            response = self.client.post(
+                "/v1/review/login",
+                json={"token": "secret", "role": "linguist"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["actor"]["role"], "linguist")
+        self.assertIn("qsign_review_session=", response.headers.get("set-cookie", ""))
+
+    def test_review_me_accepts_cookie_session(self) -> None:
+        settings_mock = mock.Mock(
+            review_token="secret",
+            review_session_secret="session-secret",
+            review_cookie_name="qsign_review_session",
+            review_cookie_secure=False,
+        )
+        with mock.patch("qsign_translator.api.settings", settings_mock):
+            login_response = self.client.post(
+                "/v1/review/login",
+                json={"token": "secret", "role": "operator"},
+            )
+            cookie = login_response.cookies.get("qsign_review_session")
+            response = self.client.get(
+                "/v1/review/me",
+                cookies={"qsign_review_session": cookie},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["actor"]["role"], "operator")
 
     def test_review_jobs_endpoint_rejects_bad_status(self) -> None:
         with (
@@ -431,6 +476,66 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["count"], 1)
         self.assertEqual(response.json()["items"][0]["event_type"], "job_created")
+
+    def test_review_system_status_endpoint_returns_service_snapshot(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch(
+                "qsign_translator.api.db.readiness",
+                return_value={"configured": True, "ok": True, "sources": 1, "lexicon_entries": 2},
+            ),
+            mock.patch(
+                "qsign_translator.api.db.review_metrics",
+                return_value={"totals": {"total_jobs": 5}, "by_language": []},
+            ),
+            mock.patch("qsign_translator.api.shutil.which", return_value="/usr/bin/ffmpeg"),
+            mock.patch("qsign_translator.api.default_lexicon_path", return_value=Path(__file__)),
+        ):
+            response = self.client.get(
+                "/v1/review/system-status",
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["services"]["ffmpeg"]["installed"])
+
+    def test_review_coverage_report_endpoint_returns_payload(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch(
+                "qsign_translator.api.db.review_coverage_report",
+                return_value={"top_fallbacks": [{"source_token": "Александр", "hits": 3}]},
+            ),
+        ):
+            response = self.client.get(
+                "/v1/review/coverage-report?limit_jobs=100&limit_terms=20",
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["report"]["top_fallbacks"][0]["source_token"], "Александр")
+
+    def test_review_lexicon_candidates_endpoint_creates_item(self) -> None:
+        with (
+            mock.patch("qsign_translator.api.settings", mock.Mock(review_token="secret")),
+            mock.patch("qsign_translator.api.db.get_translation_job", return_value={"id": "job-1"}),
+            mock.patch(
+                "qsign_translator.api.db.create_lexicon_suggestion",
+                return_value={"id": "cand-1", "job_id": "job-1", "source_token": "Александр"},
+            ),
+        ):
+            response = self.client.post(
+                "/v1/review/lexicon-candidates",
+                json={
+                    "job_id": "job-1",
+                    "unit_position": 1,
+                    "source_token": "Александр",
+                    "suggested_gloss": "ALEXANDER",
+                    "suggested_language": "ru",
+                    "reason": "Нужна ручная фиксация.",
+                },
+                headers={"x-qsign-review-token": "secret"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["item"]["id"], "cand-1")
 
     def test_review_publish_status_endpoint_updates_state(self) -> None:
         with (
