@@ -222,7 +222,13 @@ qsign-translator/
 | `GET /v1/jobs/{job_id}/review-video` | GET | Скачивание ревью-MP4 |
 | `GET /v1/jobs/{job_id}/ai-video-brief` | GET | AI-бриф для внешнего генератора |
 | `POST /v1/ai-video-batch-brief` | POST | Пакетный AI-бриф для нескольких заданий |
-| `GET /v1/review/jobs/{job_id}` | GET | Получение ревью-сессии (защищённый) |
+| `POST /v1/review/login` | POST | Открыть cookie-сессию ревью по токену |
+| `GET /v1/review/me` | GET | Текущая роль и способ review-доступа |
+| `GET /v1/review/jobs` | GET | Очередь ревью с фильтрами (защищённый) |
+| `GET /v1/review/system-status` | GET | Снимок состояния БД, ffmpeg и очереди |
+| `GET /v1/review/coverage-report` | GET | Сводка по fallback и покрытию |
+| `GET /v1/review/lexicon-candidates` | GET | Кандидаты на пополнение словаря |
+| `POST /v1/review/lexicon-candidates` | POST | Добавить словарный кандидат |
 | `PATCH /v1/review/jobs/{job_id}/publish-status` | PATCH | Установка статуса публикации |
 | `GET /v1/review/audit` | GET | Аудиторский след по заданиям |
 
@@ -254,6 +260,8 @@ docker compose up -d
 | `S3_ACCESS_KEY` | Ключ доступа S3 | `qsign-local` |
 | `S3_SECRET_KEY` | Секретный ключ S3 | `change-me-local-minio` |
 | `QSIGN_API_PORT` | Порт API | `8080` |
+| `QSIGN_REVIEW_TOKEN` | Общий bootstrap-token review API | `change-me-review-token` |
+| `QSIGN_REVIEW_SESSION_SECRET` | Секрет подписи review cookie-сессии | не задан |
 
 ### Production
 

@@ -310,6 +310,16 @@
               <input id="reviewTokenInput" type="text" placeholder="Вставьте токен x-qsign-review-token" autocomplete="off" spellcheck="false" />
             </label>
             <label class="review-filter-field">
+              <span>Роль</span>
+              <select id="reviewRoleInput">
+                <option value="operator">Оператор</option>
+                <option value="reviewer">Ревьюер</option>
+                <option value="linguist">Лингвист</option>
+                <option value="native_signer">Носитель</option>
+                <option value="admin">Админ</option>
+              </select>
+            </label>
+            <label class="review-filter-field">
               <span>Статус</span>
               <select id="reviewStatusFilter">
                 <option value="">Все</option>
@@ -319,10 +329,37 @@
                 <option value="rejected">Отклонено</option>
               </select>
             </label>
+            <label class="review-filter-field">
+              <span>Публикация</span>
+              <select id="reviewPublishFilter">
+                <option value="">Все</option>
+                <option value="draft">Черновик</option>
+                <option value="final_review_pending">Финальная проверка</option>
+                <option value="publishable">Готово к публикации</option>
+                <option value="needs_video_fix">Нужна правка видео</option>
+                <option value="rejected">Отклонено</option>
+              </select>
+            </label>
+            <label class="review-filter-field">
+              <span>Язык</span>
+              <select id="reviewLanguageFilter">
+                <option value="">Все</option>
+                <option value="ru">RU</option>
+                <option value="kk">KK</option>
+                <option value="en">EN</option>
+              </select>
+            </label>
+            <label class="review-filter-field review-search-field">
+              <span>Поиск</span>
+              <input id="reviewSearchInput" type="search" placeholder="Фраза или часть текста" autocomplete="off" spellcheck="false" />
+            </label>
+            <button class="secondary-button compact" id="reviewLoginButton" type="button">Войти</button>
+            <button class="secondary-button compact" id="reviewLogoutButton" type="button">Выйти</button>
             <button class="secondary-button compact" id="reviewLoadButton" type="submit">Обновить</button>
           </form>
 
           <div class="review-status-banner" id="reviewStatusBanner">Введите токен и обновите очередь ревью.</div>
+          <div class="review-status-banner" id="reviewIdentityBanner">Сессия ревью не открыта.</div>
           <div class="review-guide" aria-label="Порядок операторской проверки">
             <span>1. Откройте запись</span>
             <span>2. Проверьте смысл</span>
@@ -330,6 +367,7 @@
             <span>4. Сохраните решение</span>
           </div>
           <div class="review-summary" id="reviewSummary"></div>
+          <div class="review-system-summary" id="reviewSystemSummary"></div>
 
           <div class="review-grid">
             <section class="review-list-card">
@@ -446,6 +484,48 @@
                   <span class="small-status" id="reviewUnitsMeta">0 единиц</span>
                 </div>
                 <div class="review-unit-list" id="reviewUnitList"></div>
+              </section>
+              <section class="review-subsection" aria-labelledby="reviewLexiconTitle">
+                <div class="review-subsection-head">
+                  <h3 id="reviewLexiconTitle">Кандидаты в словарь</h3>
+                  <span class="small-status" id="reviewLexiconMeta">0 кандидатов</span>
+                </div>
+                <form class="review-session-form review-upload-form" id="reviewLexiconForm">
+                  <div class="review-form-grid">
+                    <label class="review-form-field">
+                      <span>Позиция</span>
+                      <input id="reviewLexiconUnitInput" type="number" min="1" max="500" placeholder="1" />
+                    </label>
+                    <label class="review-form-field">
+                      <span>Токен</span>
+                      <input id="reviewLexiconTokenInput" type="text" maxlength="200" placeholder="исходное слово" />
+                    </label>
+                    <label class="review-form-field">
+                      <span>Глосса</span>
+                      <input id="reviewLexiconGlossInput" type="text" maxlength="200" placeholder="предлагаемая глосса" />
+                    </label>
+                    <label class="review-form-field">
+                      <span>Язык</span>
+                      <select id="reviewLexiconLanguageInput">
+                        <option value="ru">ru</option>
+                        <option value="kk">kk</option>
+                        <option value="en">en</option>
+                        <option value="rsl">rsl</option>
+                        <option value="krsl">krsl</option>
+                        <option value="asl">asl</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label class="review-form-field review-form-notes">
+                    <span>Почему стоит добавить</span>
+                    <textarea id="reviewLexiconReasonInput" rows="2" maxlength="2000" placeholder="Что не так с текущим черновиком и какую замену стоит проверить"></textarea>
+                  </label>
+                  <div class="review-form-actions">
+                    <span class="small-status" id="reviewLexiconStatus">Можно вынести спорную единицу в словарь-кандидаты.</span>
+                    <button class="secondary-button compact" id="reviewLexiconSubmitButton" type="submit">Сохранить кандидата</button>
+                  </div>
+                </form>
+                <div class="review-feedback-list" id="reviewLexiconList"></div>
               </section>
               <section class="review-subsection" aria-labelledby="reviewSessionsTitle">
                 <div class="review-subsection-head">

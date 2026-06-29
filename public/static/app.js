@@ -25,12 +25,19 @@ const state = {
   healthRetryTimer: null,
   route: "app",
   reviewToken: "",
+  reviewRole: "operator",
+  reviewActor: null,
   reviewJobs: [],
   reviewFeedback: [],
   reviewSessions: [],
   reviewAuditEvents: [],
+  reviewLexiconSuggestions: [],
   selectedReviewJobId: "",
   reviewFilter: "",
+  reviewPublishFilter: "",
+  reviewLanguageFilter: "",
+  reviewSearchQuery: "",
+  reviewSystemStatus: null,
 };
 
 const defaultUploadCopy = {
@@ -115,14 +122,32 @@ const reviewView = document.querySelector("#reviewView");
 const reviewBackButton = document.querySelector("#reviewBackButton");
 const reviewToolbarForm = document.querySelector("#reviewToolbarForm");
 const reviewTokenInput = document.querySelector("#reviewTokenInput");
+const reviewRoleInput = document.querySelector("#reviewRoleInput");
 const reviewStatusFilter = document.querySelector("#reviewStatusFilter");
+const reviewPublishFilter = document.querySelector("#reviewPublishFilter");
+const reviewLanguageFilter = document.querySelector("#reviewLanguageFilter");
+const reviewSearchInput = document.querySelector("#reviewSearchInput");
+const reviewLoginButton = document.querySelector("#reviewLoginButton");
+const reviewLogoutButton = document.querySelector("#reviewLogoutButton");
 const reviewStatusBanner = document.querySelector("#reviewStatusBanner");
+const reviewIdentityBanner = document.querySelector("#reviewIdentityBanner");
 const reviewSummary = document.querySelector("#reviewSummary");
+const reviewSystemSummary = document.querySelector("#reviewSystemSummary");
 const reviewJobs = document.querySelector("#reviewJobs");
 const reviewQueueStatus = document.querySelector("#reviewQueueStatus");
 const reviewDetailSummary = document.querySelector("#reviewDetailSummary");
 const reviewUnitList = document.querySelector("#reviewUnitList");
 const reviewUnitsMeta = document.querySelector("#reviewUnitsMeta");
+const reviewLexiconForm = document.querySelector("#reviewLexiconForm");
+const reviewLexiconUnitInput = document.querySelector("#reviewLexiconUnitInput");
+const reviewLexiconTokenInput = document.querySelector("#reviewLexiconTokenInput");
+const reviewLexiconGlossInput = document.querySelector("#reviewLexiconGlossInput");
+const reviewLexiconLanguageInput = document.querySelector("#reviewLexiconLanguageInput");
+const reviewLexiconReasonInput = document.querySelector("#reviewLexiconReasonInput");
+const reviewLexiconStatus = document.querySelector("#reviewLexiconStatus");
+const reviewLexiconSubmitButton = document.querySelector("#reviewLexiconSubmitButton");
+const reviewLexiconList = document.querySelector("#reviewLexiconList");
+const reviewLexiconMeta = document.querySelector("#reviewLexiconMeta");
 const reviewSessionList = document.querySelector("#reviewSessionList");
 const reviewSessionsMeta = document.querySelector("#reviewSessionsMeta");
 const reviewFeedbackList = document.querySelector("#reviewFeedbackList");
@@ -194,10 +219,13 @@ function loadReviewToken() {
   try {
     const saved = window.localStorage.getItem("qsignReviewToken");
     state.reviewToken = String(saved || "");
+    state.reviewRole = String(window.localStorage.getItem("qsignReviewRole") || "operator");
   } catch {
     state.reviewToken = "";
+    state.reviewRole = "operator";
   }
   reviewTokenInput.value = state.reviewToken;
+  reviewRoleInput.value = state.reviewRole;
 }
 
 function saveReviewToken(value) {
@@ -211,9 +239,20 @@ function saveReviewToken(value) {
   } catch {}
 }
 
+function saveReviewRole(value) {
+  state.reviewRole = String(value || "operator").trim() || "operator";
+  try {
+    window.localStorage.setItem("qsignReviewRole", state.reviewRole);
+  } catch {}
+}
+
 function reviewHeaders() {
   if (!state.reviewToken) return {};
   return { "x-qsign-review-token": state.reviewToken };
+}
+
+function hasReviewAccess() {
+  return Boolean(state.reviewToken || state.reviewActor);
 }
 
 function setRoute(route) {
@@ -1720,11 +1759,96 @@ function renderReviewSummary(items) {
   );
 }
 
+function renderReviewIdentity() {
+  if (state.reviewActor) {
+    reviewIdentityBanner.textContent = `Сессия открыта: ${formatReviewerRole(state.reviewActor.role)} · ${state.reviewActor.method === "token" ? "через токен" : "через cookie-сессию"}.`;
+    return;
+  }
+  reviewIdentityBanner.textContent = state.reviewToken
+    ? "Токен сохранен локально. Можно войти в cookie-сессию или работать напрямую через header."
+    : "Сессия ревью не открыта.";
+}
+
+function renderReviewSystemStatus(data) {
+  clearNode(reviewSystemSummary);
+  if (!data) {
+    const empty = document.createElement("div");
+    empty.className = "review-empty-state";
+    appendTextElement(empty, "strong", "", "Системный статус пока недоступен");
+    appendTextElement(empty, "p", "", "После входа здесь появится состояние БД, ffmpeg и очереди.");
+    reviewSystemSummary.append(empty);
+    return;
+  }
+  const dbStatus = data.services?.database?.ok ? "БД: ок" : "БД: проблема";
+  const ffmpegStatus = data.services?.ffmpeg?.installed ? "ffmpeg: есть" : "ffmpeg: нет";
+  const previewStatus = data.services?.preview_video?.exists ? "preview root: готов" : "preview root: нет";
+  const renderedStatus = data.services?.rendered_video?.exists ? "final root: готов" : "final root: нет";
+  const metrics = data.review_metrics?.totals || {};
+  renderMetricGrid(
+    reviewSystemSummary,
+    [
+      [Number(metrics.total_jobs || 0), "последних записей"],
+      [Number(metrics.pending_jobs || 0), "ждут проверки"],
+      [Number(metrics.fallback_units || 0), "fallback-единиц"],
+      [Number(metrics.publishable_jobs || 0), "готовы к публикации"],
+    ],
+    "review-summary-item"
+  );
+  const meta = document.createElement("div");
+  meta.className = "review-empty-state";
+  appendTextElement(meta, "strong", "", `${dbStatus} · ${ffmpegStatus}`);
+  appendTextElement(meta, "p", "", `${previewStatus} · ${renderedStatus}.`);
+  const byLanguage = Array.isArray(data.review_metrics?.by_language) ? data.review_metrics.by_language : [];
+  if (byLanguage.length) {
+    appendTextElement(
+      meta,
+      "p",
+      "",
+      byLanguage
+        .map((item) => `${String(item.language || "unknown").toUpperCase()}: ${item.jobs} jobs / ${item.fallback_units} fallback`)
+        .join(" · ")
+    );
+  }
+  reviewSystemSummary.append(meta);
+}
+
+function renderLexiconSuggestions(items) {
+  clearNode(reviewLexiconList);
+  reviewLexiconMeta.textContent = `${items.length} ${items.length === 1 ? "кандидат" : "кандидатов"}`;
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "review-empty-state";
+    appendTextElement(empty, "strong", "", "Кандидатов пока нет");
+    appendTextElement(empty, "p", "", "Спорные единицы можно сразу вынести в словарь-кандидаты для лингвиста.");
+    reviewLexiconList.append(empty);
+    return;
+  }
+  items.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "review-feedback-card review-session-card";
+    appendTextElement(card, "strong", "", `${item.unit_position}. ${item.source_token} -> ${item.suggested_gloss}`);
+    const meta = document.createElement("div");
+    meta.className = "review-card-meta";
+    appendTextElement(
+      meta,
+      "span",
+      "",
+      `${formatReviewerRole(item.created_by_role)} · ${String(item.suggested_language || "").toUpperCase()} · ${String(item.status || "open")}`
+    );
+    card.append(meta);
+    appendTextElement(card, "p", "", item.reason || "Без пояснения.");
+    reviewLexiconList.append(card);
+  });
+}
+
 function syncReviewActionButtons() {
-  const disabled = !state.reviewToken || !state.selectedReviewJobId;
+  const hasAccess = hasReviewAccess();
+  const disabled = !hasAccess || !state.selectedReviewJobId;
   reviewStatusActionButtons.forEach((button) => {
     button.disabled = disabled;
   });
+  reviewLoginButton.disabled = !state.reviewToken;
+  reviewLogoutButton.disabled = !hasAccess;
   reviewSessionSubmitButton.disabled = disabled;
   reviewerRoleInput.disabled = disabled;
   reviewerLanguageInput.disabled = disabled;
@@ -1738,6 +1862,12 @@ function syncReviewActionButtons() {
   reviewPublishStatusInput.disabled = disabled;
   reviewPublishNoteInput.disabled = disabled;
   reviewPublishSubmitButton.disabled = disabled;
+  reviewLexiconUnitInput.disabled = disabled;
+  reviewLexiconTokenInput.disabled = disabled;
+  reviewLexiconGlossInput.disabled = disabled;
+  reviewLexiconLanguageInput.disabled = disabled;
+  reviewLexiconReasonInput.disabled = disabled;
+  reviewLexiconSubmitButton.disabled = disabled;
 }
 
 function renderReviewJobs(items) {
@@ -1750,9 +1880,9 @@ function renderReviewJobs(items) {
       empty,
       "p",
       "",
-      state.reviewToken
+      hasReviewAccess()
         ? "Для выбранного фильтра пока нет сохраненных записей."
-        : "Чтобы увидеть сохраненные записи, введите review token и обновите очередь."
+        : "Чтобы увидеть сохраненные записи, войдите через review token и обновите очередь."
     );
     reviewJobs.append(empty);
     return;
@@ -1799,20 +1929,24 @@ function renderReviewDetail(job, feedbackItems = []) {
       reviewDetailSummary,
       "p",
       "",
-      state.reviewToken
+      hasReviewAccess()
         ? "После выбора записи здесь появятся детали, единицы плана и отзывы."
-        : "После ввода токена ревью здесь откроются защищенные детали сохраненной записи."
+        : "После входа здесь откроются защищенные детали сохраненной записи."
     );
-    reviewSessionStatus.textContent = state.reviewToken
+    reviewSessionStatus.textContent = hasReviewAccess()
       ? "Сессию можно сохранить после выбора записи."
-      : "Сессии ревью доступны после ввода токена.";
-    reviewUploadStatus.textContent = state.reviewToken
+      : "Сессии ревью доступны после входа.";
+    reviewUploadStatus.textContent = hasReviewAccess()
       ? "Видео можно прикрепить после выбора записи."
-      : "Загрузка видео доступна после ввода токена.";
-    reviewPublishStatus.textContent = state.reviewToken
+      : "Загрузка видео доступна после входа.";
+    reviewPublishStatus.textContent = hasReviewAccess()
       ? "Финальное решение можно сохранить после выбора записи."
-      : "Финальное решение доступно после ввода токена.";
+      : "Финальное решение доступно после входа.";
+    reviewLexiconStatus.textContent = hasReviewAccess()
+      ? "Можно вынести спорную единицу в словарь-кандидаты."
+      : "Кандидаты в словарь доступны после входа.";
     reviewUnitsMeta.textContent = "0 единиц";
+    reviewLexiconMeta.textContent = "0 кандидатов";
     reviewSessionsMeta.textContent = "0 сессий";
     reviewFeedbackMeta.textContent = "0 отзывов";
     reviewAuditMeta.textContent = "0 событий";
@@ -1884,9 +2018,24 @@ function renderReviewDetail(job, feedbackItems = []) {
       appendTextElement(card, "strong", "", `${index + 1}. ${formatGloss(unit)}`);
       appendTextElement(card, "p", "", `${unit.source_token || "—"} · ${formatUnitSource(unit.source)}`);
       appendTextElement(card, "p", "", `${formatUnitDecision(unit)} ${formatReviewerHint(unit)}`);
+      card.addEventListener("click", () => {
+        reviewLexiconUnitInput.value = String(index + 1);
+        reviewLexiconTokenInput.value = String(unit.source_token || "");
+        reviewLexiconGlossInput.value = String(unit.gloss || "");
+        reviewLexiconLanguageInput.value = String(job.detected_language || "ru");
+      });
       reviewUnitList.append(card);
     });
   }
+
+  const candidateSeedUnit = units.find((unit) => unit.kind !== "gloss") || units[0];
+  if (candidateSeedUnit) {
+    reviewLexiconUnitInput.value = reviewLexiconUnitInput.value || "1";
+    reviewLexiconTokenInput.value = reviewLexiconTokenInput.value || String(candidateSeedUnit.source_token || "");
+    reviewLexiconGlossInput.value = reviewLexiconGlossInput.value || String(candidateSeedUnit.gloss || "");
+    reviewLexiconLanguageInput.value = String(job.detected_language || "ru");
+  }
+  renderLexiconSuggestions(state.reviewLexiconSuggestions);
 
   renderReviewSessions(state.reviewSessions);
   renderReviewAudit(state.reviewAuditEvents);
@@ -1979,28 +2128,130 @@ function renderReviewSessions(items) {
   });
 }
 
+async function refreshReviewIdentity() {
+  try {
+    const response = await fetch("/v1/review/me", { headers: reviewHeaders() });
+    if (!response.ok) {
+      state.reviewActor = null;
+      renderReviewIdentity();
+      syncReviewActionButtons();
+      return null;
+    }
+    const data = await response.json();
+    state.reviewActor = data.actor || null;
+    renderReviewIdentity();
+    syncReviewActionButtons();
+    return state.reviewActor;
+  } catch {
+    state.reviewActor = null;
+    renderReviewIdentity();
+    syncReviewActionButtons();
+    return null;
+  }
+}
+
+async function loginReviewSession() {
+  saveReviewToken(reviewTokenInput.value);
+  saveReviewRole(reviewRoleInput.value);
+  if (!state.reviewToken) {
+    reviewIdentityBanner.textContent = "Сначала вставьте review token.";
+    return;
+  }
+  reviewIdentityBanner.textContent = "Открываем cookie-сессию ревью...";
+  try {
+    const response = await fetch("/v1/review/login", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        token: state.reviewToken,
+        role: state.reviewRole,
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
+    }
+    await refreshReviewIdentity();
+    await loadReviewSystemStatus();
+    reviewIdentityBanner.textContent = "Сессия ревью открыта.";
+    await loadReviewDashboard();
+  } catch (error) {
+    state.reviewActor = null;
+    renderReviewIdentity();
+    reviewIdentityBanner.textContent = `Войти не удалось: ${String(error.message || error)}`;
+  }
+}
+
+async function logoutReviewSession() {
+  try {
+    await fetch("/v1/review/logout", { method: "POST", headers: reviewHeaders() });
+  } catch {}
+  state.reviewActor = null;
+  state.reviewJobs = [];
+  state.reviewSessions = [];
+  state.reviewAuditEvents = [];
+  state.reviewLexiconSuggestions = [];
+  state.reviewSystemStatus = null;
+  renderReviewIdentity();
+  renderReviewSystemStatus(null);
+  renderReviewSummary([]);
+  renderReviewJobs([]);
+  renderReviewDetail(null);
+  syncReviewActionButtons();
+}
+
+async function loadReviewSystemStatus() {
+  if (!hasReviewAccess()) {
+    state.reviewSystemStatus = null;
+    renderReviewSystemStatus(null);
+    return;
+  }
+  try {
+    const response = await fetch("/v1/review/system-status", { headers: reviewHeaders() });
+    if (!response.ok) throw new Error(`Сервис вернул ошибку ${response.status}`);
+    const data = await response.json();
+    state.reviewSystemStatus = data;
+    renderReviewSystemStatus(data);
+  } catch {
+    state.reviewSystemStatus = null;
+    renderReviewSystemStatus(null);
+  }
+}
+
 async function loadReviewDashboard() {
   saveReviewToken(reviewTokenInput.value);
+  saveReviewRole(reviewRoleInput.value);
   state.reviewFilter = reviewStatusFilter.value || "";
+  state.reviewPublishFilter = reviewPublishFilter.value || "";
+  state.reviewLanguageFilter = reviewLanguageFilter.value || "";
+  state.reviewSearchQuery = String(reviewSearchInput.value || "").trim();
+  await refreshReviewIdentity();
   syncReviewActionButtons();
   reviewStatusBanner.textContent = state.reviewToken
     ? "Загружаем очередь ревью и последние отзывы."
-    : "Введите токен ревью, чтобы открыть защищенную очередь.";
+    : "Проверяем доступ к защищенной очереди.";
   reviewQueueStatus.textContent = "проверка";
-  if (!state.reviewToken) {
+  await loadReviewSystemStatus();
+  if (!hasReviewAccess()) {
     state.reviewJobs = [];
     state.reviewSessions = [];
     state.reviewAuditEvents = [];
+    state.reviewLexiconSuggestions = [];
     state.selectedReviewJobId = "";
     renderReviewSummary([]);
     renderReviewJobs([]);
     renderReviewDetail(null);
-    reviewQueueStatus.textContent = "нужен токен";
+    reviewQueueStatus.textContent = "нужен вход";
     return;
   }
   try {
     const params = new URLSearchParams();
     if (state.reviewFilter) params.set("review_status", state.reviewFilter);
+    if (state.reviewPublishFilter) params.set("publish_status", state.reviewPublishFilter);
+    if (state.reviewLanguageFilter) params.set("detected_language", state.reviewLanguageFilter);
+    if (state.reviewSearchQuery) params.set("q", state.reviewSearchQuery);
     const response = await fetch(`/v1/review/jobs?${params.toString()}`, { headers: reviewHeaders() });
     if (!response.ok) {
       const detail = await response.json().catch(() => ({}));
@@ -2022,6 +2273,7 @@ async function loadReviewDashboard() {
     state.reviewJobs = [];
     state.reviewSessions = [];
     state.reviewAuditEvents = [];
+    state.reviewLexiconSuggestions = [];
     state.selectedReviewJobId = "";
     renderReviewSummary([]);
     renderReviewJobs([]);
@@ -2034,6 +2286,7 @@ async function loadReviewDashboard() {
 async function selectReviewJob(jobId, refreshList = true) {
   state.selectedReviewJobId = String(jobId || "");
   syncReviewActionButtons();
+  reviewerRoleInput.value = reviewerRoleInput.value || state.reviewActor?.role || state.reviewRole || "operator";
   reviewerLanguageInput.value = reviewerLanguageInput.value || "ru";
   reviewSessionStatus.textContent = state.selectedReviewJobId
     ? "Сохраните решение носителя или оператора по этой записи."
@@ -2050,11 +2303,12 @@ async function selectReviewJob(jobId, refreshList = true) {
     return;
   }
   try {
-    const [jobResponse, feedbackResponse, sessionsResponse, auditResponse, renderPlanResponse] = await Promise.all([
+    const [jobResponse, feedbackResponse, sessionsResponse, auditResponse, lexiconResponse, renderPlanResponse] = await Promise.all([
       fetch(`/v1/jobs/${state.selectedReviewJobId}`, { headers: reviewHeaders() }),
       fetch(`/v1/review/feedback?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
       fetch(`/v1/review/sessions?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
       fetch(`/v1/review/audit?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
+      fetch(`/v1/review/lexicon-candidates?job_id=${encodeURIComponent(state.selectedReviewJobId)}`, { headers: reviewHeaders() }),
       fetch(`/v1/jobs/${state.selectedReviewJobId}/render-plan`, { headers: reviewHeaders() }),
     ]);
     if (!jobResponse.ok) {
@@ -2065,15 +2319,18 @@ async function selectReviewJob(jobId, refreshList = true) {
     const feedbackData = feedbackResponse.ok ? await feedbackResponse.json() : { items: [] };
     const sessionsData = sessionsResponse.ok ? await sessionsResponse.json() : { items: [] };
     const auditData = auditResponse.ok ? await auditResponse.json() : { items: [] };
+    const lexiconData = lexiconResponse.ok ? await lexiconResponse.json() : { items: [] };
     state.lastRenderPlan = renderPlanResponse.ok ? await renderPlanResponse.json() : null;
     state.reviewFeedback = feedbackData.items || [];
     state.reviewSessions = sessionsData.items || [];
     state.reviewAuditEvents = auditData.items || [];
+    state.reviewLexiconSuggestions = lexiconData.items || [];
     renderReviewJobs(state.reviewJobs);
     renderReviewDetail(job, state.reviewFeedback);
   } catch (error) {
     state.reviewSessions = [];
     state.reviewAuditEvents = [];
+    state.reviewLexiconSuggestions = [];
     state.lastRenderPlan = null;
     renderReviewDetail(null);
     reviewStatusBanner.textContent = `Не удалось открыть запись: ${String(error.message || error)}`;
@@ -2111,8 +2368,8 @@ function parseOptionalScore(value) {
 }
 
 async function saveReviewSession() {
-  if (!state.selectedReviewJobId || !state.reviewToken) return;
-  const reviewerRole = String(reviewerRoleInput.value || "").trim();
+  if (!state.selectedReviewJobId || !hasReviewAccess()) return;
+  const reviewerRole = String(reviewerRoleInput.value || state.reviewActor?.role || "").trim();
   const reviewerLanguage = String(reviewerLanguageInput.value || "").trim();
   if (!reviewerRole || !reviewerLanguage) {
     reviewSessionStatus.textContent = "Укажите роль и язык ревьюера.";
@@ -2155,7 +2412,7 @@ async function saveReviewSession() {
 }
 
 async function uploadRenderedVideo() {
-  if (!state.selectedReviewJobId || !state.reviewToken) return;
+  if (!state.selectedReviewJobId || !hasReviewAccess()) return;
   const file = reviewRenderedVideoInput.files?.[0];
   if (!file) {
     reviewUploadStatus.textContent = "Выберите mp4-файл для загрузки.";
@@ -2191,7 +2448,7 @@ async function uploadRenderedVideo() {
 }
 
 async function savePublishDecision() {
-  if (!state.selectedReviewJobId || !state.reviewToken) return;
+  if (!state.selectedReviewJobId || !hasReviewAccess()) return;
   reviewPublishStatus.textContent = "Сохраняем финальное решение...";
   reviewPublishSubmitButton.disabled = true;
   try {
@@ -2214,6 +2471,48 @@ async function savePublishDecision() {
     await loadReviewDashboard();
   } catch (error) {
     reviewPublishStatus.textContent = `Финальное решение не сохранено: ${String(error.message || error)}`;
+  } finally {
+    syncReviewActionButtons();
+  }
+}
+
+async function saveLexiconSuggestion() {
+  if (!state.selectedReviewJobId || !hasReviewAccess()) return;
+  const unitPosition = Number(reviewLexiconUnitInput.value || 0);
+  const sourceToken = String(reviewLexiconTokenInput.value || "").trim();
+  const suggestedGloss = String(reviewLexiconGlossInput.value || "").trim();
+  const suggestedLanguage = String(reviewLexiconLanguageInput.value || "").trim();
+  if (!unitPosition || !sourceToken || !suggestedGloss || !suggestedLanguage) {
+    reviewLexiconStatus.textContent = "Заполните позицию, токен, глоссу и язык.";
+    return;
+  }
+  reviewLexiconStatus.textContent = "Сохраняем кандидата в словарь...";
+  reviewLexiconSubmitButton.disabled = true;
+  try {
+    const response = await fetch("/v1/review/lexicon-candidates", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...reviewHeaders(),
+      },
+      body: JSON.stringify({
+        job_id: state.selectedReviewJobId,
+        unit_position: unitPosition,
+        source_token: sourceToken,
+        suggested_gloss: suggestedGloss,
+        suggested_language: suggestedLanguage,
+        reason: String(reviewLexiconReasonInput.value || "").trim() || null,
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.detail || `Сервис вернул ошибку ${response.status}`);
+    }
+    reviewLexiconReasonInput.value = "";
+    reviewLexiconStatus.textContent = "Кандидат добавлен в очередь словаря.";
+    await selectReviewJob(state.selectedReviewJobId, false);
+  } catch (error) {
+    reviewLexiconStatus.textContent = `Кандидат не сохранен: ${String(error.message || error)}`;
   } finally {
     syncReviewActionButtons();
   }
@@ -2320,8 +2619,32 @@ reviewToolbarForm.addEventListener("submit", (event) => {
   loadReviewDashboard();
 });
 
+reviewRoleInput.addEventListener("change", () => {
+  saveReviewRole(reviewRoleInput.value);
+});
+
 reviewStatusFilter.addEventListener("change", () => {
   loadReviewDashboard();
+});
+
+reviewPublishFilter.addEventListener("change", () => {
+  loadReviewDashboard();
+});
+
+reviewLanguageFilter.addEventListener("change", () => {
+  loadReviewDashboard();
+});
+
+reviewSearchInput.addEventListener("change", () => {
+  loadReviewDashboard();
+});
+
+reviewLoginButton.addEventListener("click", () => {
+  loginReviewSession();
+});
+
+reviewLogoutButton.addEventListener("click", () => {
+  logoutReviewSession();
 });
 
 reviewStatusActionButtons.forEach((button) => {
@@ -2343,6 +2666,11 @@ reviewUploadForm.addEventListener("submit", (event) => {
 reviewPublishForm.addEventListener("submit", (event) => {
   event.preventDefault();
   savePublishDecision();
+});
+
+reviewLexiconForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveLexiconSuggestion();
 });
 
 copyAIBriefButton.addEventListener("click", async () => {
@@ -2457,11 +2785,14 @@ updateCharCount();
 setInputLanguage(state.inputLanguage);
 setPlaybackSpeed(state.playbackSpeed);
 loadReviewToken();
+renderReviewIdentity();
+renderReviewSystemStatus(null);
 syncReviewActionButtons();
 renderEmptyState();
 renderFooterStamp();
 renderSources(sampleSources);
 loadHealthAndSources();
+refreshReviewIdentity();
 syncRouteFromLocation();
 window.addEventListener("hashchange", syncRouteFromLocation);
 })();

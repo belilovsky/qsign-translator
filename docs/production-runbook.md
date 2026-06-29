@@ -19,6 +19,7 @@ Runtime secrets should be injected outside the repository:
 
 - `DATABASE_URL`
 - `QSIGN_REVIEW_TOKEN`
+- `QSIGN_REVIEW_SESSION_SECRET`
 - storage credentials if object storage is enabled
 
 Do not commit environment files with live values. Keep secrets in your process
@@ -105,6 +106,15 @@ BASE=https://your-public-host.example
 TOKEN='set-me-from-secure-env'
 curl -fsS "$BASE/v1/review/jobs" -H "x-qsign-review-token: $TOKEN"
 curl -fsS "$BASE/v1/review/audit?job_id=$JOB1" -H "x-qsign-review-token: $TOKEN" | jq '.items | length'
+curl -fsS "$BASE/v1/review/system-status" -H "x-qsign-review-token: $TOKEN" | jq '.services.database, .review_metrics.totals'
+curl -fsS "$BASE/v1/review/coverage-report?limit_jobs=100&limit_terms=20" -H "x-qsign-review-token: $TOKEN" | jq '.report.top_fallbacks[:5]'
+
+# Optional: establish a browser-friendly cookie session
+curl -fsS -X POST "$BASE/v1/review/login" \
+  -H 'content-type: application/json' \
+  -d "{\"token\":\"$TOKEN\",\"role\":\"operator\"}" \
+  -c /tmp/qsign-review.cookies >/dev/null
+curl -fsS "$BASE/v1/review/me" -b /tmp/qsign-review.cookies | jq '.actor'
 ```
 
 Attach a rendered `mp4` back to a saved job:

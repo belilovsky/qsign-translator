@@ -268,6 +268,30 @@ def run_smoke(base_url: str, review_token: str | None, timeout: int) -> list[Smo
         except REQUEST_EXCEPTIONS as exc:
             _record(results, "review_with_token", False, str(exc))
 
+        try:
+            status, payload, _ = _request(
+                base_url,
+                "/v1/review/system-status",
+                headers={"x-qsign-review-token": review_token},
+                timeout=timeout,
+            )
+            ok = status == 200 and "services" in payload
+            _record(results, "review_system_status_with_token", ok, f"{status} services={sorted((payload.get('services') or {}).keys())}")
+        except REQUEST_EXCEPTIONS as exc:
+            _record(results, "review_system_status_with_token", False, str(exc))
+
+        try:
+            status, payload, _ = _request(
+                base_url,
+                "/v1/review/coverage-report?limit_jobs=100&limit_terms=20",
+                headers={"x-qsign-review-token": review_token},
+                timeout=timeout,
+            )
+            ok = status == 200 and "report" in payload
+            _record(results, "review_coverage_report_with_token", ok, f"{status} keys={sorted((payload.get('report') or {}).keys())}")
+        except REQUEST_EXCEPTIONS as exc:
+            _record(results, "review_coverage_report_with_token", False, str(exc))
+
         if job_ids:
             job_id = job_ids[0]
             try:

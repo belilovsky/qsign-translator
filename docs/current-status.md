@@ -39,6 +39,8 @@ The project is intentionally honest about what exists today:
 - Saved plan-unit records for review and downstream rendering.
 - Feedback API for saved jobs.
 - Token-protected review API for operator workflows.
+- Cookie-session login layered over the review token, so the operator route can
+  work without keeping the raw token in every browser request.
 - Persisted review-session API for signer, linguist, and operator validation.
 - Protected upload flow for attaching an externally rendered `mp4` back to a
   saved job.
@@ -73,6 +75,13 @@ The project is intentionally honest about what exists today:
 - `GET /v1/review/sessions`
 - `POST /v1/review/sessions`
 - `GET /v1/review/audit`
+- `POST /v1/review/login`
+- `POST /v1/review/logout`
+- `GET /v1/review/me`
+- `GET /v1/review/system-status`
+- `GET /v1/review/coverage-report`
+- `GET /v1/review/lexicon-candidates`
+- `POST /v1/review/lexicon-candidates`
 - `POST /v1/review/jobs/{job_id}/rendered-video`
 - `PATCH /v1/review/jobs/{job_id}/publish-status`
 - `GET /health`
@@ -134,6 +143,11 @@ Recent validation passed with:
   publish-status controls for the saved job lifecycle.
 - reviewer UI now separates plan units, saved review sessions, user feedback,
   and audit history into clearer sections with counts and timestamps.
+- reviewer UI now supports queue search plus review/publish/language filters,
+  a visible review identity state, and an operator-facing system snapshot.
+- reviewer UI can now push disputed units into `lexicon_suggestions`, so native
+  signers and linguists can leave durable candidate updates instead of burying
+  them in free-text notes.
 - AI-video handoff now includes an explicit render contract so operators get a
   stricter acceptance checklist, output naming, and unit-order contract.
 - AI-video brief now explicitly blocks generic sign-avatar generation whenever
@@ -177,6 +191,8 @@ sign-language production stack.
   or worker-backed final video job.
 - Publish-state approval is still an operator contract. There is no downstream
   CMS or auto-publish target connected yet.
+- Review auth is now session-capable, but still intentionally bootstraps from a
+  shared review token until a fuller multi-user admin/auth system exists.
 
 ## Open-Source Notes
 

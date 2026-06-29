@@ -1712,7 +1712,7 @@ tr:last-child td {
 
 .review-toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1.2fr) minmax(160px, 0.55fr) auto;
+  grid-template-columns: repeat(4, minmax(140px, 1fr)) minmax(220px, 1.2fr) repeat(3, auto);
   gap: 12px;
   align-items: end;
   margin-bottom: 12px;
@@ -1732,7 +1732,8 @@ tr:last-child td {
 }
 
 .review-token-field input,
-.review-filter-field select {
+.review-filter-field select,
+.review-filter-field input {
   width: 100%;
   min-height: 38px;
   padding: 0 12px;
@@ -1740,6 +1741,10 @@ tr:last-child td {
   border-radius: 8px;
   background: #fbfcfb;
   color: var(--ink);
+}
+
+.review-search-field {
+  min-width: 0;
 }
 
 .review-status-banner {
@@ -1777,6 +1782,12 @@ tr:last-child td {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
+  margin-bottom: 16px;
+}
+
+.review-system-summary {
+  display: grid;
+  gap: 10px;
   margin-bottom: 16px;
 }
 
