@@ -1,0 +1,52 @@
+{
+  "schema": "https://qsign.qdev.run/claims.schema.v0",
+  "updated": "2026-06-30",
+  "entity": {
+    "name": "QSign Translator",
+    "url": "https://qsign.qdev.run/",
+    "publisher": "qdev.run",
+    "repository": "https://github.com/belilovsky/qsign-translator"
+  },
+  "claims": [
+    {
+      "id": "qsign-open-prototype",
+      "claim": "QSign Translator is an open prototype for transparent sign-language draft planning.",
+      "status": "true",
+      "evidence": ["https://qsign.qdev.run/about", "https://github.com/belilovsky/qsign-translator"]
+    },
+    {
+      "id": "qsign-not-certified-interpreter",
+      "claim": "QSign Translator is not a certified sign-language interpreter and does not replace human review.",
+      "status": "true",
+      "evidence": ["https://qsign.qdev.run/safety", "https://qsign.qdev.run/methodology"]
+    },
+    {
+      "id": "qsign-supported-routes",
+      "claim": "QSign exposes Russian, Kazakh, and English draft planning routes: RU/RSL-oriented, KK/KRSL-oriented, and EN/ASL-oriented.",
+      "status": "true",
+      "evidence": [
+        "https://qsign.qdev.run/languages/ru-rsl",
+        "https://qsign.qdev.run/languages/kk-krsl",
+        "https://qsign.qdev.run/languages/en-asl"
+      ]
+    },
+    {
+      "id": "qsign-fallback-transparent",
+      "claim": "QSign marks unknown words as fallback or fingerspelling instead of inventing a confirmed sign.",
+      "status": "true",
+      "evidence": ["https://qsign.qdev.run/examples", "https://qsign.qdev.run/methodology"]
+    },
+    {
+      "id": "qsign-ai-video-handoff",
+      "claim": "QSign exports structured AI-video briefs for external video workflows, but those briefs are not final approved sign-language videos.",
+      "status": "true",
+      "evidence": ["https://qsign.qdev.run/developers", "https://qsign.qdev.run/safety"]
+    }
+  ],
+  "machine_readable": {
+    "llms": "https://qsign.qdev.run/llms.txt",
+    "ai_use": "https://qsign.qdev.run/ai-use.md",
+    "public_context": "https://qsign.qdev.run/public-context.json",
+    "sitemap": "https://qsign.qdev.run/sitemap.xml"
+  }
+}

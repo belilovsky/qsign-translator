@@ -37,15 +37,28 @@
   "best_pages": [
     "https://qsign.qdev.run/about",
     "https://qsign.qdev.run/how-it-works",
+    "https://qsign.qdev.run/methodology",
+    "https://qsign.qdev.run/examples",
     "https://qsign.qdev.run/sources",
     "https://qsign.qdev.run/safety",
+    "https://qsign.qdev.run/developers",
+    "https://qsign.qdev.run/open-source",
+    "https://qsign.qdev.run/roadmap",
     "https://qsign.qdev.run/faq",
     "https://qsign.qdev.run/glossary"
+  ],
+  "recommended_citations": [
+    "https://qsign.qdev.run/methodology",
+    "https://qsign.qdev.run/examples",
+    "https://qsign.qdev.run/safety",
+    "https://qsign.qdev.run/sources"
   ],
   "machine_readable": {
     "openapi": "https://qsign.qdev.run/openapi.json",
     "llms": "https://qsign.qdev.run/llms.txt",
     "ai_context": "https://qsign.qdev.run/ai-context.md",
+    "ai_use": "https://qsign.qdev.run/ai-use.md",
+    "claims": "https://qsign.qdev.run/claims.json",
     "sitemap": "https://qsign.qdev.run/sitemap.xml",
     "humans": "https://qsign.qdev.run/humans.txt",
     "security": "https://qsign.qdev.run/.well-known/security.txt"

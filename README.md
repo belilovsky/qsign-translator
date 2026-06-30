@@ -219,9 +219,14 @@ qsign-translator/
 | `GET /health` | GET | Проверка работоспособности сервиса |
 | `GET /robots.txt` | GET | Правила индексирования и ссылка на sitemap |
 | `GET /sitemap.xml` | GET | Карта публичных URL для поисковых систем |
+| `GET /methodology` | GET | Методология sign-plan, fallback и human review |
+| `GET /examples` | GET | Примеры фраз, coverage и fallback |
+| `GET /developers` | GET | API examples и правила интеграции |
 | `GET /llms.txt` | GET | Краткий публичный контекст для AI-агентов |
 | `GET /ai-context.md` | GET | Расширенный контекст для AI-агентов |
+| `GET /ai-use.md` | GET | Правила безопасного описания QSign для AI-систем |
 | `GET /public-context.json` | GET | Структурированные публичные факты о проекте |
+| `GET /claims.json` | GET | Проверяемые публичные claims с evidence URL |
 | `GET /humans.txt` | GET | Публичная информация о команде, назначении и machine context |
 | `GET /.well-known/security.txt` | GET | Контакты и policy для security disclosure |
 | `GET /manifest.webmanifest` | GET | Web app manifest |

@@ -125,6 +125,8 @@ INDEXNOW_KEY_FILENAME = "d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b699
 PUBLIC_FILE_TYPES = {
     INDEXNOW_KEY_FILENAME: "text/plain; charset=utf-8",
     "ai-context.md": "text/markdown; charset=utf-8",
+    "ai-use.md": "text/markdown; charset=utf-8",
+    "claims.json": "application/json; charset=utf-8",
     "humans.txt": "text/plain; charset=utf-8",
     "llms.txt": "text/plain; charset=utf-8",
     "manifest.webmanifest": "application/manifest+json; charset=utf-8",
@@ -136,9 +138,14 @@ PUBLIC_FILE_TYPES = {
 SEO_PAGE_FILES = {
     "about": "about.html",
     "api": "api.html",
+    "developers": "developers.html",
+    "examples": "examples.html",
     "faq": "faq.html",
     "glossary": "glossary.html",
     "how-it-works": "how-it-works.html",
+    "methodology": "methodology.html",
+    "open-source": "open-source.html",
+    "roadmap": "roadmap.html",
     "safety": "safety.html",
     "sources": "sources.html",
 }
@@ -184,6 +191,18 @@ def page_how_it_works(request: Request) -> FileResponse | Response:
     return _content_page_response(request, SEO_PAGE_FILES["how-it-works"])
 
 
+@app.get("/methodology", response_model=None, include_in_schema=False)
+@app.head("/methodology", response_model=None, include_in_schema=False)
+def page_methodology(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["methodology"])
+
+
+@app.get("/examples", response_model=None, include_in_schema=False)
+@app.head("/examples", response_model=None, include_in_schema=False)
+def page_examples(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["examples"])
+
+
 @app.get("/sources", response_model=None, include_in_schema=False)
 @app.head("/sources", response_model=None, include_in_schema=False)
 def page_sources(request: Request) -> FileResponse | Response:
@@ -200,6 +219,24 @@ def page_safety(request: Request) -> FileResponse | Response:
 @app.head("/api", response_model=None, include_in_schema=False)
 def page_api(request: Request) -> FileResponse | Response:
     return _content_page_response(request, SEO_PAGE_FILES["api"])
+
+
+@app.get("/developers", response_model=None, include_in_schema=False)
+@app.head("/developers", response_model=None, include_in_schema=False)
+def page_developers(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["developers"])
+
+
+@app.get("/open-source", response_model=None, include_in_schema=False)
+@app.head("/open-source", response_model=None, include_in_schema=False)
+def page_open_source(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["open-source"])
+
+
+@app.get("/roadmap", response_model=None, include_in_schema=False)
+@app.head("/roadmap", response_model=None, include_in_schema=False)
+def page_roadmap(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["roadmap"])
 
 
 @app.get("/faq", response_model=None, include_in_schema=False)
@@ -273,6 +310,18 @@ def manifest(request: Request) -> FileResponse | Response:
 @app.head("/ai-context.md", response_model=None, include_in_schema=False)
 def ai_context(request: Request) -> FileResponse | Response:
     return _public_file_response(request, "ai-context.md")
+
+
+@app.get("/ai-use.md", response_model=None, include_in_schema=False)
+@app.head("/ai-use.md", response_model=None, include_in_schema=False)
+def ai_use(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "ai-use.md")
+
+
+@app.get("/claims.json", response_model=None, include_in_schema=False)
+@app.head("/claims.json", response_model=None, include_in_schema=False)
+def claims(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "claims.json")
 
 
 @app.get("/public-context.json", response_model=None, include_in_schema=False)

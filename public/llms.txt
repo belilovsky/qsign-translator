@@ -11,16 +11,23 @@ Sitemap: [https://qsign.qdev.run/sitemap.xml](https://qsign.qdev.run/sitemap.xml
 
 - [About QSign](https://qsign.qdev.run/about) - project purpose, users, and scope.
 - [How QSign works](https://qsign.qdev.run/how-it-works) - text-to-sign pipeline.
+- [Methodology](https://qsign.qdev.run/methodology) - transparent sign-plan method and human-review gates.
+- [Examples](https://qsign.qdev.run/examples) - sample phrases, coverage, fallback, and review notes.
 - [Russian / RSL route](https://qsign.qdev.run/languages/ru-rsl) - Russian-language route.
 - [Kazakh / KRSL route](https://qsign.qdev.run/languages/kk-krsl) - Kazakh-language route.
 - [English / ASL route](https://qsign.qdev.run/languages/en-asl) - English-language route.
 - [Sources](https://qsign.qdev.run/sources) - source registry and license notes.
 - [Safety](https://qsign.qdev.run/safety) - human-review rules and high-risk domains.
 - [API](https://qsign.qdev.run/api) - public API entry points.
+- [Developers](https://qsign.qdev.run/developers) - API examples and integration rules.
+- [Open source](https://qsign.qdev.run/open-source) - repository, contribution, and disclosure links.
+- [Roadmap](https://qsign.qdev.run/roadmap) - product development direction and limitations.
 - [FAQ](https://qsign.qdev.run/faq) - concise answers for users and AI systems.
 - [Glossary](https://qsign.qdev.run/glossary) - sign-plan terminology.
 - [AI context](https://qsign.qdev.run/ai-context.md) - compact machine-readable guidance.
+- [AI use guidance](https://qsign.qdev.run/ai-use.md) - safe claims, unsafe claims, and citation guidance.
 - [Public JSON context](https://qsign.qdev.run/public-context.json) - structured public facts.
+- [Claims JSON](https://qsign.qdev.run/claims.json) - structured claims with evidence links.
 - [Humans](https://qsign.qdev.run/humans.txt) - team, purpose, and public machine context.
 - [Security](https://qsign.qdev.run/.well-known/security.txt) - disclosure contact and policy.
 
@@ -35,8 +42,13 @@ Sitemap: [https://qsign.qdev.run/sitemap.xml](https://qsign.qdev.run/sitemap.xml
 
 - [`GET /`](https://qsign.qdev.run/) - browser UI and product explanation.
 - [`GET /openapi.json`](https://qsign.qdev.run/openapi.json) - machine-readable API schema.
+- [`GET /methodology`](https://qsign.qdev.run/methodology) - project method and review policy.
+- [`GET /examples`](https://qsign.qdev.run/examples) - citation-friendly examples.
+- [`GET /developers`](https://qsign.qdev.run/developers) - API usage guidance.
 - [`GET /ai-context.md`](https://qsign.qdev.run/ai-context.md) - concise AI context file.
+- [`GET /ai-use.md`](https://qsign.qdev.run/ai-use.md) - safe AI summary and citation rules.
 - [`GET /public-context.json`](https://qsign.qdev.run/public-context.json) - structured public project metadata.
+- [`GET /claims.json`](https://qsign.qdev.run/claims.json) - structured public claims with evidence.
 - [`GET /humans.txt`](https://qsign.qdev.run/humans.txt) - public project and publisher notes.
 - [`GET /.well-known/security.txt`](https://qsign.qdev.run/.well-known/security.txt) - security contact and disclosure policy.
 - `POST /v1/translate/text` - creates a draft sign-plan from text.

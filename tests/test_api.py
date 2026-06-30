@@ -36,19 +36,26 @@ class ApiTests(unittest.TestCase):
             "/",
             "/about",
             "/how-it-works",
+            "/methodology",
+            "/examples",
             "/sources",
             "/safety",
             "/languages/ru-rsl",
             "/languages/kk-krsl",
             "/languages/en-asl",
             "/api",
+            "/developers",
+            "/open-source",
+            "/roadmap",
             "/faq",
             "/glossary",
             "/robots.txt",
             "/sitemap.xml",
             "/llms.txt",
             "/ai-context.md",
+            "/ai-use.md",
             "/public-context.json",
+            "/claims.json",
             "/humans.txt",
             "/security.txt",
             "/.well-known/security.txt",
@@ -68,7 +75,9 @@ class ApiTests(unittest.TestCase):
             "/sitemap.xml": ("application/xml", "https://qsign.qdev.run/"),
             "/llms.txt": ("text/plain", "QSign Translator"),
             "/ai-context.md": ("text/markdown", "QSign Translator public AI context"),
+            "/ai-use.md": ("text/markdown", "QSign Translator AI Use Guidance"),
             "/public-context.json": ("application/json", "QSign Translator"),
+            "/claims.json": ("application/json", "qsign-not-certified-interpreter"),
             "/humans.txt": ("text/plain", "Publisher: qdev.run"),
             "/security.txt": ("text/plain", "Policy: https://github.com/belilovsky/qsign-translator/blob/main/SECURITY.md"),
             "/.well-known/security.txt": (
@@ -100,6 +109,8 @@ class ApiTests(unittest.TestCase):
             data["machine_readable"]["security"],
             "https://qsign.qdev.run/.well-known/security.txt",
         )
+        self.assertEqual(data["machine_readable"]["ai_use"], "https://qsign.qdev.run/ai-use.md")
+        self.assertEqual(data["machine_readable"]["claims"], "https://qsign.qdev.run/claims.json")
 
     def test_robots_allows_search_and_ai_discovery(self) -> None:
         response = self.client.get("/robots.txt")
@@ -127,12 +138,17 @@ class ApiTests(unittest.TestCase):
         expected = {
             "/about": "О QSign Translator",
             "/how-it-works": "Как работает QSign Translator",
+            "/methodology": "Методология QSign Translator",
+            "/examples": "Примеры QSign Translator",
             "/sources": "Источники и словари QSign Translator",
             "/safety": "Безопасность QSign Translator",
             "/languages/ru-rsl": "Русский жестовый маршрут QSign",
             "/languages/kk-krsl": "Қазақша жест маршруты QSign",
             "/languages/en-asl": "QSign English route",
             "/api": "QSign API",
+            "/developers": "QSign Developers",
+            "/open-source": "Open-source QSign Translator",
+            "/roadmap": "Roadmap QSign Translator",
             "/faq": "FAQ QSign Translator",
             "/glossary": "Глоссарий QSign",
         }
@@ -144,22 +160,58 @@ class ApiTests(unittest.TestCase):
                 self.assertIn(title_marker, response.text)
                 self.assertIn(f'href="https://qsign.qdev.run{path}"', response.text)
 
-    def test_sitemap_and_llms_list_public_content_pages(self) -> None:
-        sitemap = self.client.get("/sitemap.xml").text
-        llms = self.client.get("/llms.txt").text
+    def test_public_content_pages_have_social_and_breadcrumb_metadata(self) -> None:
         for path in [
             "/about",
             "/how-it-works",
+            "/methodology",
+            "/examples",
             "/sources",
             "/safety",
             "/languages/ru-rsl",
             "/languages/kk-krsl",
             "/languages/en-asl",
             "/api",
+            "/developers",
+            "/open-source",
+            "/roadmap",
+            "/faq",
+            "/glossary",
+        ]:
+            with self.subTest(path=path):
+                html = self.client.get(path).text
+                self.assertIn('property="og:title"', html)
+                self.assertIn('name="twitter:card"', html)
+                self.assertIn("BreadcrumbList", html)
+                if path.startswith("/languages/"):
+                    self.assertIn('hreflang="ru"', html)
+                    self.assertIn('hreflang="kk"', html)
+                    self.assertIn('hreflang="en"', html)
+                    self.assertIn('hreflang="x-default"', html)
+
+    def test_sitemap_and_llms_list_public_content_pages(self) -> None:
+        sitemap = self.client.get("/sitemap.xml").text
+        llms = self.client.get("/llms.txt").text
+        for path in [
+            "/about",
+            "/how-it-works",
+            "/methodology",
+            "/examples",
+            "/sources",
+            "/safety",
+            "/languages/ru-rsl",
+            "/languages/kk-krsl",
+            "/languages/en-asl",
+            "/api",
+            "/developers",
+            "/open-source",
+            "/roadmap",
             "/faq",
             "/glossary",
             "/ai-context.md",
+            "/ai-use.md",
             "/public-context.json",
+            "/claims.json",
             "/humans.txt",
             "/.well-known/security.txt",
         ]:

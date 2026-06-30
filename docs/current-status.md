@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-06-29
+Last updated: 2026-06-30
 
 ## Scope
 
@@ -59,8 +59,9 @@ The project is intentionally honest about what exists today:
   `ai-context.md`, `public-context.json`, indexed explanatory pages, and a web
   app manifest are now bundled and served by FastAPI.
 - Indexable public pages now explain the project, pipeline, sources, safety
-  rules, API, FAQ, glossary, and RU/KZ/EN language routes without requiring the
-  SPA to execute.
+  rules, API, methodology, examples, developer integration, open-source status,
+  roadmap, FAQ, glossary, and RU/KZ/EN language routes without requiring the SPA
+  to execute.
 - Separate reviewer route in the same frontend shell, with token-gated queue and
   details view.
 - Reviewer UI now supports persisted validation sessions with role, language,
@@ -112,7 +113,7 @@ The current repository state has been exercised through:
 
 Recent validation passed with:
 
-- 108 automated tests green;
+- 123 automated tests green;
 - no browser console errors in the checked desktop/mobile flow;
 - no horizontal overflow in the checked public UI;
 - stable route switching between the main app and `#/review`;
@@ -170,9 +171,10 @@ Recent validation passed with:
   validates job presence and preview metadata without forcing `ffmpeg` preview
   generation during UI preflight or operational smoke checks.
 - public discovery endpoints are live-checkable at `/robots.txt`,
-  `/sitemap.xml`, `/llms.txt`, `/ai-context.md`, `/public-context.json`, and
-  `/manifest.webmanifest`; the HTML head now exposes canonical, hreflang,
-  Open Graph, Twitter, and schema.org metadata.
+  `/sitemap.xml`, `/llms.txt`, `/ai-context.md`, `/ai-use.md`,
+  `/public-context.json`, `/claims.json`, and `/manifest.webmanifest`; the HTML
+  head now exposes canonical, hreflang, Open Graph, Twitter, and schema.org
+  metadata.
 - IndexNow discovery is configured with a public key file at
   `/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt`;
   `scripts/submit_indexnow.py` submits sitemap URLs after deploy.
