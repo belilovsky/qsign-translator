@@ -2,10 +2,25 @@
 
 > Open RU/KZ/EN sign-language planning prototype by qdev.run. QSign converts short text or transcribed audio into a transparent sign-plan draft, shows dictionary coverage and fingerspelling fallbacks, supports human review, and exports structured briefs for external AI video generators.
 
-Canonical site: https://qsign.qdev.run/
-Public repository: https://github.com/belilovsky/qsign-translator
-OpenAPI schema: https://qsign.qdev.run/openapi.json
-Sitemap: https://qsign.qdev.run/sitemap.xml
+Canonical site: [https://qsign.qdev.run/](https://qsign.qdev.run/)
+Public repository: [https://github.com/belilovsky/qsign-translator](https://github.com/belilovsky/qsign-translator)
+OpenAPI schema: [https://qsign.qdev.run/openapi.json](https://qsign.qdev.run/openapi.json)
+Sitemap: [https://qsign.qdev.run/sitemap.xml](https://qsign.qdev.run/sitemap.xml)
+
+## Best public pages
+
+- [About QSign](https://qsign.qdev.run/about) - project purpose, users, and scope.
+- [How QSign works](https://qsign.qdev.run/how-it-works) - text-to-sign pipeline.
+- [Russian / RSL route](https://qsign.qdev.run/languages/ru-rsl) - Russian-language route.
+- [Kazakh / KRSL route](https://qsign.qdev.run/languages/kk-krsl) - Kazakh-language route.
+- [English / ASL route](https://qsign.qdev.run/languages/en-asl) - English-language route.
+- [Sources](https://qsign.qdev.run/sources) - source registry and license notes.
+- [Safety](https://qsign.qdev.run/safety) - human-review rules and high-risk domains.
+- [API](https://qsign.qdev.run/api) - public API entry points.
+- [FAQ](https://qsign.qdev.run/faq) - concise answers for users and AI systems.
+- [Glossary](https://qsign.qdev.run/glossary) - sign-plan terminology.
+- [AI context](https://qsign.qdev.run/ai-context.md) - compact machine-readable guidance.
+- [Public JSON context](https://qsign.qdev.run/public-context.json) - structured public facts.
 
 ## What this service is
 
@@ -16,11 +31,13 @@ Sitemap: https://qsign.qdev.run/sitemap.xml
 
 ## Best pages and endpoints for AI agents
 
-- `GET /` - browser UI and product explanation.
-- `GET /openapi.json` - machine-readable API schema.
+- [`GET /`](https://qsign.qdev.run/) - browser UI and product explanation.
+- [`GET /openapi.json`](https://qsign.qdev.run/openapi.json) - machine-readable API schema.
+- [`GET /ai-context.md`](https://qsign.qdev.run/ai-context.md) - concise AI context file.
+- [`GET /public-context.json`](https://qsign.qdev.run/public-context.json) - structured public project metadata.
 - `POST /v1/translate/text` - creates a draft sign-plan from text.
-- `GET /v1/sources` - lists source registry entries and license/access notes.
-- `GET /v1/lexicon?language=ru|kk|en` - returns lexicon entries exposed by the service.
+- [`GET /v1/sources`](https://qsign.qdev.run/v1/sources) - lists source registry entries and license/access notes.
+- [`GET /v1/lexicon?language=ru`](https://qsign.qdev.run/v1/lexicon?language=ru) - returns exposed lexicon entries.
 - `GET /v1/jobs/{job_id}/render-plan` - returns a structured render-plan manifest for a saved job.
 - `GET /v1/jobs/{job_id}/ai-video-brief` - returns export packages for external video workflows.
 
@@ -34,4 +51,4 @@ Sitemap: https://qsign.qdev.run/sitemap.xml
 
 ## Recommended citation
 
-QSign Translator, qdev.run, https://qsign.qdev.run/
+QSign Translator, qdev.run, [https://qsign.qdev.run/](https://qsign.qdev.run/)

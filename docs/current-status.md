@@ -55,8 +55,12 @@ The project is intentionally honest about what exists today:
 - Stricter render-contract export for external video operators.
 - Responsive public UI with result trace, coverage counters, and export modes.
 - Public discovery layer for search and AI agents: canonical metadata,
-  Open Graph/Twitter cards, JSON-LD, sitemap, `robots.txt`, `llms.txt`, and a
-  web app manifest are now bundled and served by FastAPI.
+  Open Graph/Twitter cards, JSON-LD, sitemap, `robots.txt`, `llms.txt`,
+  `ai-context.md`, `public-context.json`, indexed explanatory pages, and a web
+  app manifest are now bundled and served by FastAPI.
+- Indexable public pages now explain the project, pipeline, sources, safety
+  rules, API, FAQ, glossary, and RU/KZ/EN language routes without requiring the
+  SPA to execute.
 - Separate reviewer route in the same frontend shell, with token-gated queue and
   details view.
 - Reviewer UI now supports persisted validation sessions with role, language,
@@ -166,8 +170,9 @@ Recent validation passed with:
   validates job presence and preview metadata without forcing `ffmpeg` preview
   generation during UI preflight or operational smoke checks.
 - public discovery endpoints are live-checkable at `/robots.txt`,
-  `/sitemap.xml`, `/llms.txt`, and `/manifest.webmanifest`; the HTML head now
-  exposes canonical, Open Graph, Twitter, and schema.org metadata.
+  `/sitemap.xml`, `/llms.txt`, `/ai-context.md`, `/public-context.json`, and
+  `/manifest.webmanifest`; the HTML head now exposes canonical, hreflang,
+  Open Graph, Twitter, and schema.org metadata.
 
 ## Readiness Rating
 

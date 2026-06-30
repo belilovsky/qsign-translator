@@ -1,0 +1,51 @@
+{
+  "name": "QSign Translator",
+  "url": "https://qsign.qdev.run/",
+  "publisher": "qdev.run",
+  "repository": "https://github.com/belilovsky/qsign-translator",
+  "version": "0.2.0",
+  "languages": [
+    {
+      "code": "ru",
+      "route": "RU/RSL-oriented",
+      "page": "https://qsign.qdev.run/languages/ru-rsl"
+    },
+    {
+      "code": "kk",
+      "route": "KK/KRSL-oriented",
+      "page": "https://qsign.qdev.run/languages/kk-krsl"
+    },
+    {
+      "code": "en",
+      "route": "EN/ASL-oriented",
+      "page": "https://qsign.qdev.run/languages/en-asl"
+    }
+  ],
+  "summary": "Open prototype for turning short text or transcribed audio into transparent sign-language draft plans with review gates and AI-video handoff packages.",
+  "outputs": [
+    "sign_plan",
+    "coverage_trace",
+    "review_state",
+    "render_plan",
+    "ai_video_brief"
+  ],
+  "safety": {
+    "certified_interpreter": false,
+    "requires_human_review": true,
+    "high_risk_domains": ["medical", "legal", "finance", "emergency", "public_safety"]
+  },
+  "best_pages": [
+    "https://qsign.qdev.run/about",
+    "https://qsign.qdev.run/how-it-works",
+    "https://qsign.qdev.run/sources",
+    "https://qsign.qdev.run/safety",
+    "https://qsign.qdev.run/faq",
+    "https://qsign.qdev.run/glossary"
+  ],
+  "machine_readable": {
+    "openapi": "https://qsign.qdev.run/openapi.json",
+    "llms": "https://qsign.qdev.run/llms.txt",
+    "ai_context": "https://qsign.qdev.run/ai-context.md",
+    "sitemap": "https://qsign.qdev.run/sitemap.xml"
+  }
+}

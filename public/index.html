@@ -15,15 +15,19 @@
       name="keywords"
       content="QSign, сурдопереводчик, жестовый язык, русский жестовый язык, казахский жестовый язык, sign language translator, RSL, KRSL, ASL, RU KZ EN"
     />
-    <title>QSign Translator — RU/KZ/EN планировщик жестового перевода</title>
+    <title>QSign Translator — бесплатный RU/KZ/EN планировщик жестового перевода</title>
     <link rel="canonical" href="https://qsign.qdev.run/" />
+    <link rel="alternate" hreflang="ru" href="https://qsign.qdev.run/languages/ru-rsl" />
+    <link rel="alternate" hreflang="kk" href="https://qsign.qdev.run/languages/kk-krsl" />
+    <link rel="alternate" hreflang="en" href="https://qsign.qdev.run/languages/en-asl" />
+    <link rel="alternate" hreflang="x-default" href="https://qsign.qdev.run/" />
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="QSign Translator" />
     <meta property="og:locale" content="ru_RU" />
-    <meta property="og:title" content="QSign Translator — RU/KZ/EN планировщик жестового перевода" />
+    <meta property="og:title" content="QSign Translator — бесплатный RU/KZ/EN планировщик жестового перевода" />
     <meta
       property="og:description"
       content="Открытый прототип qdev.run для прозрачного text-to-sign планирования: RU/KZ/EN, словари, дактильный fallback, ревью носителем и готовый handoff для AI-видео."
@@ -34,7 +38,7 @@
     <meta property="og:image:height" content="720" />
     <meta property="og:image:alt" content="Интерфейс QSign Translator с обзорным окном жестового черновика" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="QSign Translator — RU/KZ/EN планировщик жестового перевода" />
+    <meta name="twitter:title" content="QSign Translator — бесплатный RU/KZ/EN планировщик жестового перевода" />
     <meta
       name="twitter:description"
       content="Прозрачный прототип для подготовки sign-plan, ревью носителем и AI-video handoff для русского, казахского и английского языков."
@@ -48,7 +52,8 @@
             "@type": "Organization",
             "@id": "https://qdev.run/#organization",
             "name": "qdev.run",
-            "url": "https://qdev.run/"
+            "url": "https://qdev.run/",
+            "sameAs": ["https://github.com/belilovsky/qsign-translator"]
           },
           {
             "@type": "WebSite",
@@ -56,7 +61,15 @@
             "name": "QSign Translator",
             "url": "https://qsign.qdev.run/",
             "inLanguage": ["ru", "kk", "en"],
-            "publisher": { "@id": "https://qdev.run/#organization" }
+            "publisher": { "@id": "https://qdev.run/#organization" },
+            "hasPart": [
+              { "@id": "https://qsign.qdev.run/about#webpage" },
+              { "@id": "https://qsign.qdev.run/how-it-works#webpage" },
+              { "@id": "https://qsign.qdev.run/sources#webpage" },
+              { "@id": "https://qsign.qdev.run/safety#webpage" },
+              { "@id": "https://qsign.qdev.run/faq#webpage" },
+              { "@id": "https://qsign.qdev.run/glossary#webpage" }
+            ]
           },
           {
             "@type": ["WebApplication", "SoftwareApplication"],
@@ -68,6 +81,7 @@
             "url": "https://qsign.qdev.run/",
             "image": "https://qsign.qdev.run/static/assets/signing-avatar.png",
             "description": "Открытый RU/KZ/EN прототип для превращения текста и аудио в прозрачный план жестовой записи. Система показывает словарные совпадения, дактильный fallback, ревью-статусы и AI-video handoff, но не заменяет профессионального переводчика жестового языка.",
+            "keywords": "сурдопереводчик, жестовый язык, RSL, KRSL, ASL, sign-plan, dactyl fallback, AI-video brief",
             "softwareVersion": "0.2.0",
             "isAccessibleForFree": true,
             "inLanguage": ["ru", "kk", "en"],
@@ -79,6 +93,8 @@
             ],
             "creator": { "@id": "https://qdev.run/#organization" },
             "publisher": { "@id": "https://qdev.run/#organization" },
+            "softwareHelp": "https://qsign.qdev.run/faq",
+            "downloadUrl": "https://github.com/belilovsky/qsign-translator",
             "offers": {
               "@type": "Offer",
               "price": "0",
@@ -93,11 +109,53 @@
             "programmingLanguage": ["Python", "JavaScript", "HTML", "CSS"],
             "license": "https://github.com/belilovsky/qsign-translator/blob/main/LICENSE",
             "runtimePlatform": "FastAPI"
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://qsign.qdev.run/about#webpage",
+            "url": "https://qsign.qdev.run/about",
+            "name": "О QSign Translator",
+            "isPartOf": { "@id": "https://qsign.qdev.run/#website" }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://qsign.qdev.run/how-it-works#webpage",
+            "url": "https://qsign.qdev.run/how-it-works",
+            "name": "Как работает QSign Translator",
+            "isPartOf": { "@id": "https://qsign.qdev.run/#website" }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://qsign.qdev.run/sources#webpage",
+            "url": "https://qsign.qdev.run/sources",
+            "name": "Источники QSign Translator",
+            "isPartOf": { "@id": "https://qsign.qdev.run/#website" }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://qsign.qdev.run/safety#webpage",
+            "url": "https://qsign.qdev.run/safety",
+            "name": "Безопасность QSign Translator",
+            "isPartOf": { "@id": "https://qsign.qdev.run/#website" }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://qsign.qdev.run/faq#webpage",
+            "url": "https://qsign.qdev.run/faq",
+            "name": "FAQ QSign Translator",
+            "isPartOf": { "@id": "https://qsign.qdev.run/#website" }
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://qsign.qdev.run/glossary#webpage",
+            "url": "https://qsign.qdev.run/glossary",
+            "name": "Глоссарий QSign Translator",
+            "isPartOf": { "@id": "https://qsign.qdev.run/#website" }
           }
         ]
       }
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=20260629b" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260630seo" />
   </head>
   <body>
     <div class="app-shell">
@@ -116,8 +174,10 @@
           </span>
         </a>
         <nav class="topnav" aria-label="Основная навигация">
-          <span>RU / KZ / EN</span>
-          <span>Черновик жестового перевода</span>
+          <a href="/about">О проекте</a>
+          <a href="/how-it-works">Как работает</a>
+          <a href="/sources">Источники</a>
+          <a href="/safety">Безопасность</a>
           <span class="version">бета</span>
         </nav>
         <div class="top-actions">
@@ -147,11 +207,29 @@
         </div>
       </header>
 
+      <section class="product-intro" aria-labelledby="productTitle">
+        <div>
+          <p class="eyebrow">Открытый прототип qdev.run</p>
+          <h1 id="productTitle">QSign Translator — RU/KZ/EN планировщик жестового перевода</h1>
+          <p>
+            QSign помогает превратить короткую фразу или расшифрованное аудио в прозрачный
+            черновик жестовой записи: показывает найденные словарные жесты, дактильные
+            fallback-единицы, рискованные места и пакет задания для внешнего AI-видео.
+          </p>
+        </div>
+        <div class="intro-facts" aria-label="Ключевые свойства QSign">
+          <a href="/languages/ru-rsl">Русский / RSL</a>
+          <a href="/languages/kk-krsl">Қазақша / KRSL</a>
+          <a href="/languages/en-asl">English / ASL</a>
+          <a href="/faq">FAQ</a>
+        </div>
+      </section>
+
       <main class="workspace" id="appView">
         <div class="workspace-column workspace-column-main">
           <section class="panel input-panel" aria-labelledby="inputTitle">
             <div class="panel-heading">
-              <h1 id="inputTitle">1. Фраза или аудио</h1>
+              <h2 id="inputTitle">1. Фраза или аудио</h2>
             </div>
             <div class="tab-control" role="group" aria-label="Основной режим ввода">
               <button class="active" id="textTab" type="button" aria-pressed="true" data-input-mode="text">
@@ -352,6 +430,7 @@
                 rows="9"
                 readonly
                 spellcheck="false"
+                aria-labelledby="aiBriefStatusTitle"
               >Пока пусто.</textarea>
             </div>
             <div class="risk-card" id="riskCard" hidden>
@@ -386,7 +465,7 @@
         <div class="panel review-panel">
           <div class="panel-heading review-heading">
             <div>
-              <h1 id="reviewTitle">Операторская проверка</h1>
+              <h2 id="reviewTitle">Операторская проверка</h2>
               <p class="panel-subtitle">Очередь ревью, статусы и обратная связь по сохраненным записям.</p>
             </div>
             <button class="secondary-button compact" id="reviewBackButton" type="button">К приложению</button>

@@ -84,8 +84,12 @@ BASE=https://your-public-host.example
 curl -fsS "$BASE/robots.txt" | grep -F 'Sitemap:'
 curl -fsS "$BASE/sitemap.xml" | grep -F "$BASE/"
 curl -fsS "$BASE/llms.txt" | grep -F 'QSign Translator'
+curl -fsS "$BASE/ai-context.md" | grep -F 'QSign Translator public AI context'
+curl -fsS "$BASE/public-context.json" | grep -F 'QSign Translator'
 curl -fsSI "$BASE/manifest.webmanifest" | grep -Fi 'application/manifest+json'
 curl -fsS "$BASE/" | grep -E 'application/ld\\+json|og:title|canonical'
+curl -fsS "$BASE/about" | grep -F 'О QSign Translator'
+curl -fsS "$BASE/faq" | grep -F 'FAQ QSign Translator'
 ```
 
 Verify a saved job end to end:

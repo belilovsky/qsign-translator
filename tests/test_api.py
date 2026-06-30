@@ -34,9 +34,21 @@ class ApiTests(unittest.TestCase):
     def test_head_routes_are_monitorable(self) -> None:
         for path in [
             "/",
+            "/about",
+            "/how-it-works",
+            "/sources",
+            "/safety",
+            "/languages/ru-rsl",
+            "/languages/kk-krsl",
+            "/languages/en-asl",
+            "/api",
+            "/faq",
+            "/glossary",
             "/robots.txt",
             "/sitemap.xml",
             "/llms.txt",
+            "/ai-context.md",
+            "/public-context.json",
             "/manifest.webmanifest",
             "/health",
             "/health/live",
@@ -51,6 +63,8 @@ class ApiTests(unittest.TestCase):
             "/robots.txt": ("text/plain", "Sitemap: https://qsign.qdev.run/sitemap.xml"),
             "/sitemap.xml": ("application/xml", "https://qsign.qdev.run/"),
             "/llms.txt": ("text/plain", "QSign Translator"),
+            "/ai-context.md": ("text/markdown", "QSign Translator public AI context"),
+            "/public-context.json": ("application/json", "QSign Translator"),
             "/manifest.webmanifest": ("application/manifest+json", "QSign Translator"),
         }
         for path, (content_type, marker) in expected.items():
@@ -73,6 +87,48 @@ class ApiTests(unittest.TestCase):
         self.assertIn('type="application/ld+json"', html)
         self.assertIn("SoftwareApplication", html)
         self.assertIn("https://github.com/belilovsky/qsign-translator", html)
+
+    def test_public_content_pages_are_indexable(self) -> None:
+        expected = {
+            "/about": "О QSign Translator",
+            "/how-it-works": "Как работает QSign Translator",
+            "/sources": "Источники и словари QSign Translator",
+            "/safety": "Безопасность QSign Translator",
+            "/languages/ru-rsl": "Русский жестовый маршрут QSign",
+            "/languages/kk-krsl": "Қазақша жест маршруты QSign",
+            "/languages/en-asl": "QSign English route",
+            "/api": "QSign API",
+            "/faq": "FAQ QSign Translator",
+            "/glossary": "Глоссарий QSign",
+        }
+        for path, title_marker in expected.items():
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("text/html", response.headers["content-type"])
+                self.assertIn(title_marker, response.text)
+                self.assertIn(f'href="https://qsign.qdev.run{path}"', response.text)
+
+    def test_sitemap_and_llms_list_public_content_pages(self) -> None:
+        sitemap = self.client.get("/sitemap.xml").text
+        llms = self.client.get("/llms.txt").text
+        for path in [
+            "/about",
+            "/how-it-works",
+            "/sources",
+            "/safety",
+            "/languages/ru-rsl",
+            "/languages/kk-krsl",
+            "/languages/en-asl",
+            "/api",
+            "/faq",
+            "/glossary",
+            "/ai-context.md",
+            "/public-context.json",
+        ]:
+            with self.subTest(path=path):
+                self.assertIn(f"https://qsign.qdev.run{path}", sitemap)
+                self.assertIn(f"https://qsign.qdev.run{path}", llms)
 
     def test_health_ready_head_returns_503_for_configured_but_unready_database(self) -> None:
         with (

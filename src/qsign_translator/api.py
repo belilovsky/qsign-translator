@@ -122,10 +122,26 @@ GENERATED_PREVIEW_ROOT = Path(tempfile.gettempdir()) / "qsign-preview-videos"
 UPLOADED_RENDER_ROOT = Path(settings.generated_media_root) / "rendered-videos"
 REVIEW_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
 PUBLIC_FILE_TYPES = {
+    "ai-context.md": "text/markdown; charset=utf-8",
     "llms.txt": "text/plain; charset=utf-8",
     "manifest.webmanifest": "application/manifest+json; charset=utf-8",
+    "public-context.json": "application/json; charset=utf-8",
     "robots.txt": "text/plain; charset=utf-8",
     "sitemap.xml": "application/xml; charset=utf-8",
+}
+SEO_PAGE_FILES = {
+    "about": "about.html",
+    "api": "api.html",
+    "faq": "faq.html",
+    "glossary": "glossary.html",
+    "how-it-works": "how-it-works.html",
+    "safety": "safety.html",
+    "sources": "sources.html",
+}
+LANGUAGE_PAGE_FILES = {
+    "en-asl": "languages-en-asl.html",
+    "kk-krsl": "languages-kk-krsl.html",
+    "ru-rsl": "languages-ru-rsl.html",
 }
 
 if STATIC_ROOT.exists():
@@ -141,6 +157,66 @@ def index(request: Request) -> FileResponse | Response:
     if request.method == "HEAD":
         return Response(status_code=200)
     return FileResponse(index_path)
+
+
+def _content_page_response(request: Request, filename: str) -> FileResponse | Response:
+    page_path = PUBLIC_ROOT / "pages" / filename
+    if not page_path.exists():
+        raise HTTPException(status_code=404, detail="Content page is not bundled")
+    if request.method == "HEAD":
+        return Response(status_code=200, media_type="text/html; charset=utf-8")
+    return FileResponse(page_path, media_type="text/html; charset=utf-8")
+
+
+@app.get("/about", response_model=None, include_in_schema=False)
+@app.head("/about", response_model=None, include_in_schema=False)
+def page_about(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["about"])
+
+
+@app.get("/how-it-works", response_model=None, include_in_schema=False)
+@app.head("/how-it-works", response_model=None, include_in_schema=False)
+def page_how_it_works(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["how-it-works"])
+
+
+@app.get("/sources", response_model=None, include_in_schema=False)
+@app.head("/sources", response_model=None, include_in_schema=False)
+def page_sources(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["sources"])
+
+
+@app.get("/safety", response_model=None, include_in_schema=False)
+@app.head("/safety", response_model=None, include_in_schema=False)
+def page_safety(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["safety"])
+
+
+@app.get("/api", response_model=None, include_in_schema=False)
+@app.head("/api", response_model=None, include_in_schema=False)
+def page_api(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["api"])
+
+
+@app.get("/faq", response_model=None, include_in_schema=False)
+@app.head("/faq", response_model=None, include_in_schema=False)
+def page_faq(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["faq"])
+
+
+@app.get("/glossary", response_model=None, include_in_schema=False)
+@app.head("/glossary", response_model=None, include_in_schema=False)
+def page_glossary(request: Request) -> FileResponse | Response:
+    return _content_page_response(request, SEO_PAGE_FILES["glossary"])
+
+
+@app.get("/languages/{slug}", response_model=None, include_in_schema=False)
+@app.head("/languages/{slug}", response_model=None, include_in_schema=False)
+def page_language(slug: str, request: Request) -> FileResponse | Response:
+    filename = LANGUAGE_PAGE_FILES.get(slug)
+    if not filename:
+        raise HTTPException(status_code=404, detail="Language page is not bundled")
+    return _content_page_response(request, filename)
 
 
 @app.get("/favicon.ico", response_model=None, include_in_schema=False)
@@ -187,6 +263,18 @@ def llms(request: Request) -> FileResponse | Response:
 @app.head("/manifest.webmanifest", response_model=None, include_in_schema=False)
 def manifest(request: Request) -> FileResponse | Response:
     return _public_file_response(request, "manifest.webmanifest")
+
+
+@app.get("/ai-context.md", response_model=None, include_in_schema=False)
+@app.head("/ai-context.md", response_model=None, include_in_schema=False)
+def ai_context(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "ai-context.md")
+
+
+@app.get("/public-context.json", response_model=None, include_in_schema=False)
+@app.head("/public-context.json", response_model=None, include_in_schema=False)
+def public_context(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "public-context.json")
 
 
 @app.get("/health", response_model=None)
