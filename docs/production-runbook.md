@@ -86,10 +86,19 @@ curl -fsS "$BASE/sitemap.xml" | grep -F "$BASE/"
 curl -fsS "$BASE/llms.txt" | grep -F 'QSign Translator'
 curl -fsS "$BASE/ai-context.md" | grep -F 'QSign Translator public AI context'
 curl -fsS "$BASE/public-context.json" | grep -F 'QSign Translator'
+curl -fsS "$BASE/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt" | grep -F 'd491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141'
 curl -fsSI "$BASE/manifest.webmanifest" | grep -Fi 'application/manifest+json'
 curl -fsS "$BASE/" | grep -E 'application/ld\\+json|og:title|canonical'
 curl -fsS "$BASE/about" | grep -F 'О QSign Translator'
 curl -fsS "$BASE/faq" | grep -F 'FAQ QSign Translator'
+```
+
+Notify IndexNow-compatible search engines after discovery file or public page
+changes:
+
+```bash
+python3 scripts/submit_indexnow.py --base-url "$BASE" --dry-run
+python3 scripts/submit_indexnow.py --base-url "$BASE"
 ```
 
 Verify a saved job end to end:

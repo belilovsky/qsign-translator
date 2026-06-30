@@ -223,6 +223,7 @@ qsign-translator/
 | `GET /ai-context.md` | GET | Расширенный контекст для AI-агентов |
 | `GET /public-context.json` | GET | Структурированные публичные факты о проекте |
 | `GET /manifest.webmanifest` | GET | Web app manifest |
+| `GET /d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt` | GET | Публичный ключ IndexNow для уведомления поисковиков |
 | `POST /v1/translate/text` | POST | Перевод текста в sign-plan |
 | `GET /v1/jobs/{job_id}` | GET | Получение сохранённого задания |
 | `GET /v1/jobs/{job_id}/render-plan` | GET | План рендеринга видео |

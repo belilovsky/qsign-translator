@@ -7,5 +7,11 @@ Allow: /
 User-agent: ChatGPT-User
 Allow: /
 
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
 Host: https://qsign.qdev.run
 Sitemap: https://qsign.qdev.run/sitemap.xml

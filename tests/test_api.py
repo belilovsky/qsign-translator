@@ -49,6 +49,7 @@ class ApiTests(unittest.TestCase):
             "/llms.txt",
             "/ai-context.md",
             "/public-context.json",
+            "/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt",
             "/manifest.webmanifest",
             "/health",
             "/health/live",
@@ -65,6 +66,10 @@ class ApiTests(unittest.TestCase):
             "/llms.txt": ("text/plain", "QSign Translator"),
             "/ai-context.md": ("text/markdown", "QSign Translator public AI context"),
             "/public-context.json": ("application/json", "QSign Translator"),
+            "/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt": (
+                "text/plain",
+                "d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141",
+            ),
             "/manifest.webmanifest": ("application/manifest+json", "QSign Translator"),
         }
         for path, (content_type, marker) in expected.items():
@@ -76,6 +81,17 @@ class ApiTests(unittest.TestCase):
                 head_response = self.client.head(path)
                 self.assertEqual(head_response.status_code, 200)
                 self.assertIn(content_type, head_response.headers["content-type"])
+
+    def test_robots_allows_search_and_ai_discovery(self) -> None:
+        response = self.client.get("/robots.txt")
+        self.assertEqual(response.status_code, 200)
+        robots = response.text
+        self.assertIn("User-agent: *", robots)
+        self.assertIn("User-agent: OAI-SearchBot", robots)
+        self.assertIn("User-agent: ChatGPT-User", robots)
+        self.assertIn("User-agent: PerplexityBot", robots)
+        self.assertIn("User-agent: Claude-SearchBot", robots)
+        self.assertIn("Sitemap: https://qsign.qdev.run/sitemap.xml", robots)
 
     def test_index_contains_search_and_ai_metadata(self) -> None:
         response = self.client.get("/")

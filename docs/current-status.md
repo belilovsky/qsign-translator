@@ -173,6 +173,9 @@ Recent validation passed with:
   `/sitemap.xml`, `/llms.txt`, `/ai-context.md`, `/public-context.json`, and
   `/manifest.webmanifest`; the HTML head now exposes canonical, hreflang,
   Open Graph, Twitter, and schema.org metadata.
+- IndexNow discovery is configured with a public key file at
+  `/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt`;
+  `scripts/submit_indexnow.py` submits sitemap URLs after deploy.
 
 ## Readiness Rating
 

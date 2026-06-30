@@ -121,7 +121,9 @@ STATIC_ROOT = PUBLIC_ROOT / "static"
 GENERATED_PREVIEW_ROOT = Path(tempfile.gettempdir()) / "qsign-preview-videos"
 UPLOADED_RENDER_ROOT = Path(settings.generated_media_root) / "rendered-videos"
 REVIEW_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
+INDEXNOW_KEY_FILENAME = "d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt"
 PUBLIC_FILE_TYPES = {
+    INDEXNOW_KEY_FILENAME: "text/plain; charset=utf-8",
     "ai-context.md": "text/markdown; charset=utf-8",
     "llms.txt": "text/plain; charset=utf-8",
     "manifest.webmanifest": "application/manifest+json; charset=utf-8",
@@ -275,6 +277,12 @@ def ai_context(request: Request) -> FileResponse | Response:
 @app.head("/public-context.json", response_model=None, include_in_schema=False)
 def public_context(request: Request) -> FileResponse | Response:
     return _public_file_response(request, "public-context.json")
+
+
+@app.get(f"/{INDEXNOW_KEY_FILENAME}", response_model=None, include_in_schema=False)
+@app.head(f"/{INDEXNOW_KEY_FILENAME}", response_model=None, include_in_schema=False)
+def indexnow_key(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, INDEXNOW_KEY_FILENAME)
 
 
 @app.get("/health", response_model=None)
