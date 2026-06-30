@@ -134,6 +134,40 @@ class ApiTests(unittest.TestCase):
         self.assertIn("SoftwareApplication", html)
         self.assertIn("https://github.com/belilovsky/qsign-translator", html)
 
+    def test_index_uses_avds4_static_primitives(self) -> None:
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        html = response.text
+        for marker in [
+            "styles.css?v=20260630avds4",
+            "avds-shell",
+            "avds-topbar",
+            "avds-nav",
+            "avds-status-pill",
+            "avds-button--primary",
+            "avds-segmented__item",
+            "avds-card",
+            "avds-textarea",
+        ]:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, html)
+
+    def test_avds4_bridge_tokens_are_available(self) -> None:
+        css = Path("public/static/styles.css").read_text(encoding="utf-8")
+        for marker in [
+            "AV DS 4 compatibility bridge",
+            "--color-bg-canvas",
+            "--color-bg-surface",
+            "--color-text-primary",
+            "--color-accent",
+            ".avds-button",
+            ".avds-card",
+            ".avds-table",
+            ".avds-textarea",
+        ]:
+            with self.subTest(marker=marker):
+                self.assertIn(marker, css)
+
     def test_public_content_pages_are_indexable(self) -> None:
         expected = {
             "/about": "О QSign Translator",
@@ -159,6 +193,9 @@ class ApiTests(unittest.TestCase):
                 self.assertIn("text/html", response.headers["content-type"])
                 self.assertIn(title_marker, response.text)
                 self.assertIn(f'href="https://qsign.qdev.run{path}"', response.text)
+                self.assertIn("avds-shell", response.text)
+                self.assertIn("avds-topbar", response.text)
+                self.assertIn("avds-nav", response.text)
 
     def test_public_content_pages_have_social_and_breadcrumb_metadata(self) -> None:
         for path in [

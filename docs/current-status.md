@@ -62,6 +62,10 @@ The project is intentionally honest about what exists today:
   rules, API, methodology, examples, developer integration, open-source status,
   roadmap, FAQ, glossary, and RU/KZ/EN language routes without requiring the SPA
   to execute.
+- Frontend chrome now carries an AV DS 4 static compatibility bridge: stable
+  `--color-*` tokens, stock primitive classes for shell, topbar, nav, chips,
+  buttons, cards, tables, segmented controls, and textareas, plus legacy aliases
+  for older selectors.
 - Separate reviewer route in the same frontend shell, with token-gated queue and
   details view.
 - Reviewer UI now supports persisted validation sessions with role, language,

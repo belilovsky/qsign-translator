@@ -155,13 +155,13 @@
         ]
       }
     </script>
-    <link rel="stylesheet" href="/static/styles.css?v=20260630seo" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260630avds4" />
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="QSign Translator">
-          <span class="brand-mark" aria-hidden="true">
+    <div class="app-shell avds-shell">
+      <header class="topbar avds-topbar">
+        <a class="brand avds-brand" href="/" aria-label="QSign Translator">
+          <span class="brand-mark avds-brand-mark" aria-hidden="true">
             <svg viewBox="0 0 28 28" role="img">
               <path d="M14 2.5 23.5 7.9v9.2L14 25.5 4.5 17.1V7.9L14 2.5Z" />
               <path d="M9.2 15.4V9.8M12.4 16V7.2M15.6 16V8.8M18.8 15.1v-4.6" />
@@ -173,31 +173,31 @@
             <small>Translator</small>
           </span>
         </a>
-        <nav class="topnav" aria-label="Основная навигация">
+        <nav class="topnav avds-nav" aria-label="Основная навигация">
           <a href="/about">О проекте</a>
           <a href="/how-it-works">Как работает</a>
           <a href="/sources">Источники</a>
           <a href="/safety">Безопасность</a>
-          <span class="version">бета</span>
+          <span class="version avds-chip avds-chip--accent">бета</span>
         </nav>
         <div class="top-actions">
-          <span class="service-pill" id="serviceStatus">
-            <span class="status-dot"></span>
+          <span class="service-pill avds-status-pill" id="serviceStatus">
+            <span class="status-dot avds-status-dot"></span>
             <span id="serviceStatusLabel">Проверка сервиса</span>
           </span>
-          <div class="segmented" role="group" aria-label="Язык входного текста">
-            <button class="active" type="button" data-language="ru" aria-pressed="true">RU</button>
-            <button type="button" data-language="kk" aria-pressed="false">KZ</button>
-            <button type="button" data-language="en" aria-pressed="false">EN</button>
+          <div class="segmented avds-segmented" role="group" aria-label="Язык входного текста">
+            <button class="active avds-segmented__item" type="button" data-language="ru" aria-pressed="true">RU</button>
+            <button class="avds-segmented__item" type="button" data-language="kk" aria-pressed="false">KZ</button>
+            <button class="avds-segmented__item" type="button" data-language="en" aria-pressed="false">EN</button>
           </div>
-          <button class="icon-button" id="settingsButton" type="button" aria-label="Источники и статус">
+          <button class="icon-button avds-button avds-button--ghost" id="settingsButton" type="button" aria-label="Источники и статус">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2Z" />
               <path d="M19.4 15.1a8.2 8.2 0 0 0 .1-1.1 8.2 8.2 0 0 0-.1-1.1l2-1.5-2-3.5-2.4 1a8.7 8.7 0 0 0-1.9-1.1L14.8 5h-4l-.4 2.8a8.7 8.7 0 0 0-1.9 1.1l-2.4-1-2 3.5 2 1.5A8.2 8.2 0 0 0 6 14c0 .4 0 .7.1 1.1l-2 1.5 2 3.5 2.4-1c.6.5 1.2.8 1.9 1.1l.4 2.8h4l.4-2.8c.7-.3 1.3-.7 1.9-1.1l2.4 1 2-3.5-2.1-1.5Z" />
             </svg>
             <span>Источники</span>
           </button>
-          <button class="icon-button" id="reviewButton" type="button" aria-label="Ревью и админка">
+          <button class="icon-button avds-button avds-button--ghost" id="reviewButton" type="button" aria-label="Ревью и админка">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 6h16M4 12h16M4 18h10" />
               <path d="M18 15.5 20.5 18 24 13.5" />
@@ -227,7 +227,7 @@
 
       <main class="workspace" id="appView">
         <div class="workspace-column workspace-column-main">
-          <section class="panel input-panel" aria-labelledby="inputTitle">
+          <section class="panel avds-card input-panel" aria-labelledby="inputTitle">
             <div class="panel-heading">
               <h2 id="inputTitle">1. Фраза или аудио</h2>
             </div>
@@ -246,7 +246,7 @@
               <span>Введите короткую фразу</span>
               <span id="charCount">0 / 5000</span>
             </label>
-            <textarea id="inputText" maxlength="5000" placeholder="Введите короткий русский текст" lang="ru"></textarea>
+            <textarea class="avds-textarea" id="inputText" maxlength="5000" placeholder="Введите короткий русский текст" lang="ru"></textarea>
             <p class="hint" id="inputHint">Короткие фразы легче проверить и показать по шагам.</p>
 
             <div class="upload-box" id="uploadBox" role="button" tabindex="0" aria-label="Загрузка аудио">
@@ -260,24 +260,24 @@
             </div>
 
             <div class="button-row">
-              <button class="secondary-button" id="clearButton" type="button" disabled>
+              <button class="secondary-button avds-button avds-button--secondary" id="clearButton" type="button" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12M9 7V5h6v2M9 10v8M15 10v8M7 7l1 14h8l1-14" /></svg>
                 Очистить
               </button>
-              <button class="primary-button" id="generateButton" type="button">
+              <button class="primary-button avds-button avds-button--primary" id="generateButton" type="button">
                 Собрать перевод
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z" /></svg>
               </button>
             </div>
           </section>
 
-          <section class="panel steps-panel" aria-labelledby="stepsTitle">
+          <section class="panel avds-card steps-panel" aria-labelledby="stepsTitle">
             <div class="panel-heading">
               <h2 id="stepsTitle">2. Как собирается перевод</h2>
             </div>
             <ol class="stepper" id="stepper"></ol>
           </section>
-          <section class="panel trace-panel" aria-labelledby="traceTitle">
+          <section class="panel avds-card trace-panel" aria-labelledby="traceTitle">
             <div class="panel-heading">
               <div>
                 <h2 id="traceTitle">4. Как принято решение</h2>
@@ -289,18 +289,18 @@
             <ol class="trace-list" id="traceList"></ol>
           </section>
 
-          <section class="panel timeline-panel">
+          <section class="panel avds-card timeline-panel">
             <div class="panel-heading">
               <div>
                 <h2>5. План жестов</h2>
                 <p class="panel-subtitle">Выберите единицу, чтобы увидеть причину выбора и подсказку для проверки.</p>
               </div>
               <div class="timeline-actions">
-                <div class="segmented view-mode-toggle" role="group" aria-label="Режим просмотра плана">
-                  <button class="active" type="button" data-view-mode="user" aria-pressed="true">Пользователь</button>
-                  <button type="button" data-view-mode="reviewer" aria-pressed="false">Ревьюер</button>
+                <div class="segmented avds-segmented view-mode-toggle" role="group" aria-label="Режим просмотра плана">
+                  <button class="active avds-segmented__item" type="button" data-view-mode="user" aria-pressed="true">Пользователь</button>
+                  <button class="avds-segmented__item" type="button" data-view-mode="reviewer" aria-pressed="false">Ревьюер</button>
                 </div>
-                <button class="secondary-button compact" id="planViewButton" type="button" aria-pressed="false">Компактно</button>
+                <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="planViewButton" type="button" aria-pressed="false">Компактно</button>
               </div>
             </div>
             <div class="coverage-strip" id="coverageStrip"></div>
@@ -315,10 +315,10 @@
         </div>
 
         <div class="workspace-column workspace-column-aside">
-          <section class="panel result-panel" aria-labelledby="resultTitle">
+          <section class="panel avds-card result-panel" aria-labelledby="resultTitle">
             <div class="panel-heading result-heading">
               <h2 id="resultTitle">3. Результат</h2>
-              <button class="secondary-button compact" id="fullscreenButton" type="button" aria-pressed="false">
+              <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="fullscreenButton" type="button" aria-pressed="false">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" /></svg>
                 <span id="fullscreenButtonLabel">Полный экран</span>
               </button>
@@ -361,9 +361,9 @@
                   <strong id="transcriptTitle">Рабочий текст</strong>
                   <span id="transcriptMeta">После первой сборки здесь можно будет быстро поправить текст и пересобрать черновик.</span>
                 </div>
-                <button class="secondary-button compact" id="applyTranscriptButton" type="button" disabled>Применить</button>
+                <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="applyTranscriptButton" type="button" disabled>Применить</button>
               </div>
-              <textarea id="resultTranscript" class="transcript-editor" rows="4" spellcheck="false" aria-labelledby="transcriptTitle"></textarea>
+              <textarea class="transcript-editor avds-textarea" id="resultTranscript" rows="4" spellcheck="false" aria-labelledby="transcriptTitle"></textarea>
             </div>
             <div class="fallback-summary" id="fallbackSummary" aria-label="Сводка покрытия"></div>
             <div class="result-meta">
@@ -415,18 +415,18 @@
                   <strong id="aiBriefStatusTitle">Экспорт для AI-видео</strong>
                   <span id="aiBriefSummary">Пакет для AI-видео появится после сохранения черновика.</span>
                 </div>
-                <button class="secondary-button compact" id="copyAIBriefButton" type="button" disabled>Копировать пакет</button>
+                <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="copyAIBriefButton" type="button" disabled>Копировать пакет</button>
               </div>
-              <div class="segmented-control export-modes" role="group" aria-label="Формат экспортного пакета">
-                <button type="button" class="mode-button active" id="aiBriefModeUniversal" data-brief-mode="universal_prompt" aria-pressed="true">Универсальный</button>
-                <button type="button" class="mode-button" id="aiBriefModeOperator" data-brief-mode="operator_handoff" aria-pressed="false">Оператор</button>
-                <button type="button" class="mode-button" id="aiBriefModeContract" data-brief-mode="render_contract" aria-pressed="false">Контракт</button>
-                <button type="button" class="mode-button" id="aiBriefModeJson" data-brief-mode="json_payload" aria-pressed="false">JSON</button>
-                <button type="button" class="mode-button" id="aiBriefModeBatch" data-brief-mode="batch_storyboard" aria-pressed="false">Пакет</button>
+              <div class="segmented-control avds-segmented export-modes" role="group" aria-label="Формат экспортного пакета">
+                <button type="button" class="mode-button avds-segmented__item active" id="aiBriefModeUniversal" data-brief-mode="universal_prompt" aria-pressed="true">Универсальный</button>
+                <button type="button" class="mode-button avds-segmented__item" id="aiBriefModeOperator" data-brief-mode="operator_handoff" aria-pressed="false">Оператор</button>
+                <button type="button" class="mode-button avds-segmented__item" id="aiBriefModeContract" data-brief-mode="render_contract" aria-pressed="false">Контракт</button>
+                <button type="button" class="mode-button avds-segmented__item" id="aiBriefModeJson" data-brief-mode="json_payload" aria-pressed="false">JSON</button>
+                <button type="button" class="mode-button avds-segmented__item" id="aiBriefModeBatch" data-brief-mode="batch_storyboard" aria-pressed="false">Пакет</button>
               </div>
               <textarea
+                class="brief-output avds-textarea"
                 id="aiBriefOutput"
-                class="brief-output"
                 rows="9"
                 readonly
                 spellcheck="false"
@@ -439,7 +439,7 @@
             </div>
           </section>
 
-          <section class="panel sources-panel">
+          <section class="panel avds-card sources-panel">
             <div class="panel-heading">
               <h2>6. Источники</h2>
               <span class="small-status" id="readyStatus">проверка</span>
@@ -462,13 +462,13 @@
       </main>
 
       <section class="review-shell" id="reviewView" hidden aria-labelledby="reviewTitle">
-        <div class="panel review-panel">
+        <div class="panel avds-card review-panel">
           <div class="panel-heading review-heading">
             <div>
               <h2 id="reviewTitle">Операторская проверка</h2>
               <p class="panel-subtitle">Очередь ревью, статусы и обратная связь по сохраненным записям.</p>
             </div>
-            <button class="secondary-button compact" id="reviewBackButton" type="button">К приложению</button>
+            <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewBackButton" type="button">К приложению</button>
           </div>
 
           <form class="review-toolbar" id="reviewToolbarForm">
@@ -520,9 +520,9 @@
               <span>Поиск</span>
               <input id="reviewSearchInput" type="search" placeholder="Фраза или часть текста" autocomplete="off" spellcheck="false" />
             </label>
-            <button class="secondary-button compact" id="reviewLoginButton" type="button">Войти</button>
-            <button class="secondary-button compact" id="reviewLogoutButton" type="button">Выйти</button>
-            <button class="secondary-button compact" id="reviewLoadButton" type="submit">Обновить</button>
+            <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewLoginButton" type="button">Войти</button>
+            <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewLogoutButton" type="button">Выйти</button>
+            <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewLoadButton" type="submit">Обновить</button>
           </form>
 
           <div class="review-status-banner" id="reviewStatusBanner">Введите токен и обновите очередь ревью.</div>
@@ -549,10 +549,10 @@
               <div class="review-card-head">
                 <h2>Карточка записи</h2>
                 <div class="review-actions">
-                  <button class="secondary-button compact" type="button" data-review-status-action="pending_signer_review">Ожидает</button>
-                  <button class="secondary-button compact" type="button" data-review-status-action="needs_edit">Нужна правка</button>
-                  <button class="secondary-button compact" type="button" data-review-status-action="approved">Одобрить</button>
-                  <button class="secondary-button compact" type="button" data-review-status-action="rejected">Отклонить</button>
+                  <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" type="button" data-review-status-action="pending_signer_review">Ожидает</button>
+                  <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" type="button" data-review-status-action="needs_edit">Нужна правка</button>
+                  <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" type="button" data-review-status-action="approved">Одобрить</button>
+                  <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" type="button" data-review-status-action="rejected">Отклонить</button>
                 </div>
               </div>
               <div class="review-detail-summary" id="reviewDetailSummary">Выберите запись слева, чтобы увидеть детали ревью.</div>
@@ -605,11 +605,11 @@
                 </div>
                 <label class="review-form-field review-form-notes">
                   <span>Заметка ревьюера</span>
-                  <textarea id="reviewSessionNotesInput" rows="3" maxlength="2000" placeholder="Что нужно поправить или почему запись можно одобрить"></textarea>
+                  <textarea class="avds-textarea" id="reviewSessionNotesInput" rows="3" maxlength="2000" placeholder="Что нужно поправить или почему запись можно одобрить"></textarea>
                 </label>
                 <div class="review-form-actions">
                   <span class="small-status" id="reviewSessionStatus">Сессию можно сохранить после выбора записи.</span>
-                  <button class="secondary-button compact" id="reviewSessionSubmitButton" type="submit">Сохранить сессию</button>
+                  <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewSessionSubmitButton" type="submit">Сохранить сессию</button>
                 </div>
               </form>
               <form class="review-session-form review-upload-form" id="reviewUploadForm">
@@ -620,7 +620,7 @@
                   </label>
                   <div class="review-form-actions review-upload-actions">
                     <span class="small-status" id="reviewUploadStatus">Загрузите внешний mp4 после рендера.</span>
-                    <button class="secondary-button compact" id="reviewUploadSubmitButton" type="submit">Прикрепить видео</button>
+                    <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewUploadSubmitButton" type="submit">Прикрепить видео</button>
                   </div>
                 </div>
               </form>
@@ -637,12 +637,12 @@
                   </label>
                   <div class="review-form-actions review-upload-actions">
                     <span class="small-status" id="reviewPublishStatus">Финальное решение сохраняется отдельно от статуса проверки.</span>
-                    <button class="secondary-button compact" id="reviewPublishSubmitButton" type="submit">Сохранить решение</button>
+                    <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewPublishSubmitButton" type="submit">Сохранить решение</button>
                   </div>
                 </div>
                 <label class="review-form-field review-form-notes">
                   <span>Комментарий к финальному видео</span>
-                  <textarea id="reviewPublishNoteInput" rows="2" maxlength="2000" placeholder="Почему видео можно публиковать или что в нем нужно исправить"></textarea>
+                  <textarea class="avds-textarea" id="reviewPublishNoteInput" rows="2" maxlength="2000" placeholder="Почему видео можно публиковать или что в нем нужно исправить"></textarea>
                 </label>
               </form>
               <section class="review-subsection" aria-labelledby="reviewUnitsTitle">
@@ -685,11 +685,11 @@
                   </div>
                   <label class="review-form-field review-form-notes">
                     <span>Почему стоит добавить</span>
-                    <textarea id="reviewLexiconReasonInput" rows="2" maxlength="2000" placeholder="Что не так с текущим черновиком и какую замену стоит проверить"></textarea>
+                    <textarea class="avds-textarea" id="reviewLexiconReasonInput" rows="2" maxlength="2000" placeholder="Что не так с текущим черновиком и какую замену стоит проверить"></textarea>
                   </label>
                   <div class="review-form-actions">
                     <span class="small-status" id="reviewLexiconStatus">Можно вынести спорную единицу в словарь-кандидаты.</span>
-                    <button class="secondary-button compact" id="reviewLexiconSubmitButton" type="submit">Сохранить кандидата</button>
+                    <button class="secondary-button avds-button avds-button--secondary avds-button--compact compact" id="reviewLexiconSubmitButton" type="submit">Сохранить кандидата</button>
                   </div>
                 </form>
                 <div class="review-feedback-list" id="reviewLexiconList"></div>
