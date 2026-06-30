@@ -148,6 +148,8 @@ class ApiTests(unittest.TestCase):
             "avds-segmented__item",
             "avds-card",
             "avds-textarea",
+            "provenanceCard",
+            "sourceCards",
         ]:
             with self.subTest(marker=marker):
                 self.assertIn(marker, html)

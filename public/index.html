@@ -355,6 +355,22 @@
               <strong id="trustTitle">Пока нет черновика</strong>
               <span id="trustText">Введите короткую фразу. Система покажет, что найдено в словарях, а что нужно проверить человеком.</span>
             </div>
+            <section class="provenance-card avds-card" id="provenanceCard" aria-live="polite" aria-labelledby="provenanceTitle">
+              <div class="provenance-head">
+                <div>
+                  <strong id="provenanceTitle">Почему система так решила</strong>
+                  <span id="provenanceSummary">После сборки здесь появится прозрачная связка: маршрут, статус проверки, источник черновика и готовность к выпуску.</span>
+                </div>
+                <span class="provenance-status needs-review" id="provenanceStatus">ожидает сборки</span>
+              </div>
+              <div class="provenance-list" id="provenanceList">
+                <div class="provenance-row">
+                  <strong>Маршрут</strong>
+                  <span>—</span>
+                  <span>—</span>
+                </div>
+              </div>
+            </section>
             <div class="transcript-card" aria-labelledby="transcriptTitle">
               <div class="transcript-head">
                 <div>
@@ -444,19 +460,7 @@
               <h2>6. Источники</h2>
               <span class="small-status" id="readyStatus">проверка</span>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Источник</th>
-                    <th>Тип</th>
-                    <th>Языки</th>
-                    <th>Статус</th>
-                  </tr>
-                </thead>
-                <tbody id="sourceRows"></tbody>
-              </table>
-            </div>
+            <div class="source-card-grid" id="sourceCards"></div>
           </section>
         </div>
       </main>
@@ -731,6 +735,6 @@
         <span id="footerStamp">дата обновляется</span>
       </footer>
     </div>
-    <script src="/static/app.js?v=20260629b" defer></script>
+    <script src="/static/app.js?v=20260630avds4b" defer></script>
   </body>
 </html>

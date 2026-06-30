@@ -87,6 +87,9 @@ const riskText = document.querySelector("#riskText");
 const subtitleBox = document.querySelector("#subtitleBox");
 const trustTitle = document.querySelector("#trustTitle");
 const trustText = document.querySelector("#trustText");
+const provenanceStatus = document.querySelector("#provenanceStatus");
+const provenanceSummary = document.querySelector("#provenanceSummary");
+const provenanceList = document.querySelector("#provenanceList");
 const resultTranscript = document.querySelector("#resultTranscript");
 const transcriptMeta = document.querySelector("#transcriptMeta");
 const applyTranscriptButton = document.querySelector("#applyTranscriptButton");
@@ -98,7 +101,7 @@ const traceGate = document.querySelector("#traceGate");
 const traceSummary = document.querySelector("#traceSummary");
 const traceList = document.querySelector("#traceList");
 const unitInspector = document.querySelector("#unitInspector");
-const sourceRows = document.querySelector("#sourceRows");
+const sourceCards = document.querySelector("#sourceCards");
 const serviceStatus = document.querySelector("#serviceStatus");
 const readyStatus = document.querySelector("#readyStatus");
 const apiBadge = document.querySelector("#apiBadge");
@@ -342,6 +345,57 @@ function appendTextElement(parent, tagName, className, text) {
   element.textContent = text;
   parent.append(element);
   return element;
+}
+
+function renderMiniMetricGrid(parent, items, className = "") {
+  clearNode(parent);
+  items.forEach(([value, label, note, kicker]) => {
+    const item = document.createElement("div");
+    item.className = className || "mini-metric-card";
+    appendTextElement(item, "span", "mini-metric-kicker", kicker || "срез");
+    appendTextElement(item, "strong", "mini-metric-value", String(value));
+    appendTextElement(item, "span", "mini-metric-label", label);
+    if (note) appendTextElement(item, "span", "mini-metric-subtext", note);
+    parent.append(item);
+  });
+}
+
+function formatConfidenceBand(value) {
+  const confidence = Number(value || 0);
+  if (confidence >= 0.85) {
+    return { label: "высокое", tone: "good", color: "var(--green)" };
+  }
+  if (confidence >= 0.55) {
+    return { label: "умеренное", tone: "warn", color: "var(--amber)" };
+  }
+  return { label: "низкое", tone: "bad", color: "var(--red)" };
+}
+
+function formatProvenanceStatus(status) {
+  if (status === "ready") return { label: "готово", className: "ready" };
+  if (status === "draft") return { label: "черновик", className: "draft" };
+  if (status === "stale") return { label: "устарело", className: "stale" };
+  if (status === "warning") return { label: "нужна проверка", className: "needs-review" };
+  return { label: "ожидает сборки", className: "needs-review" };
+}
+
+function setProvenanceState(summary, status, rows) {
+  if (provenanceSummary) provenanceSummary.textContent = summary;
+  if (provenanceStatus) {
+    const badge = formatProvenanceStatus(status);
+    provenanceStatus.textContent = badge.label;
+    provenanceStatus.className = `provenance-status ${badge.className}`;
+  }
+  if (!provenanceList) return;
+  clearNode(provenanceList);
+  rows.forEach((row) => {
+    const item = document.createElement("div");
+    item.className = "provenance-row";
+    appendTextElement(item, "strong", "", row.label);
+    appendTextElement(item, "span", "provenance-value", row.value);
+    appendTextElement(item, "span", "provenance-note", row.note);
+    provenanceList.append(item);
+  });
 }
 
 function renderRenderPlanSummary(summary, items) {
@@ -745,8 +799,10 @@ function renderPlan(plan) {
   const units = plan.units || [];
   if (state.selectedUnitIndex >= units.length) state.selectedUnitIndex = Math.max(0, units.length - 1);
   const confidence = Number(plan.confidence || 0);
+  const confidenceBand = formatConfidenceBand(confidence);
   confidenceValue.textContent = confidence.toFixed(2);
   confidenceBar.style.width = `${Math.max(0, Math.min(1, confidence)) * 100}%`;
+  confidenceBar.style.background = confidenceBand.color;
   subtitleBox.textContent = plan.input_text || "Нет текста";
   const fallbackCount = Number(plan?.metadata?.fallback_count ?? plan?.coverage?.fallback ?? 0);
   if (trustTitle) {
@@ -771,6 +827,34 @@ function renderPlan(plan) {
   renderCoverage(units, plan.coverage);
   renderFallbackSummary(units, plan.coverage);
   renderTrace(plan.trace, plan);
+  setProvenanceState(
+    plan?.metadata?.persisted
+      ? "Черновик сохранен, поэтому можно проследить маршрут, статус проверки и готовность к следующему шагу."
+      : "План собран локально. Пока это черновик без сохраненной записи и без видео-артефактов.",
+    plan?.metadata?.persisted ? (fallbackCount ? "warning" : "ready") : "draft",
+    [
+      {
+        label: "Маршрут",
+        value: formatPlanLanguage(plan.language),
+        note: `${units.length} ${pluralRu(units.length, "единица", "единицы", "единиц")} в плане`,
+      },
+      {
+        label: "Проверка",
+        value: formatReviewStatus(plan?.metadata?.review_status),
+        note: fallbackCount ? "есть словарные пробелы и замены" : "буквенный fallback не понадобился",
+      },
+      {
+        label: "Вывод",
+        value: formatOutputStatus(plan?.metadata?.output_status),
+        note: formatOutputKind(plan?.metadata?.output_kind),
+      },
+      {
+        label: "Запись",
+        value: plan?.metadata?.job_id ? String(plan.metadata.job_id).slice(0, 8) : "не сохранена",
+        note: plan?.metadata?.persisted ? "можно продолжать ревью и handoff" : "доступен только локальный черновик",
+      },
+    ]
+  );
 
   clearNode(timeline);
   units.forEach((unit, index) => {
@@ -834,6 +918,7 @@ function renderEmptyState() {
   syncTranscriptState();
   confidenceValue.textContent = "0.00";
   confidenceBar.style.width = "0%";
+  confidenceBar.style.background = "linear-gradient(90deg, var(--amber), var(--green))";
   warningText.textContent = "Пока предупреждений нет.";
   warningCount.textContent = "0";
   jobMeta.textContent = "Введите фразу или загрузите аудио, затем нажмите «Собрать перевод».";
@@ -843,6 +928,11 @@ function renderEmptyState() {
   renderSteps(0);
   renderCoverage([], { gloss: 0, dactyl: 0, fallback: 0, total: 0 });
   renderFallbackSummary([], { gloss: 0, dactyl: 0, fallback: 0, total: 0 });
+  setProvenanceState(
+    "После сборки здесь появится прозрачная связка: маршрут, статус проверки, источник черновика и готовность к выпуску.",
+    "idle",
+    [{ label: "Маршрут", value: "—", note: "сначала нужен черновик" }]
+  );
   traceGate.textContent = "ожидание";
   traceGate.classList.remove("bad");
   renderMetricGrid(traceSummary, [
@@ -891,6 +981,14 @@ function markPlanStale() {
     "Пакет для AI-видео устарел вместе с черновиком.",
     "Пересоберите результат, чтобы обновить экспортный пакет.",
     false
+  );
+  setProvenanceState(
+    "Текст был изменен после последней сборки. Прежняя логика решения сохранена только как ориентир и требует полной пересборки.",
+    "stale",
+    [
+      { label: "Маршрут", value: formatPlanLanguage(state.lastPlan?.language), note: "старый маршрут больше не гарантирует точность" },
+      { label: "Статус", value: "нужна пересборка", note: "обновите черновик, чтобы пересчитать handoff и ревью" },
+    ]
   );
   syncAIBriefModeButtons();
 }
@@ -1152,11 +1250,11 @@ function renderCoverage(units, coverage) {
     coverage?.fallback ?? units.filter((unit) => String(unit.source || "").startsWith("fallback")).length
   );
   const total = Number(coverage?.total ?? units.length);
-  renderMetricGrid(coverageStrip, [
-    [covered, "найдено жестов"],
-    [dactyl, "по буквам"],
-    [fallback, "требует замены"],
-    [total, "единиц плана"],
+  renderMiniMetricGrid(coverageStrip, [
+    [covered, "найдено жестов", total ? `${Math.round((covered / total) * 100)}% покрытия` : "пока без покрытия", "словарь"],
+    [dactyl, "по буквам", "временный буквенный показ", "fallback"],
+    [fallback, "требует замены", "желательно заменить словарным жестом", "проверка"],
+    [total, "единиц плана", "итоговая длина черновика", "объем"],
   ]);
 }
 
@@ -1167,12 +1265,12 @@ function renderFallbackSummary(units, coverage) {
     coverage?.fallback ?? units.filter((unit) => String(unit.source || "").startsWith("fallback")).length
   );
   const total = Number(coverage?.total ?? units.length);
-  renderMetricGrid(fallbackSummary, [
-    [covered, "словарных жестов"],
-    [dactyl, "по буквам"],
-    [fallback, "требуют замены"],
-    [total, "единиц всего"],
-  ], "fallback-summary-item");
+  renderMiniMetricGrid(fallbackSummary, [
+    [covered, "словарных жестов", "точки, где система уверена", "качество"],
+    [dactyl, "по буквам", "слово показано посимвольно", "допуск"],
+    [fallback, "требуют замены", "места для носительского ревью", "риск"],
+    [total, "единиц всего", "весь объём показа", "итог"],
+  ], "fallback-summary-item mini-metric-card");
 }
 
 function formatGloss(unit) {
@@ -1362,22 +1460,38 @@ async function sendFeedback(feedbackType) {
   }
 }
 
+function formatSourceHealth(status) {
+  if (status === "verified") return { label: "проверено", tone: "ok" };
+  if (status === "needs_access_check") return { label: "нужен доступ", tone: "info" };
+  if (status === "needs_license_check") return { label: "нужна лицензия", tone: "warn" };
+  return { label: formatStatus(status), tone: "muted" };
+}
+
+function formatSourcePolicy(status) {
+  if (status === "verified") return "готов к использованию";
+  if (status === "needs_access_check") return "нужна проверка доступа";
+  if (status === "needs_license_check") return "нужна правовая проверка";
+  return "статус уточняется";
+}
+
 function renderSources(items) {
-  clearNode(sourceRows);
+  clearNode(sourceCards);
   const visibleItems = Array.isArray(items) ? items.slice(0, 8) : [];
   if (!visibleItems.length) {
-    const row = document.createElement("tr");
-    const emptyCell = appendTextElement(row, "td", "source-empty", "Источники пока не загружены.");
-    emptyCell.colSpan = 4;
-    sourceRows.append(row);
+    const empty = document.createElement("article");
+    empty.className = "source-card source-empty";
+    appendTextElement(empty, "strong", "", "Источники пока не загружены");
+    appendTextElement(empty, "p", "", "После ответа API здесь появятся карточки словарей, моделей и условий использования.");
+    sourceCards.append(empty);
     return;
   }
   visibleItems.forEach((source) => {
     const languages = formatSourceLanguages(source.languages);
-    const statusLabel = formatStatus(source.status);
-    const row = document.createElement("tr");
-    const nameCell = document.createElement("td");
-    nameCell.dataset.label = "Источник";
+    const health = formatSourceHealth(source.status);
+    const card = document.createElement("article");
+    card.className = "source-card avds-card";
+    const head = document.createElement("div");
+    head.className = "source-card-head";
     const nameWrap = document.createElement("div");
     nameWrap.className = "source-name";
     if (source.url) {
@@ -1391,25 +1505,33 @@ function renderSources(items) {
     } else {
       appendTextElement(nameWrap, "span", "source-link", source.name || source.id || "");
     }
+    if (source.id) appendTextElement(nameWrap, "span", "source-id", source.id);
     if (source.license_note) {
       appendTextElement(nameWrap, "span", "source-note", formatSourceNote(source.license_note));
     }
-    nameCell.append(nameWrap);
-    row.append(nameCell);
-    const taskCell = appendTextElement(row, "td", "", formatTask(source.task));
-    taskCell.dataset.label = "Тип";
-    taskCell.title = String(source.task || "");
-    const languageCell = appendTextElement(row, "td", "", languages || "");
-    languageCell.dataset.label = "Языки";
-    const statusCell = document.createElement("td");
-    statusCell.dataset.label = "Статус";
-    const badge = appendTextElement(statusCell, "span", "status-badge", statusLabel);
-    badge.title = statusLabel;
-    if (source.status === "verified") badge.classList.add("verified");
-    if (source.status === "needs_license_check") badge.classList.add("needs-license");
-    if (source.status === "needs_access_check") badge.classList.add("needs-access");
-    row.append(statusCell);
-    sourceRows.append(row);
+    head.append(nameWrap);
+    const badges = document.createElement("div");
+    badges.className = "source-card-badges";
+    appendTextElement(badges, "span", `source-health-badge ${health.tone}`, health.label);
+    appendTextElement(badges, "span", "source-policy-badge", formatSourcePolicy(source.status));
+    head.append(badges);
+    card.append(head);
+    const meta = document.createElement("div");
+    meta.className = "source-card-meta";
+    [
+      ["Тип", formatTask(source.task), String(source.task || "")],
+      ["Языки", languages || "—", "поддерживаемые маршруты"],
+      ["Статус", formatStatus(source.status), "операционный статус"],
+    ].forEach(([label, value, note]) => {
+      const item = document.createElement("div");
+      item.className = "source-meta-item";
+      appendTextElement(item, "span", "", label);
+      appendTextElement(item, "strong", "", value);
+      appendTextElement(item, "small", "", note);
+      meta.append(item);
+    });
+    card.append(meta);
+    sourceCards.append(card);
   });
 }
 
@@ -1785,15 +1907,15 @@ function renderReviewSystemStatus(data) {
   const previewStatus = data.services?.preview_video?.exists ? "preview root: готов" : "preview root: нет";
   const renderedStatus = data.services?.rendered_video?.exists ? "final root: готов" : "final root: нет";
   const metrics = data.review_metrics?.totals || {};
-  renderMetricGrid(
+  renderMiniMetricGrid(
     reviewSystemSummary,
     [
-      [Number(metrics.total_jobs || 0), "последних записей"],
-      [Number(metrics.pending_jobs || 0), "ждут проверки"],
-      [Number(metrics.fallback_units || 0), "fallback-единиц"],
-      [Number(metrics.publishable_jobs || 0), "готовы к публикации"],
+      [Number(metrics.total_jobs || 0), "последних записей", "видимый рабочий срез", "объем"],
+      [Number(metrics.pending_jobs || 0), "ждут проверки", "очередь носителя и оператора", "очередь"],
+      [Number(metrics.fallback_units || 0), "fallback-единиц", "самые спорные места", "спорные"],
+      [Number(metrics.publishable_jobs || 0), "готовы к публикации", "можно выпускать после проверки", "выпуск"],
     ],
-    "review-summary-item"
+    "review-summary-item mini-metric-card"
   );
   const meta = document.createElement("div");
   meta.className = "review-empty-state";
@@ -1801,14 +1923,33 @@ function renderReviewSystemStatus(data) {
   appendTextElement(meta, "p", "", `${previewStatus} · ${renderedStatus}.`);
   const byLanguage = Array.isArray(data.review_metrics?.by_language) ? data.review_metrics.by_language : [];
   if (byLanguage.length) {
-    appendTextElement(
-      meta,
-      "p",
-      "",
-      byLanguage
-        .map((item) => `${String(item.language || "unknown").toUpperCase()}: ${item.jobs} jobs / ${item.fallback_units} fallback`)
-        .join(" · ")
-    );
+    const chart = document.createElement("div");
+    chart.className = "review-language-chart";
+    appendTextElement(chart, "strong", "review-language-chart-title", "Где больше спорных единиц");
+    const bars = document.createElement("div");
+    bars.className = "review-language-bars";
+    const maxFallback = Math.max(...byLanguage.map((item) => Number(item.fallback_units || 0)), 1);
+    byLanguage.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "review-language-row";
+      appendTextElement(row, "span", "review-language-label", formatPlanLanguage(item.language));
+      const track = document.createElement("div");
+      track.className = "review-language-track";
+      const fill = document.createElement("span");
+      fill.className = "review-language-fill";
+      fill.style.width = `${Math.max(8, (Number(item.fallback_units || 0) / maxFallback) * 100)}%`;
+      track.append(fill);
+      row.append(track);
+      appendTextElement(
+        row,
+        "span",
+        "review-language-value",
+        `${Number(item.fallback_units || 0)} fallback / ${Number(item.jobs || 0)} jobs`
+      );
+      bars.append(row);
+    });
+    chart.append(bars);
+    meta.append(chart);
   }
   const topFallbacks = Array.isArray(state.reviewCoverageReport?.top_fallbacks)
     ? state.reviewCoverageReport.top_fallbacks
