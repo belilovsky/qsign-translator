@@ -49,7 +49,7 @@ ports or service-discovery wiring.
 Recommended deployment shape:
 
 ```text
-/srv/qsign-translator
+/opt/qsign-translator
   app process or container
   postgres managed volume or external DB
   object storage bucket for clips and generated media

@@ -35,11 +35,11 @@ rsync -az --delete \
   --exclude '.venv/' \
   --exclude 'experiments/mimic_text2video/' \
   --exclude '.env' \
-  ./ your-host:/srv/qsign-translator/
-ssh your-host 'cd /srv/qsign-translator && docker compose config --quiet'
-ssh your-host 'cd /srv/qsign-translator && docker compose up -d postgres minio'
-ssh your-host 'cd /srv/qsign-translator && .venv/bin/python -m pip install -e ".[api,db,test]"'
-ssh your-host 'cd /srv/qsign-translator && .venv/bin/python scripts/apply_migrations.py'
+  ./ your-host:/opt/qsign-translator/
+ssh your-host 'cd /opt/qsign-translator && docker compose config --quiet'
+ssh your-host 'cd /opt/qsign-translator && docker compose up -d postgres minio'
+ssh your-host 'cd /opt/qsign-translator && .venv/bin/python -m pip install -e ".[api,db,test]"'
+ssh your-host 'cd /opt/qsign-translator && .venv/bin/python scripts/apply_migrations.py'
 ssh your-host 'systemctl restart qsign-translator.service'
 ssh your-host 'systemctl is-active qsign-translator.service'
 ```
