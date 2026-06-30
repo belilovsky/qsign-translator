@@ -1,0 +1,5 @@
+Contact: mailto:hello@qdev.run
+Preferred-Languages: ru, en, kk
+Canonical: https://qsign.qdev.run/.well-known/security.txt
+Policy: https://github.com/belilovsky/qsign-translator/blob/main/SECURITY.md
+Expires: 2027-06-30T23:59:59Z

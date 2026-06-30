@@ -125,10 +125,12 @@ INDEXNOW_KEY_FILENAME = "d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b699
 PUBLIC_FILE_TYPES = {
     INDEXNOW_KEY_FILENAME: "text/plain; charset=utf-8",
     "ai-context.md": "text/markdown; charset=utf-8",
+    "humans.txt": "text/plain; charset=utf-8",
     "llms.txt": "text/plain; charset=utf-8",
     "manifest.webmanifest": "application/manifest+json; charset=utf-8",
     "public-context.json": "application/json; charset=utf-8",
     "robots.txt": "text/plain; charset=utf-8",
+    "security.txt": "text/plain; charset=utf-8",
     "sitemap.xml": "application/xml; charset=utf-8",
 }
 SEO_PAGE_FILES = {
@@ -277,6 +279,20 @@ def ai_context(request: Request) -> FileResponse | Response:
 @app.head("/public-context.json", response_model=None, include_in_schema=False)
 def public_context(request: Request) -> FileResponse | Response:
     return _public_file_response(request, "public-context.json")
+
+
+@app.get("/humans.txt", response_model=None, include_in_schema=False)
+@app.head("/humans.txt", response_model=None, include_in_schema=False)
+def humans(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "humans.txt")
+
+
+@app.get("/security.txt", response_model=None, include_in_schema=False)
+@app.head("/security.txt", response_model=None, include_in_schema=False)
+@app.get("/.well-known/security.txt", response_model=None, include_in_schema=False)
+@app.head("/.well-known/security.txt", response_model=None, include_in_schema=False)
+def security_txt(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "security.txt")
 
 
 @app.get(f"/{INDEXNOW_KEY_FILENAME}", response_model=None, include_in_schema=False)

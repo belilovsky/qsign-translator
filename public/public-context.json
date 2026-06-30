@@ -46,6 +46,8 @@
     "openapi": "https://qsign.qdev.run/openapi.json",
     "llms": "https://qsign.qdev.run/llms.txt",
     "ai_context": "https://qsign.qdev.run/ai-context.md",
-    "sitemap": "https://qsign.qdev.run/sitemap.xml"
+    "sitemap": "https://qsign.qdev.run/sitemap.xml",
+    "humans": "https://qsign.qdev.run/humans.txt",
+    "security": "https://qsign.qdev.run/.well-known/security.txt"
   }
 }

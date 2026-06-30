@@ -49,6 +49,9 @@ class ApiTests(unittest.TestCase):
             "/llms.txt",
             "/ai-context.md",
             "/public-context.json",
+            "/humans.txt",
+            "/security.txt",
+            "/.well-known/security.txt",
             "/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt",
             "/manifest.webmanifest",
             "/health",
@@ -66,6 +69,12 @@ class ApiTests(unittest.TestCase):
             "/llms.txt": ("text/plain", "QSign Translator"),
             "/ai-context.md": ("text/markdown", "QSign Translator public AI context"),
             "/public-context.json": ("application/json", "QSign Translator"),
+            "/humans.txt": ("text/plain", "Publisher: qdev.run"),
+            "/security.txt": ("text/plain", "Policy: https://github.com/belilovsky/qsign-translator/blob/main/SECURITY.md"),
+            "/.well-known/security.txt": (
+                "text/plain",
+                "Canonical: https://qsign.qdev.run/.well-known/security.txt",
+            ),
             "/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt": (
                 "text/plain",
                 "d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141",
@@ -81,6 +90,16 @@ class ApiTests(unittest.TestCase):
                 head_response = self.client.head(path)
                 self.assertEqual(head_response.status_code, 200)
                 self.assertIn(content_type, head_response.headers["content-type"])
+
+    def test_public_context_lists_trust_files(self) -> None:
+        response = self.client.get("/public-context.json")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["machine_readable"]["humans"], "https://qsign.qdev.run/humans.txt")
+        self.assertEqual(
+            data["machine_readable"]["security"],
+            "https://qsign.qdev.run/.well-known/security.txt",
+        )
 
     def test_robots_allows_search_and_ai_discovery(self) -> None:
         response = self.client.get("/robots.txt")
@@ -141,10 +160,13 @@ class ApiTests(unittest.TestCase):
             "/glossary",
             "/ai-context.md",
             "/public-context.json",
+            "/humans.txt",
+            "/.well-known/security.txt",
         ]:
             with self.subTest(path=path):
-                self.assertIn(f"https://qsign.qdev.run{path}", sitemap)
                 self.assertIn(f"https://qsign.qdev.run{path}", llms)
+                if path not in {"/humans.txt", "/.well-known/security.txt"}:
+                    self.assertIn(f"https://qsign.qdev.run{path}", sitemap)
 
     def test_health_ready_head_returns_503_for_configured_but_unready_database(self) -> None:
         with (

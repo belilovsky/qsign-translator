@@ -176,6 +176,8 @@ Recent validation passed with:
 - IndexNow discovery is configured with a public key file at
   `/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt`;
   `scripts/submit_indexnow.py` submits sitemap URLs after deploy.
+- Public trust/disclosure files are exposed at `/humans.txt`,
+  `/security.txt`, and `/.well-known/security.txt`.
 
 ## Readiness Rating
 

@@ -21,6 +21,8 @@ Sitemap: [https://qsign.qdev.run/sitemap.xml](https://qsign.qdev.run/sitemap.xml
 - [Glossary](https://qsign.qdev.run/glossary) - sign-plan terminology.
 - [AI context](https://qsign.qdev.run/ai-context.md) - compact machine-readable guidance.
 - [Public JSON context](https://qsign.qdev.run/public-context.json) - structured public facts.
+- [Humans](https://qsign.qdev.run/humans.txt) - team, purpose, and public machine context.
+- [Security](https://qsign.qdev.run/.well-known/security.txt) - disclosure contact and policy.
 
 ## What this service is
 
@@ -35,6 +37,8 @@ Sitemap: [https://qsign.qdev.run/sitemap.xml](https://qsign.qdev.run/sitemap.xml
 - [`GET /openapi.json`](https://qsign.qdev.run/openapi.json) - machine-readable API schema.
 - [`GET /ai-context.md`](https://qsign.qdev.run/ai-context.md) - concise AI context file.
 - [`GET /public-context.json`](https://qsign.qdev.run/public-context.json) - structured public project metadata.
+- [`GET /humans.txt`](https://qsign.qdev.run/humans.txt) - public project and publisher notes.
+- [`GET /.well-known/security.txt`](https://qsign.qdev.run/.well-known/security.txt) - security contact and disclosure policy.
 - `POST /v1/translate/text` - creates a draft sign-plan from text.
 - [`GET /v1/sources`](https://qsign.qdev.run/v1/sources) - lists source registry entries and license/access notes.
 - [`GET /v1/lexicon?language=ru`](https://qsign.qdev.run/v1/lexicon?language=ru) - returns exposed lexicon entries.

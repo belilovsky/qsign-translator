@@ -222,6 +222,8 @@ qsign-translator/
 | `GET /llms.txt` | GET | Краткий публичный контекст для AI-агентов |
 | `GET /ai-context.md` | GET | Расширенный контекст для AI-агентов |
 | `GET /public-context.json` | GET | Структурированные публичные факты о проекте |
+| `GET /humans.txt` | GET | Публичная информация о команде, назначении и machine context |
+| `GET /.well-known/security.txt` | GET | Контакты и policy для security disclosure |
 | `GET /manifest.webmanifest` | GET | Web app manifest |
 | `GET /d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt` | GET | Публичный ключ IndexNow для уведомления поисковиков |
 | `POST /v1/translate/text` | POST | Перевод текста в sign-plan |

@@ -1,0 +1,17 @@
+/* TEAM */
+Project: QSign Translator
+Publisher: qdev.run
+Site: https://qsign.qdev.run/
+Repository: https://github.com/belilovsky/qsign-translator
+Contact: hello@qdev.run
+
+/* PURPOSE */
+QSign is an open RU/KZ/EN sign-language planning prototype. It prepares transparent
+draft sign plans, review artifacts, and AI-video handoff briefs. It is not a
+certified interpreter and does not replace human sign-language review.
+
+/* PUBLIC MACHINE CONTEXT */
+LLMs: https://qsign.qdev.run/llms.txt
+AI context: https://qsign.qdev.run/ai-context.md
+Public JSON: https://qsign.qdev.run/public-context.json
+Sitemap: https://qsign.qdev.run/sitemap.xml

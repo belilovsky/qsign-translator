@@ -86,6 +86,8 @@ curl -fsS "$BASE/sitemap.xml" | grep -F "$BASE/"
 curl -fsS "$BASE/llms.txt" | grep -F 'QSign Translator'
 curl -fsS "$BASE/ai-context.md" | grep -F 'QSign Translator public AI context'
 curl -fsS "$BASE/public-context.json" | grep -F 'QSign Translator'
+curl -fsS "$BASE/humans.txt" | grep -F 'Publisher: qdev.run'
+curl -fsS "$BASE/.well-known/security.txt" | grep -F 'Policy:'
 curl -fsS "$BASE/d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt" | grep -F 'd491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141'
 curl -fsSI "$BASE/manifest.webmanifest" | grep -Fi 'application/manifest+json'
 curl -fsS "$BASE/" | grep -E 'application/ld\\+json|og:title|canonical'
