@@ -32,10 +32,47 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json()["info"]["version"], "0.2.0")
 
     def test_head_routes_are_monitorable(self) -> None:
-        for path in ["/", "/health", "/health/live", "/health/ready"]:
+        for path in [
+            "/",
+            "/robots.txt",
+            "/sitemap.xml",
+            "/llms.txt",
+            "/manifest.webmanifest",
+            "/health",
+            "/health/live",
+            "/health/ready",
+        ]:
             with self.subTest(path=path):
                 response = self.client.head(path)
                 self.assertLess(response.status_code, 500)
+
+    def test_public_discovery_files_are_exposed(self) -> None:
+        expected = {
+            "/robots.txt": ("text/plain", "Sitemap: https://qsign.qdev.run/sitemap.xml"),
+            "/sitemap.xml": ("application/xml", "https://qsign.qdev.run/"),
+            "/llms.txt": ("text/plain", "QSign Translator"),
+            "/manifest.webmanifest": ("application/manifest+json", "QSign Translator"),
+        }
+        for path, (content_type, marker) in expected.items():
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(content_type, response.headers["content-type"])
+                self.assertIn(marker, response.text)
+                head_response = self.client.head(path)
+                self.assertEqual(head_response.status_code, 200)
+                self.assertIn(content_type, head_response.headers["content-type"])
+
+    def test_index_contains_search_and_ai_metadata(self) -> None:
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        html = response.text
+        self.assertIn('<link rel="canonical" href="https://qsign.qdev.run/"', html)
+        self.assertIn('property="og:title"', html)
+        self.assertIn('name="twitter:card"', html)
+        self.assertIn('type="application/ld+json"', html)
+        self.assertIn("SoftwareApplication", html)
+        self.assertIn("https://github.com/belilovsky/qsign-translator", html)
 
     def test_health_ready_head_returns_503_for_configured_but_unready_database(self) -> None:
         with (

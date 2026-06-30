@@ -54,6 +54,9 @@ The project is intentionally honest about what exists today:
 - Batch AI-video brief export for multiple saved phrases.
 - Stricter render-contract export for external video operators.
 - Responsive public UI with result trace, coverage counters, and export modes.
+- Public discovery layer for search and AI agents: canonical metadata,
+  Open Graph/Twitter cards, JSON-LD, sitemap, `robots.txt`, `llms.txt`, and a
+  web app manifest are now bundled and served by FastAPI.
 - Separate reviewer route in the same frontend shell, with token-gated queue and
   details view.
 - Reviewer UI now supports persisted validation sessions with role, language,
@@ -162,6 +165,9 @@ Recent validation passed with:
 - review-video `HEAD` is now intentionally lightweight and monitor-safe: it
   validates job presence and preview metadata without forcing `ffmpeg` preview
   generation during UI preflight or operational smoke checks.
+- public discovery endpoints are live-checkable at `/robots.txt`,
+  `/sitemap.xml`, `/llms.txt`, and `/manifest.webmanifest`; the HTML head now
+  exposes canonical, Open Graph, Twitter, and schema.org metadata.
 
 ## Readiness Rating
 
@@ -193,6 +199,9 @@ sign-language production stack.
   CMS or auto-publish target connected yet.
 - Review auth is now session-capable, but still intentionally bootstraps from a
   shared review token until a fuller multi-user admin/auth system exists.
+- Search and AI discovery metadata improves findability, but ranking and AI
+  citation frequency still depend on external crawler schedules, backlinks, and
+  public references outside this repository.
 
 ## Open-Source Notes
 

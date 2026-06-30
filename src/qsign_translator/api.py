@@ -121,6 +121,12 @@ STATIC_ROOT = PUBLIC_ROOT / "static"
 GENERATED_PREVIEW_ROOT = Path(tempfile.gettempdir()) / "qsign-preview-videos"
 UPLOADED_RENDER_ROOT = Path(settings.generated_media_root) / "rendered-videos"
 REVIEW_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
+PUBLIC_FILE_TYPES = {
+    "llms.txt": "text/plain; charset=utf-8",
+    "manifest.webmanifest": "application/manifest+json; charset=utf-8",
+    "robots.txt": "text/plain; charset=utf-8",
+    "sitemap.xml": "application/xml; charset=utf-8",
+}
 
 if STATIC_ROOT.exists():
     app.mount("/static", StaticFiles(directory=STATIC_ROOT), name="static")
@@ -148,15 +154,39 @@ def favicon(request: Request) -> FileResponse | Response:
     return FileResponse(icon_path, media_type="image/svg+xml")
 
 
+def _public_file_response(request: Request, filename: str) -> FileResponse | Response:
+    if filename not in PUBLIC_FILE_TYPES:
+        raise HTTPException(status_code=404, detail="Public file is not bundled")
+    file_path = PUBLIC_ROOT / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"{filename} is not bundled")
+    if request.method == "HEAD":
+        return Response(status_code=200, media_type=PUBLIC_FILE_TYPES[filename])
+    return FileResponse(file_path, media_type=PUBLIC_FILE_TYPES[filename])
+
+
 @app.get("/robots.txt", response_model=None, include_in_schema=False)
 @app.head("/robots.txt", response_model=None, include_in_schema=False)
 def robots(request: Request) -> FileResponse | Response:
-    robots_path = PUBLIC_ROOT / "robots.txt"
-    if not robots_path.exists():
-        raise HTTPException(status_code=404, detail="robots.txt is not bundled")
-    if request.method == "HEAD":
-        return Response(status_code=200)
-    return FileResponse(robots_path, media_type="text/plain; charset=utf-8")
+    return _public_file_response(request, "robots.txt")
+
+
+@app.get("/sitemap.xml", response_model=None, include_in_schema=False)
+@app.head("/sitemap.xml", response_model=None, include_in_schema=False)
+def sitemap(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "sitemap.xml")
+
+
+@app.get("/llms.txt", response_model=None, include_in_schema=False)
+@app.head("/llms.txt", response_model=None, include_in_schema=False)
+def llms(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "llms.txt")
+
+
+@app.get("/manifest.webmanifest", response_model=None, include_in_schema=False)
+@app.head("/manifest.webmanifest", response_model=None, include_in_schema=False)
+def manifest(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "manifest.webmanifest")
 
 
 @app.get("/health", response_model=None)

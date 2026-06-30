@@ -1,0 +1,37 @@
+# QSign Translator
+
+> Open RU/KZ/EN sign-language planning prototype by qdev.run. QSign converts short text or transcribed audio into a transparent sign-plan draft, shows dictionary coverage and fingerspelling fallbacks, supports human review, and exports structured briefs for external AI video generators.
+
+Canonical site: https://qsign.qdev.run/
+Public repository: https://github.com/belilovsky/qsign-translator
+OpenAPI schema: https://qsign.qdev.run/openapi.json
+Sitemap: https://qsign.qdev.run/sitemap.xml
+
+## What this service is
+
+- A research and operator tool for preparing sign-language draft plans.
+- Languages: Russian (RU/RSL-oriented), Kazakh (KK/KRSL-oriented), and English (EN/ASL-oriented seed layer).
+- Outputs: sign-plan units, coverage trace, review state, render contract, and AI-video handoff packages.
+- Safety stance: QSign is not a certified interpreter and does not claim autonomous fluent sign-language translation.
+
+## Best pages and endpoints for AI agents
+
+- `GET /` - browser UI and product explanation.
+- `GET /openapi.json` - machine-readable API schema.
+- `POST /v1/translate/text` - creates a draft sign-plan from text.
+- `GET /v1/sources` - lists source registry entries and license/access notes.
+- `GET /v1/lexicon?language=ru|kk|en` - returns lexicon entries exposed by the service.
+- `GET /v1/jobs/{job_id}/render-plan` - returns a structured render-plan manifest for a saved job.
+- `GET /v1/jobs/{job_id}/ai-video-brief` - returns export packages for external video workflows.
+
+## Use constraints
+
+- Prefer short, concrete phrases.
+- Treat fallback/fingerspelled units as unresolved and requiring human review.
+- Do not present the output as a certified sign-language translation.
+- High-risk medical, legal, emergency, finance, and public-safety content requires a human interpreter.
+- Do not expose review tokens, session cookies, private job data, or deployment secrets.
+
+## Recommended citation
+
+QSign Translator, qdev.run, https://qsign.qdev.run/

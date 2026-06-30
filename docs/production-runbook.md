@@ -77,6 +77,17 @@ curl -fsS "$BASE/v1/sources"
 curl -fsS "$BASE/v1/lexicon?language=ru"
 ```
 
+Verify public discovery files after every deploy:
+
+```bash
+BASE=https://your-public-host.example
+curl -fsS "$BASE/robots.txt" | grep -F 'Sitemap:'
+curl -fsS "$BASE/sitemap.xml" | grep -F "$BASE/"
+curl -fsS "$BASE/llms.txt" | grep -F 'QSign Translator'
+curl -fsSI "$BASE/manifest.webmanifest" | grep -Fi 'application/manifest+json'
+curl -fsS "$BASE/" | grep -E 'application/ld\\+json|og:title|canonical'
+```
+
 Verify a saved job end to end:
 
 ```bash

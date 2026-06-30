@@ -1,0 +1,20 @@
+{
+  "name": "QSign Translator",
+  "short_name": "QSign",
+  "description": "RU/KZ/EN sign-language planning prototype with transparent review and AI-video handoff.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7faf8",
+  "theme_color": "#e8f3ee",
+  "lang": "ru",
+  "categories": ["accessibility", "education", "productivity"],
+  "icons": [
+    {
+      "src": "/static/assets/qsign-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

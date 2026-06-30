@@ -46,6 +46,7 @@
 | **Render-контракт** | Строгий контракт на рендеринг: имя файла, блокировщики публикации, порядок юнитов |
 | **Публикационный конвейер** | Жизненный цикл: `draft` → `final_review_pending` → `publishable` / `rejected` |
 | **Aудиторский след** | Полная история изменений для каждого задания на перевод |
+| **Search / AI discovery** | Canonical metadata, Open Graph, JSON-LD, sitemap, `robots.txt` и `llms.txt` для корректного индексирования |
 | **Интеграция с S3** | Хранение видео-артефактов через MinIO (S3-совместимое хранилище) |
 | **ASR-адаптер** | Опциональный интерфейс для распознавания речи (faster-whisper) |
 
@@ -216,6 +217,10 @@ qsign-translator/
 | Эндпоинт | Метод | Описание |
 |----------|-------|----------|
 | `GET /health` | GET | Проверка работоспособности сервиса |
+| `GET /robots.txt` | GET | Правила индексирования и ссылка на sitemap |
+| `GET /sitemap.xml` | GET | Карта публичных URL для поисковых систем |
+| `GET /llms.txt` | GET | Краткий публичный контекст для AI-агентов |
+| `GET /manifest.webmanifest` | GET | Web app manifest |
 | `POST /v1/translate/text` | POST | Перевод текста в sign-plan |
 | `GET /v1/jobs/{job_id}` | GET | Получение сохранённого задания |
 | `GET /v1/jobs/{job_id}/render-plan` | GET | План рендеринга видео |

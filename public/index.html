@@ -5,10 +5,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="QSign Translator: RU/KZ/EN speech and text to transparent sign-language plan."
+      content="QSign Translator: открытый RU/KZ/EN прототип для превращения текста и аудио в прозрачный план жестовой записи с ревью носителем и AI-video handoff."
     />
-    <title>QSign Translator</title>
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="author" content="qdev.run" />
+    <meta name="application-name" content="QSign Translator" />
+    <meta name="theme-color" content="#e8f3ee" />
+    <meta
+      name="keywords"
+      content="QSign, сурдопереводчик, жестовый язык, русский жестовый язык, казахский жестовый язык, sign language translator, RSL, KRSL, ASL, RU KZ EN"
+    />
+    <title>QSign Translator — RU/KZ/EN планировщик жестового перевода</title>
+    <link rel="canonical" href="https://qsign.qdev.run/" />
     <link rel="icon" href="/static/assets/qsign-icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="QSign Translator" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content="QSign Translator — RU/KZ/EN планировщик жестового перевода" />
+    <meta
+      property="og:description"
+      content="Открытый прототип qdev.run для прозрачного text-to-sign планирования: RU/KZ/EN, словари, дактильный fallback, ревью носителем и готовый handoff для AI-видео."
+    />
+    <meta property="og:url" content="https://qsign.qdev.run/" />
+    <meta property="og:image" content="https://qsign.qdev.run/static/assets/signing-avatar.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:image:alt" content="Интерфейс QSign Translator с обзорным окном жестового черновика" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="QSign Translator — RU/KZ/EN планировщик жестового перевода" />
+    <meta
+      name="twitter:description"
+      content="Прозрачный прототип для подготовки sign-plan, ревью носителем и AI-video handoff для русского, казахского и английского языков."
+    />
+    <meta name="twitter:image" content="https://qsign.qdev.run/static/assets/signing-avatar.png" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://qdev.run/#organization",
+            "name": "qdev.run",
+            "url": "https://qdev.run/"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://qsign.qdev.run/#website",
+            "name": "QSign Translator",
+            "url": "https://qsign.qdev.run/",
+            "inLanguage": ["ru", "kk", "en"],
+            "publisher": { "@id": "https://qdev.run/#organization" }
+          },
+          {
+            "@type": ["WebApplication", "SoftwareApplication"],
+            "@id": "https://qsign.qdev.run/#app",
+            "name": "QSign Translator",
+            "alternateName": "QSign",
+            "applicationCategory": "AccessibilityApplication",
+            "operatingSystem": "Web",
+            "url": "https://qsign.qdev.run/",
+            "image": "https://qsign.qdev.run/static/assets/signing-avatar.png",
+            "description": "Открытый RU/KZ/EN прототип для превращения текста и аудио в прозрачный план жестовой записи. Система показывает словарные совпадения, дактильный fallback, ревью-статусы и AI-video handoff, но не заменяет профессионального переводчика жестового языка.",
+            "softwareVersion": "0.2.0",
+            "isAccessibleForFree": true,
+            "inLanguage": ["ru", "kk", "en"],
+            "featureList": [
+              "Text-to-sign-plan для русского, казахского и английского языков",
+              "Прозрачный словарный разбор и дактильный fallback",
+              "Операторское и носительское ревью",
+              "Экспорт AI-video brief и batch storyboard"
+            ],
+            "creator": { "@id": "https://qdev.run/#organization" },
+            "publisher": { "@id": "https://qdev.run/#organization" },
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          },
+          {
+            "@type": "SoftwareSourceCode",
+            "@id": "https://github.com/belilovsky/qsign-translator#source",
+            "name": "QSign Translator source code",
+            "codeRepository": "https://github.com/belilovsky/qsign-translator",
+            "programmingLanguage": ["Python", "JavaScript", "HTML", "CSS"],
+            "license": "https://github.com/belilovsky/qsign-translator/blob/main/LICENSE",
+            "runtimePlatform": "FastAPI"
+          }
+        ]
+      }
+    </script>
     <link rel="stylesheet" href="/static/styles.css?v=20260629b" />
   </head>
   <body>
