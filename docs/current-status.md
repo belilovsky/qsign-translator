@@ -66,6 +66,9 @@ The project is intentionally honest about what exists today:
   `--color-*` tokens, stock primitive classes for shell, topbar, nav, chips,
   buttons, cards, tables, segmented controls, and textareas, plus legacy aliases
   for older selectors.
+- A follow-up absorption audit now documents which QSign-specific UI patterns
+  should be upstreamed back into AV DS 4 and which should remain local product
+  logic: see `docs/avds4-absorption-audit.md`.
 - Separate reviewer route in the same frontend shell, with token-gated queue and
   details view.
 - Reviewer UI now supports persisted validation sessions with role, language,
