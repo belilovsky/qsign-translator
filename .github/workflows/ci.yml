@@ -7,6 +7,6 @@ on:
 
 jobs:
   ci:
-    uses: belilovsky/ecosystem/.github/workflows/ci-python.yml@main
+    uses: belilovsky/ecosystem/.github/workflows/ci-python.yml@303a68d86d429124941fe1a5a2d6f38fb8fa6017
     secrets: inherit
 
