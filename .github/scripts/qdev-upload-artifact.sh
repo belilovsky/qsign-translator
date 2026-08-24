@@ -2,6 +2,10 @@
 set -euo pipefail
 
 name="${1:?artifact name is required}"
+if [[ ! "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]]; then
+  printf 'invalid qdev artifact name: %s\n' "$name" >&2
+  exit 2
+fi
 shift
 files=()
 for path in "$@"; do
@@ -26,5 +30,5 @@ curl --fail --silent --show-error --request PUT \
   --header "X-QDev-Artifact-Token: ${QDEV_ARTIFACT_TOKEN:?}" \
   --header "X-QDev-SHA256: ${digest}" \
   --data-binary "@${archive}" \
-  "${QDEV_ARTIFACT_URL:?}/${GITHUB_REPOSITORY:?}/${GITHUB_SHA:?}/${QDEV_JOB_ID:?}/${name}.tar.gz"
+  "${QDEV_ARTIFACT_URL:?}/${QDEV_REPOSITORY:?}/${QDEV_HEAD_SHA:?}/${QDEV_JOB_ID:?}/${name}.tar.gz"
 printf '\nqdev_artifact_ok name=%s sha256=%s\n' "$name" "$digest"
