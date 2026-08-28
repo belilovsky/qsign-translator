@@ -1,0 +1,17 @@
+{
+  "policy_version": "1.0.0",
+  "extensions": [
+    ".html", ".htm", ".md", ".txt", ".json", ".jsonld", ".yaml", ".yml",
+    ".xml", ".svg", ".js", ".jsx", ".mjs", ".ts", ".tsx", ".css", ".scss",
+    ".py", ".sql", ".csv"
+  ],
+  "ignored_paths": [
+    ".git", "__pycache__", ".pytest_cache", ".ruff_cache", ".venv", "venv",
+    "node_modules", "dist", "build", "output", "coverage"
+  ],
+  "allowed_paths": [
+    "src/qsign_translator/typography_policy.py",
+    "scripts/check_typography.py",
+    "tests/test_typography_policy.py"
+  ]
+}

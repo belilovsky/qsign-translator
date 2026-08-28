@@ -1,0 +1,46 @@
+{
+  "schema_version": "qazstack-consumer-v1",
+  "project_id": "qsign-translator",
+  "product_name": "QSign Translator",
+  "lifecycle": "planned",
+  "integration_mode": "documented-only",
+  "qazstack_version": "contract-only",
+  "language_surface": "Python 3.11 FastAPI with a static HTML/CSS/JavaScript public surface",
+  "primitives": [
+    "governance-and-audit",
+    "observability-and-ui"
+  ],
+  "owns": [
+    "sign-language-draft-planning",
+    "human-review-boundary",
+    "source-registry-policy"
+  ],
+  "forbidden_capabilities": [
+    "certified-interpretation-claim",
+    "public-review-data",
+    "direct-qazlake-access",
+    "browser-private-media-access"
+  ],
+  "evidence": {
+    "source_files": [
+      "qdev-project.json",
+      "avds-ui-contract.json",
+      "docs/avds4-absorption-audit.md",
+      "src/qsign_translator/api.py",
+      "tests/test_api.py"
+    ],
+    "test_commands": [
+      "PYTHONPATH=src python3 -m unittest tests.test_api",
+      "PYTHONPATH=src python3 scripts/check_platform_contracts.py"
+    ],
+    "runtime_urls": [
+      "https://qsign.qdev.run/health/live",
+      "https://qsign.qdev.run/.well-known/release.json",
+      "https://qsign.qdev.run/.well-known/qazstack-consumer.json"
+    ],
+    "environment": "local",
+    "checked_by": "qsign-local-contract-gate"
+  },
+  "owner": "qdev.run",
+  "notes": "QSign is an alpha product mapped to the planning lifecycle because the QazStack consumer schema has no alpha value. This is a documented-only contract: it does not install a QazStack runtime package, create a QazLake data plane, or turn local public-contract routes into live evidence before release."
+}

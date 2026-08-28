@@ -1,0 +1,135 @@
+{
+  "access": "public-read",
+  "mcp": {
+    "allowed_safety": [],
+    "mode": "absent"
+  },
+  "policy": {
+    "access": "public-read",
+    "citation_policy": "Cite the returned public URL and preserve QSign's non-certified-interpreter and human-review limitations.",
+    "excludes": "Translation jobs, review data, uploads, tokens, sessions, private media, and every mutation endpoint.",
+    "forbidden_response_keys": [
+      "token",
+      "cookie",
+      "session",
+      "password",
+      "secret",
+      "authorization"
+    ],
+    "includes": "Published project context, methodology, and source-registry entries.",
+    "unknown_policy": "State that the public source does not establish the fact; do not infer a translation, signer validation, or source license."
+  },
+  "project": {
+    "description": "Public read-only context for a transparent RU/KZ/EN sign-language draft-planning prototype.",
+    "id": "qsign-translator",
+    "languages": [
+      "ru",
+      "kk",
+      "en"
+    ],
+    "name": "QSign Translator",
+    "origin": "https://qsign.qdev.run",
+    "released_at": "2026-06-30",
+    "version": "0.2.0"
+  },
+  "resources": [
+    {
+      "id": "qazstack-consumer-contract",
+      "kind": "documentation",
+      "media_types": [
+        "application/json"
+      ],
+      "purpose": "Read-only QazStack and AVDS compatibility contracts; they describe a documented local integration boundary, not a deployed package adoption.",
+      "required": false,
+      "url": "https://qsign.qdev.run/.well-known/qazstack-consumer.json"
+    },
+    {
+      "id": "avds-ui-contract",
+      "kind": "documentation",
+      "media_types": [
+        "application/json"
+      ],
+      "purpose": "Read-only AVDS compatibility contract for QSign's static adapter; it does not claim an installed AVDS package.",
+      "required": false,
+      "url": "https://qsign.qdev.run/.well-known/avds-ui-contract.json"
+    },
+    {
+      "id": "public-context",
+      "kind": "documentation",
+      "media_types": [
+        "application/json"
+      ],
+      "purpose": "Published product scope, safety limits, pages, and machine-readable links.",
+      "required": true,
+      "url": "https://qsign.qdev.run/public-context.json"
+    },
+    {
+      "id": "source-registry",
+      "kind": "catalog",
+      "media_types": [
+        "application/json"
+      ],
+      "purpose": "Published source registry and license/access notes.",
+      "required": true,
+      "url": "https://qsign.qdev.run/v1/sources"
+    }
+  ],
+  "schema_version": "qdev-public-data-agent-discovery-v2",
+  "surfaces": {
+    "ai_index": {
+      "ownership": "managed",
+      "required": true,
+      "url": "https://qsign.qdev.run/ai-index.json"
+    },
+    "discovery": {
+      "ownership": "managed",
+      "required": true,
+      "url": "https://qsign.qdev.run/.well-known/qdev-public-data-agent.json"
+    },
+    "llms": {
+      "ownership": "native",
+      "required": true,
+      "url": "https://qsign.qdev.run/llms.txt"
+    }
+  },
+  "tasks": [
+    {
+      "degraded_behavior": "Use only an available public context resource and name the missing one.",
+      "empty_behavior": "Report that public project context is unavailable.",
+      "id": "explain-qsign",
+      "out_of_scope": "Do not produce a certified interpretation or disclose private review material.",
+      "resource_ids": [
+        "public-context"
+      ],
+      "steps": [
+        "Read the public context.",
+        "State the prototype and human-review limits.",
+        "Cite the public context URL."
+      ],
+      "title": "Explain QSign's published scope and limits",
+      "user_intents": [
+        "What is QSign?",
+        "What can QSign safely claim?"
+      ]
+    },
+    {
+      "degraded_behavior": "Do not substitute an unverified source or an internal record.",
+      "empty_behavior": "Say that no matching public source-registry entry was returned.",
+      "id": "cite-sources",
+      "out_of_scope": "Do not infer license status beyond the returned record.",
+      "resource_ids": [
+        "source-registry"
+      ],
+      "steps": [
+        "Read the source registry.",
+        "Return only matching published entries.",
+        "Cite the registry URL."
+      ],
+      "title": "Find published source-registry entries",
+      "user_intents": [
+        "What public sources does QSign list?",
+        "What license note is published?"
+      ]
+    }
+  ]
+}

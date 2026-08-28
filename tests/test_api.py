@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+import json
 from pathlib import Path
 import unittest
 from unittest import mock
@@ -52,6 +53,11 @@ class ApiTests(unittest.TestCase):
             "/robots.txt",
             "/sitemap.xml",
             "/llms.txt",
+            "/ai-index.json",
+            "/.well-known/qdev-public-data-agent.json",
+            "/.well-known/qazstack-consumer.json",
+            "/.well-known/avds-ui-contract.json",
+            "/.well-known/release.json",
             "/ai-context.md",
             "/ai-use.md",
             "/public-context.json",
@@ -74,6 +80,19 @@ class ApiTests(unittest.TestCase):
             "/robots.txt": ("text/plain", "Sitemap: https://qsign.qdev.run/sitemap.xml"),
             "/sitemap.xml": ("application/xml", "https://qsign.qdev.run/"),
             "/llms.txt": ("text/plain", "QSign Translator"),
+            "/ai-index.json": ("application/json", "qdev-public-data-agent-ai-index-v1"),
+            "/.well-known/qdev-public-data-agent.json": (
+                "application/json",
+                "qdev-public-data-agent-discovery-v2",
+            ),
+            "/.well-known/qazstack-consumer.json": (
+                "application/json",
+                "qazstack-consumer-v1",
+            ),
+            "/.well-known/avds-ui-contract.json": (
+                "application/json",
+                "avds-ui-contract-v1",
+            ),
             "/ai-context.md": ("text/markdown", "QSign Translator public AI context"),
             "/ai-use.md": ("text/markdown", "QSign Translator AI Use Guidance"),
             "/public-context.json": ("application/json", "QSign Translator"),
@@ -100,6 +119,40 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(head_response.status_code, 200)
                 self.assertIn(content_type, head_response.headers["content-type"])
 
+    def test_platform_contract_projections_match_canonical_files(self) -> None:
+        expected = {
+            "/.well-known/qazstack-consumer.json": Path("qazstack-consumer.json"),
+            "/.well-known/avds-ui-contract.json": Path("avds-ui-contract.json"),
+        }
+        for path, source_path in expected.items():
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json(), json.loads(source_path.read_text(encoding="utf-8")))
+
+    def test_release_marker_uses_only_an_explicit_full_sha(self) -> None:
+        release_sha = "a" * 40
+        with mock.patch.dict("os.environ", {"QSIGN_RELEASE_SHA": release_sha}, clear=False):
+            response = self.client.get("/.well-known/release.json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "schema_version": "qsign-release-v1",
+                "project_id": "qsign-translator",
+                "release_state": "bound",
+                "release_sha": release_sha,
+            },
+        )
+
+    def test_release_marker_rejects_an_invalid_environment_value(self) -> None:
+        with mock.patch.dict("os.environ", {"QSIGN_RELEASE_SHA": "main"}, clear=False):
+            with mock.patch("qsign_translator.api.subprocess.run", side_effect=OSError):
+                response = self.client.get("/.well-known/release.json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["release_state"], "unbound")
+        self.assertEqual(response.json()["release_sha"], "")
+
     def test_public_context_lists_trust_files(self) -> None:
         response = self.client.get("/public-context.json")
         self.assertEqual(response.status_code, 200)
@@ -111,6 +164,19 @@ class ApiTests(unittest.TestCase):
         )
         self.assertEqual(data["machine_readable"]["ai_use"], "https://qsign.qdev.run/ai-use.md")
         self.assertEqual(data["machine_readable"]["claims"], "https://qsign.qdev.run/claims.json")
+        self.assertEqual(data["machine_readable"]["ai_index"], "https://qsign.qdev.run/ai-index.json")
+        self.assertEqual(
+            data["machine_readable"]["public_data_agent"],
+            "https://qsign.qdev.run/.well-known/qdev-public-data-agent.json",
+        )
+        self.assertEqual(
+            data["machine_readable"]["qazstack_consumer"],
+            "https://qsign.qdev.run/.well-known/qazstack-consumer.json",
+        )
+        self.assertEqual(
+            data["machine_readable"]["avds_ui_contract"],
+            "https://qsign.qdev.run/.well-known/avds-ui-contract.json",
+        )
 
     def test_robots_allows_search_and_ai_discovery(self) -> None:
         response = self.client.get("/robots.txt")

@@ -56,6 +56,10 @@
   "machine_readable": {
     "openapi": "https://qsign.qdev.run/openapi.json",
     "llms": "https://qsign.qdev.run/llms.txt",
+    "ai_index": "https://qsign.qdev.run/ai-index.json",
+    "public_data_agent": "https://qsign.qdev.run/.well-known/qdev-public-data-agent.json",
+    "qazstack_consumer": "https://qsign.qdev.run/.well-known/qazstack-consumer.json",
+    "avds_ui_contract": "https://qsign.qdev.run/.well-known/avds-ui-contract.json",
     "ai_context": "https://qsign.qdev.run/ai-context.md",
     "ai_use": "https://qsign.qdev.run/ai-use.md",
     "claims": "https://qsign.qdev.run/claims.json",

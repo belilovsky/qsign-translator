@@ -6,6 +6,7 @@ from typing import Any, Iterator
 
 from .planner import SignPlan
 from .settings import get_settings
+from .typography_policy import normalize_text, normalize_value
 
 
 class DatabaseUnavailable(RuntimeError):
@@ -131,6 +132,7 @@ def list_lexicon(language: str | None = None, limit: int = 200) -> list[dict[str
 
 
 def record_translation_job(plan: SignPlan, input_type: str = "text") -> str:
+    plan_data = normalize_value(plan.to_dict())
     with connect() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -155,16 +157,16 @@ def record_translation_job(plan: SignPlan, input_type: str = "text") -> str:
                 """,
                 (
                     input_type,
-                    plan.input_text,
+                    normalize_text(plan.input_text),
                     plan.language,
                     plan.job_status,
                     plan.output_kind,
                     plan.output_status,
                     plan.confidence,
-                    plan.to_dict()["warnings"],
+                    plan_data["warnings"],
                     "pending_signer_review",
-                    plan.risk_domains,
-                    plan.source_ids,
+                    normalize_value(plan.risk_domains),
+                    normalize_value(plan.source_ids),
                     plan.fallback_count,
                     plan.unknown_token_count,
                 ),
@@ -192,11 +194,11 @@ def record_translation_job(plan: SignPlan, input_type: str = "text") -> str:
                         job_id,
                         position,
                         unit.kind,
-                        unit.source_token,
-                        unit.gloss,
+                        normalize_text(unit.source_token),
+                        normalize_text(unit.gloss),
                         unit.confidence,
-                        unit.source,
-                        unit.clip_id,
+                        normalize_text(unit.source),
+                        normalize_text(unit.clip_id) if unit.clip_id is not None else None,
                     ),
                 )
             _record_audit_event(
@@ -428,7 +430,7 @@ def record_feedback(job_id: str, feedback_type: str, note: str | None = None) ->
                 VALUES (%s, %s, %s)
                 RETURNING id
                 """,
-                (job_id, feedback_type, note),
+                (job_id, feedback_type, normalize_text(note) if note is not None else None),
             )
             row = cur.fetchone()
             if not row:
@@ -566,7 +568,7 @@ def create_review_session(
                         fingerspelling_score,
                         timing_score,
                         understandability_score,
-                        notes,
+                        normalize_text(notes) if notes is not None else None,
                         blocking_issue,
                     ),
                 )
@@ -951,8 +953,8 @@ def create_lexicon_suggestion(
                     actor_role=created_by_role,
                     detail={
                         "unit_position": unit_position,
-                        "source_token": source_token,
-                        "suggested_gloss": suggested_gloss,
+                        "source_token": normalize_text(source_token),
+                        "suggested_gloss": normalize_text(suggested_gloss),
                         "suggested_language": suggested_language,
                     },
                 )
@@ -975,7 +977,7 @@ def _record_audit_event(
         INSERT INTO audit_events (job_id, event_type, actor_role, detail)
         VALUES (%s, %s, %s, %s)
         """,
-        (job_id, event_type, actor_role, json.dumps(detail or {}, ensure_ascii=False)),
+        (job_id, event_type, actor_role, json.dumps(normalize_value(detail or {}), ensure_ascii=False)),
     )
 
 

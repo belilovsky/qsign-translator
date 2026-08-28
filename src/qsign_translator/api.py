@@ -4,8 +4,10 @@ import base64
 import hashlib
 import hmac
 import os
+import re
 import secrets
 import shutil
+import subprocess
 import tempfile
 import time
 from functools import lru_cache
@@ -23,6 +25,7 @@ from .planner import SignPlanner
 from .preview_video import PreviewVideoUnavailable
 from .preview_video import build_review_video
 from .settings import get_settings
+from .typography_policy import TypographyPolicyMiddleware, normalize_text
 from .video_plan import build_job_render_plan
 
 planner = SignPlanner(load_default_lexicon())
@@ -32,7 +35,7 @@ try:
     from fastapi import FastAPI, HTTPException, Request, Response
     from fastapi.responses import FileResponse
     from fastapi.staticfiles import StaticFiles
-    from pydantic import BaseModel, Field
+    from pydantic import BaseModel, Field, field_validator
 except ImportError as exc:  # pragma: no cover - import guard for optional API extra
     raise RuntimeError("Install qsign-translator[api] to run the FastAPI service") from exc
 
@@ -58,11 +61,21 @@ class TextTranslateRequest(BaseModel):
     text: str = Field(min_length=1, max_length=5000)
     language: Literal["ru", "kk", "en"] | None = None
 
+    @field_validator("text")
+    @classmethod
+    def normalize_visible_text(cls, value: str) -> str:
+        return normalize_text(value)
+
 
 class FeedbackRequest(BaseModel):
     job_id: str = Field(min_length=1, max_length=80)
     feedback_type: str = Field(min_length=1, max_length=40)
     note: str | None = Field(default=None, max_length=1000)
+
+    @field_validator("note")
+    @classmethod
+    def normalize_note(cls, value: str | None) -> str | None:
+        return normalize_text(value) if value is not None else None
 
 
 class ReviewStatusRequest(BaseModel):
@@ -84,15 +97,30 @@ class ReviewSessionRequest(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
     blocking_issue: bool = False
 
+    @field_validator("notes")
+    @classmethod
+    def normalize_notes(cls, value: str | None) -> str | None:
+        return normalize_text(value) if value is not None else None
+
 
 class PublishStatusRequest(BaseModel):
     publish_status: str = Field(min_length=1, max_length=40)
     note: str | None = Field(default=None, max_length=2000)
 
+    @field_validator("note")
+    @classmethod
+    def normalize_note(cls, value: str | None) -> str | None:
+        return normalize_text(value) if value is not None else None
+
 
 class BatchAIVideoBriefRequest(BaseModel):
     job_ids: list[str] = Field(min_length=1, max_length=20)
     title: str | None = Field(default=None, min_length=1, max_length=120)
+
+    @field_validator("title")
+    @classmethod
+    def normalize_title(cls, value: str | None) -> str | None:
+        return normalize_text(value) if value is not None else None
 
 
 class ReviewLoginRequest(BaseModel):
@@ -109,21 +137,32 @@ class LexiconSuggestionRequest(BaseModel):
     suggested_clip_id: str | None = Field(default=None, max_length=200)
     reason: str | None = Field(default=None, max_length=2000)
 
+    @field_validator("source_token", "suggested_gloss", "reason")
+    @classmethod
+    def normalize_lexicon_copy(cls, value: str | None) -> str | None:
+        return normalize_text(value) if value is not None else None
+
 
 app = FastAPI(
     title="QSign Translator API",
     version=__version__,
     description="Prototype RU/KZ/EN text-to-sign-plan API with transparent draft output. Not a professional interpretation.",
 )
+app.add_middleware(TypographyPolicyMiddleware)
 
 PUBLIC_ROOT = Path(__file__).resolve().parents[2] / "public"
+PROJECT_ROOT = PUBLIC_ROOT.parent
 STATIC_ROOT = PUBLIC_ROOT / "static"
 GENERATED_PREVIEW_ROOT = Path(tempfile.gettempdir()) / "qsign-preview-videos"
 UPLOADED_RENDER_ROOT = Path(settings.generated_media_root) / "rendered-videos"
 REVIEW_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12
 INDEXNOW_KEY_FILENAME = "d491805d96a2b9f8c9b89725616e32f222a007cbc582d8a9158b6993d41b7141.txt"
 PUBLIC_FILE_TYPES = {
+    ".well-known/avds-ui-contract.json": "application/json; charset=utf-8",
+    ".well-known/qazstack-consumer.json": "application/json; charset=utf-8",
+    ".well-known/qdev-public-data-agent.json": "application/json; charset=utf-8",
     INDEXNOW_KEY_FILENAME: "text/plain; charset=utf-8",
+    "ai-index.json": "application/json; charset=utf-8",
     "ai-context.md": "text/markdown; charset=utf-8",
     "ai-use.md": "text/markdown; charset=utf-8",
     "claims.json": "application/json; charset=utf-8",
@@ -135,6 +174,11 @@ PUBLIC_FILE_TYPES = {
     "security.txt": "text/plain; charset=utf-8",
     "sitemap.xml": "application/xml; charset=utf-8",
 }
+PUBLIC_FILE_PATHS = {
+    ".well-known/avds-ui-contract.json": PROJECT_ROOT / "avds-ui-contract.json",
+    ".well-known/qazstack-consumer.json": PROJECT_ROOT / "qazstack-consumer.json",
+}
+RELEASE_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$", re.IGNORECASE)
 SEO_PAGE_FILES = {
     "about": "about.html",
     "api": "api.html",
@@ -274,7 +318,7 @@ def favicon(request: Request) -> FileResponse | Response:
 def _public_file_response(request: Request, filename: str) -> FileResponse | Response:
     if filename not in PUBLIC_FILE_TYPES:
         raise HTTPException(status_code=404, detail="Public file is not bundled")
-    file_path = PUBLIC_ROOT / filename
+    file_path = PUBLIC_FILE_PATHS.get(filename, PUBLIC_ROOT / filename)
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"{filename} is not bundled")
     if request.method == "HEAD":
@@ -298,6 +342,30 @@ def sitemap(request: Request) -> FileResponse | Response:
 @app.head("/llms.txt", response_model=None, include_in_schema=False)
 def llms(request: Request) -> FileResponse | Response:
     return _public_file_response(request, "llms.txt")
+
+
+@app.get("/ai-index.json", response_model=None, include_in_schema=False)
+@app.head("/ai-index.json", response_model=None, include_in_schema=False)
+def ai_index(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, "ai-index.json")
+
+
+@app.get("/.well-known/qdev-public-data-agent.json", response_model=None, include_in_schema=False)
+@app.head("/.well-known/qdev-public-data-agent.json", response_model=None, include_in_schema=False)
+def public_data_agent_discovery(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, ".well-known/qdev-public-data-agent.json")
+
+
+@app.get("/.well-known/qazstack-consumer.json", response_model=None, include_in_schema=False)
+@app.head("/.well-known/qazstack-consumer.json", response_model=None, include_in_schema=False)
+def qazstack_consumer_contract(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, ".well-known/qazstack-consumer.json")
+
+
+@app.get("/.well-known/avds-ui-contract.json", response_model=None, include_in_schema=False)
+@app.head("/.well-known/avds-ui-contract.json", response_model=None, include_in_schema=False)
+def avds_ui_contract(request: Request) -> FileResponse | Response:
+    return _public_file_response(request, ".well-known/avds-ui-contract.json")
 
 
 @app.get("/manifest.webmanifest", response_model=None, include_in_schema=False)
@@ -348,6 +416,55 @@ def security_txt(request: Request) -> FileResponse | Response:
 @app.head(f"/{INDEXNOW_KEY_FILENAME}", response_model=None, include_in_schema=False)
 def indexnow_key(request: Request) -> FileResponse | Response:
     return _public_file_response(request, INDEXNOW_KEY_FILENAME)
+
+
+def _release_sha() -> str | None:
+    """Return an exact release identity, never an inferred branch name.
+
+    A process manager may bind an immutable artifact with ``QSIGN_RELEASE_SHA``.
+    For the documented checkout-based deployment, a clean detached Git checkout
+    supplies the same identity.  A dirty tree intentionally has no release
+    marker: its HEAD alone does not identify the code currently serving users.
+    """
+
+    configured = os.getenv("QSIGN_RELEASE_SHA", "").strip()
+    if RELEASE_SHA_PATTERN.fullmatch(configured):
+        return configured.lower()
+
+    try:
+        status = subprocess.run(
+            ["git", "-C", str(PROJECT_ROOT), "status", "--porcelain"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=1,
+        )
+        if status.stdout.strip():
+            return None
+        revision = subprocess.run(
+            ["git", "-C", str(PROJECT_ROOT), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=1,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return revision.lower() if RELEASE_SHA_PATTERN.fullmatch(revision) else None
+
+
+@app.get("/.well-known/release.json", response_model=None, include_in_schema=False)
+@app.head("/.well-known/release.json", response_model=None, include_in_schema=False)
+def release_marker(request: Request) -> dict[str, str] | Response:
+    if request.method == "HEAD":
+        return Response(status_code=200, media_type="application/json")
+    release_sha = _release_sha()
+    return {
+        "schema_version": "qsign-release-v1",
+        "project_id": "qsign-translator",
+        "release_state": "bound" if release_sha else "unbound",
+        "release_sha": release_sha or "",
+    }
 
 
 @app.get("/health", response_model=None)

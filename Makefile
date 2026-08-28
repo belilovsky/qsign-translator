@@ -1,4 +1,4 @@
-.PHONY: install install-api check api bootstrap-local benchmark smoke-live
+.PHONY: install install-api check check-platform api bootstrap-local benchmark smoke-live
 
 install:
 	python3 -m pip install -e ".[test]"
@@ -8,6 +8,11 @@ install-api:
 
 check:
 	./scripts/check.sh
+	python3 scripts/check_typography.py
+	PYTHONPATH=src python3 -m unittest tests.test_typography_policy
+
+check-platform:
+	PYTHONPATH=src python3 scripts/check_platform_contracts.py --platform-root "$${PLATFORM_ROOT:?set PLATFORM_ROOT to the Platform Portal checkout}"
 
 api:
 	uvicorn qsign_translator.api:app --reload

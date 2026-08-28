@@ -450,7 +450,7 @@ function renderAIBriefData() {
     return;
   }
   renderAIBriefSummary(
-    `Готов формат: ${activeExport.label || "brief"} · запись ${(data.job_id || "").slice(0, 8) || "—"}.`,
+    `Готов формат: ${activeExport.label || "brief"} · запись ${(data.job_id || "").slice(0, 8) || "–"}.`,
     String(activeExport.text || ""),
     true
   );
@@ -762,7 +762,7 @@ function showUnsavedDependentState() {
   resetAIBrief();
   renderRenderPlanSummary(
     "Без сохраненной записи нельзя проверить готовность к сборке видео.",
-    ["готовность: нужна запись", "есть фрагментов: —", "нужно добавить: —", "выпуск: нет"]
+    ["готовность: нужна запись", "есть фрагментов: –", "нужно добавить: –", "выпуск: нет"]
   );
   renderAIBriefSummary(
     "Экспорт для AI-видео доступен только после сохранения записи.",
@@ -931,7 +931,7 @@ function renderEmptyState() {
   setProvenanceState(
     "После сборки здесь появится прозрачная связка: маршрут, статус проверки, источник черновика и готовность к выпуску.",
     "idle",
-    [{ label: "Маршрут", value: "—", note: "сначала нужен черновик" }]
+    [{ label: "Маршрут", value: "–", note: "сначала нужен черновик" }]
   );
   traceGate.textContent = "ожидание";
   traceGate.classList.remove("bad");
@@ -1032,7 +1032,7 @@ function renderUnitInspector(units) {
   const grid = document.createElement("div");
   grid.className = "unit-inspector-grid";
   [
-    ["Текст", unit.source_token || "—"],
+    ["Текст", unit.source_token || "–"],
     ["Глосса", formatInspectorGloss(unit)],
     ["Источник", formatUnitSource(unit.source)],
     ["Оценка", Number(unit.confidence || 0).toFixed(2)],
@@ -1296,7 +1296,7 @@ function formatDactylPart(part) {
 }
 
 function formatInspectorGloss(unit) {
-  if (!unit?.gloss) return "—";
+  if (!unit?.gloss) return "–";
   if (unit.kind !== "dactyl") return String(unit.gloss);
   return formatDactylPreview(unit.source_token) || String(unit.gloss);
 }
@@ -1391,7 +1391,7 @@ async function generatePlan() {
 async function uploadAudio(file) {
   if (!file) return;
   if (file.size > maxAudioBytes) {
-    setUploadState("error", "Файл слишком большой", "Максимальный размер аудио — 50 MB");
+    setUploadState("error", "Файл слишком большой", "Максимальный размер аудио – 50 MB");
     return;
   }
   if (!supportedAudioTypes.has(file.type)) {
@@ -1520,7 +1520,7 @@ function renderSources(items) {
     meta.className = "source-card-meta";
     [
       ["Тип", formatTask(source.task), String(source.task || "")],
-      ["Языки", languages || "—", "поддерживаемые маршруты"],
+      ["Языки", languages || "–", "поддерживаемые маршруты"],
       ["Статус", formatStatus(source.status), "операционный статус"],
     ].forEach(([label, value, note]) => {
       const item = document.createElement("div");
@@ -1726,7 +1726,7 @@ function formatAuditDetailKey(key) {
 
 function formatAuditDetailValue(value) {
   if (typeof value === "boolean") return value ? "да" : "нет";
-  if (value == null || value === "") return "—";
+  if (value == null || value === "") return "–";
   return String(value);
 }
 
@@ -1961,7 +1961,7 @@ function renderReviewSystemStatus(data) {
       "",
       `Частые fallback: ${topFallbacks
         .slice(0, 5)
-        .map((item) => `${String(item.source_token || "—")} (${item.hits})`)
+        .map((item) => `${String(item.source_token || "–")} (${item.hits})`)
         .join(", ")}`
     );
   }
@@ -2172,7 +2172,7 @@ function renderReviewDetail(job, feedbackItems = []) {
       const card = document.createElement("article");
       card.className = "review-unit-card";
       appendTextElement(card, "strong", "", `${index + 1}. ${formatGloss(unit)}`);
-      appendTextElement(card, "p", "", `${unit.source_token || "—"} · ${formatUnitSource(unit.source)}`);
+      appendTextElement(card, "p", "", `${unit.source_token || "–"} · ${formatUnitSource(unit.source)}`);
       appendTextElement(card, "p", "", `${formatUnitDecision(unit)} ${formatReviewerHint(unit)}`);
       card.addEventListener("click", () => {
         reviewLexiconUnitInput.value = String(index + 1);

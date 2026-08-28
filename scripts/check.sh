@@ -6,6 +6,7 @@ cd "$ROOT"
 
 PYTHONPATH=src python3 -m compileall -q src tests
 PYTHONPATH=src python3 -m unittest discover -s tests
+PYTHONPATH=src python3 scripts/check_platform_contracts.py
 PYTHONPATH=src python3 scripts/phrase_coverage_smoke.py
 python3 -m json.tool data/sample_lexicon.json >/dev/null
 python3 -m json.tool data/curated_overrides.json >/dev/null

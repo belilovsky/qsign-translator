@@ -18,7 +18,7 @@
 
 ## 1. Что уже хорошо покрыто AV DS 4
 
-Эти вещи не требуют нового компонента, максимум — маленького расширения API
+Эти вещи не требуют нового компонента, максимум – маленького расширения API
 или новых showcase-примеров.
 
 ### 1.1 MiniMetric
@@ -86,7 +86,7 @@ runtime-адаптер вокруг уже существующего `MiniMetri
 
 ### 1.4 ProvenanceCard
 
-QSign подтвердил, что `ProvenanceCard` — не декоративный блок, а реально
+QSign подтвердил, что `ProvenanceCard` – не декоративный блок, а реально
 полезный operational pattern.
 
 Что уже есть в AV DS:
@@ -107,7 +107,7 @@ QSign подтвердил, что `ProvenanceCard` — не декоратив�
 
 ### 1.5 BarChart
 
-Локальный `review-language-chart` — это упрощённый operational use case для
+Локальный `review-language-chart` – это упрощённый operational use case для
 `BarChart`.
 
 Что уже есть в AV DS:
@@ -337,7 +337,7 @@ QSign подтвердил, что `ProvenanceCard` — не декоратив�
 
 Если делать маленькими шагами и без расползания scope, приоритет я вижу так:
 
-### Batch A — быстрые доработки существующих компонентов
+### Batch A – быстрые доработки существующих компонентов
 
 1. `MiniMetric`
    - добавить `kicker?: string`;
@@ -354,7 +354,7 @@ QSign подтвердил, что `ProvenanceCard` — не декоратив�
 4. `ScoreBar`
    - дать semantic examples для confidence/quality.
 
-### Batch B — новые reusable blocks
+### Batch B – новые reusable blocks
 
 1. `WorkflowSteps`
 2. `DecisionTrace`
@@ -371,8 +371,8 @@ QSign подтвердил, что `ProvenanceCard` — не декоратив�
 - **не надо** переносить в AV DS весь QSign UI кусками;
 - **надо** забрать обратно только те паттерны, которые уже доказали
   операционную полезность и не привязаны к сурдопереводу как домену;
-- лучший следующий шаг — **один batch на расширение существующих
-  `MiniMetric / ProvenanceCard / SourceCard / ScoreBar`**, а уже потом —
+- лучший следующий шаг – **один batch на расширение существующих
+  `MiniMetric / ProvenanceCard / SourceCard / ScoreBar`**, а уже потом –
   новый комплект `WorkflowSteps + DecisionTrace + InspectorPanel + EmptyState`.
 
 Это даст AV DS 4 не “ещё один набор красивых карточек”, а действительно более

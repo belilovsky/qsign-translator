@@ -27,6 +27,8 @@ Sitemap: [https://qsign.qdev.run/sitemap.xml](https://qsign.qdev.run/sitemap.xml
 - [AI context](https://qsign.qdev.run/ai-context.md) - compact machine-readable guidance.
 - [AI use guidance](https://qsign.qdev.run/ai-use.md) - safe claims, unsafe claims, and citation guidance.
 - [Public JSON context](https://qsign.qdev.run/public-context.json) - structured public facts.
+- [QazStack consumer contract](https://qsign.qdev.run/.well-known/qazstack-consumer.json) - documented platform boundary; not live package-adoption proof.
+- [AVDS UI contract](https://qsign.qdev.run/.well-known/avds-ui-contract.json) - static compatibility adapter and UI boundary.
 - [Claims JSON](https://qsign.qdev.run/claims.json) - structured claims with evidence links.
 - [Humans](https://qsign.qdev.run/humans.txt) - team, purpose, and public machine context.
 - [Security](https://qsign.qdev.run/.well-known/security.txt) - disclosure contact and policy.
@@ -48,6 +50,8 @@ Sitemap: [https://qsign.qdev.run/sitemap.xml](https://qsign.qdev.run/sitemap.xml
 - [`GET /ai-context.md`](https://qsign.qdev.run/ai-context.md) - concise AI context file.
 - [`GET /ai-use.md`](https://qsign.qdev.run/ai-use.md) - safe AI summary and citation rules.
 - [`GET /public-context.json`](https://qsign.qdev.run/public-context.json) - structured public project metadata.
+- [`GET /.well-known/qazstack-consumer.json`](https://qsign.qdev.run/.well-known/qazstack-consumer.json) - documented QazStack consumer boundary.
+- [`GET /.well-known/avds-ui-contract.json`](https://qsign.qdev.run/.well-known/avds-ui-contract.json) - AVDS static-adapter boundary.
 - [`GET /claims.json`](https://qsign.qdev.run/claims.json) - structured public claims with evidence.
 - [`GET /humans.txt`](https://qsign.qdev.run/humans.txt) - public project and publisher notes.
 - [`GET /.well-known/security.txt`](https://qsign.qdev.run/.well-known/security.txt) - security contact and disclosure policy.

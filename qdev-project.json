@@ -1,0 +1,86 @@
+{
+  "schema_version": "qdev-project-manifest-v1",
+  "project_id": "qsign-translator",
+  "profile": "service-api",
+  "lifecycle": "alpha",
+  "owners": {
+    "product": "qdev.run",
+    "technical": "qdev.run",
+    "data": "qdev.run"
+  },
+  "runtime": {
+    "kind": "container",
+    "language": "Python",
+    "version": "3.11+"
+  },
+  "capabilities": {
+    "qazstack": {
+      "mode": "optional",
+      "version": "contract-only",
+      "contracts": [
+        "qazstack-consumer.json"
+      ]
+    },
+    "avds": {
+      "mode": "optional",
+      "version": "4.8.0-static-adapter",
+      "contracts": [
+        "avds-ui-contract.json",
+        "docs/avds4-absorption-audit.md"
+      ]
+    },
+    "data": {
+      "mode": "optional",
+      "version": null,
+      "contracts": [
+        "data/source_registry.json",
+        "docs/infrastructure.md"
+      ],
+      "qazpipe": false,
+      "qazlake": false
+    },
+    "compute": {
+      "mode": "optional",
+      "version": null,
+      "contracts": []
+    },
+    "geo": {
+      "mode": "not-applicable",
+      "version": null,
+      "contracts": []
+    },
+    "identity": {
+      "mode": "optional",
+      "version": null,
+      "contracts": [
+        "SECURITY.md"
+      ]
+    }
+  },
+  "quality": {
+    "state": "review-required",
+    "workflow": ".github/workflows/ci.yml",
+    "coverage_minimum": 80,
+    "commands": {
+      "install": "make install-api",
+      "lint": "python3 -m ruff check src tests",
+      "typecheck": "python3 -m mypy src",
+      "test": "make check",
+      "build": "docker compose build",
+      "security": "python3 scripts/validate_sql.py"
+    },
+    "required_documents": [
+      "README.md",
+      "SECURITY.md",
+      "docs/architecture.md",
+      "docs/infrastructure.md",
+      "docs/production-runbook.md"
+    ]
+  },
+  "operations": {
+    "health_path": "/health/live",
+    "readiness_path": "/health/ready",
+    "release_revision_path": "/.well-known/release.json",
+    "deploy_mode": "container"
+  }
+}

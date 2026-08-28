@@ -1,0 +1,40 @@
+{
+  "schema_version": "avds-ui-contract-v1",
+  "contract_id": "avds-ui-contract",
+  "avds_source": {
+    "site": "https://avds.digital",
+    "package": "AV DS 4 static compatibility adapter",
+    "version": "4.8.0"
+  },
+  "component_families": [
+    {
+      "id": "translation-planning",
+      "components": [
+        "semantic token bridge",
+        "compact metric strip",
+        "quality score bars",
+        "operational empty state"
+      ],
+      "qazstack_relationship": "Uses the QazStack observability-and-ui vocabulary only as a documented presentation boundary; sign-plan scoring, text processing and review policy remain QSign-owned."
+    },
+    {
+      "id": "review-provenance",
+      "components": [
+        "source registry cards",
+        "provenance and review-state panels",
+        "review queue inspector"
+      ],
+      "qazstack_relationship": "Renders QazStack-compatible governance-and-audit evidence without exposing review tokens, private media, sessions or reviewer records."
+    }
+  ],
+  "do_not_duplicate": [
+    "a framework-specific AV DS package dependency in the FastAPI/static surface",
+    "a second navigation or page shell",
+    "a generic dashboard that hides the primary translation-planning task",
+    "a public surface for private review, upload or media records"
+  ],
+  "qazstack_behavior_sources": [
+    "governance-and-audit",
+    "observability-and-ui"
+  ]
+}

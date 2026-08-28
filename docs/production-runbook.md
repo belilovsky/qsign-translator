@@ -47,6 +47,10 @@ ssh your-host 'systemctl is-active qsign-translator.service'
 If you do not use `systemd`, replace the service-management lines with your own
 supervisor or container restart flow.
 
+Bind the exact deployed Git revision to the process as `QSIGN_RELEASE_SHA`, or
+deploy from a clean detached checkout. The public marker never guesses from a
+branch name and returns `release_state: unbound` for an unidentifiable build.
+
 ## Smoke
 
 Preferred automated live smoke:
@@ -73,6 +77,7 @@ Verify readiness first:
 BASE=https://your-public-host.example
 curl -fsS "$BASE/health"
 curl -fsS "$BASE/health/ready"
+curl -fsS "$BASE/.well-known/release.json" | grep -E '"release_state":"bound"|"release_sha":"[0-9a-f]{40}"'
 curl -fsS "$BASE/v1/sources"
 curl -fsS "$BASE/v1/lexicon?language=ru"
 ```

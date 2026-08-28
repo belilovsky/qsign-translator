@@ -1,0 +1,125 @@
+{
+  "schema_version": "qdev-public-data-agent-profile-v2",
+  "project": {
+    "id": "qsign-translator",
+    "name": "QSign Translator",
+    "description": "Public read-only context for a transparent RU/KZ/EN sign-language draft-planning prototype.",
+    "public_origin": "https://qsign.qdev.run",
+    "version": "0.2.0",
+    "released_at": "2026-06-30",
+    "languages": ["ru", "kk", "en"],
+    "allowed_origins": ["https://qsign.qdev.run"]
+  },
+  "policy": {
+    "access": "public-read",
+    "includes": "Published project context, methodology, and source-registry entries.",
+    "excludes": "Translation jobs, review data, uploads, tokens, sessions, private media, and every mutation endpoint.",
+    "citation_policy": "Cite the returned public URL and preserve QSign's non-certified-interpreter and human-review limitations.",
+    "unknown_policy": "State that the public source does not establish the fact; do not infer a translation, signer validation, or source license.",
+    "forbidden_response_keys": ["token", "cookie", "session", "password", "secret", "authorization"]
+  },
+  "surfaces": {
+    "llms": {
+      "ownership": "native",
+      "path": "/llms.txt",
+      "required": true,
+      "source_paths": ["public/llms.txt"]
+    },
+    "ai_index": {
+      "ownership": "managed",
+      "path": "/ai-index.json",
+      "required": true,
+      "source_paths": ["config/public-data-agent.profile.json"]
+    },
+    "discovery": {
+      "ownership": "managed",
+      "path": "/.well-known/qdev-public-data-agent.json",
+      "required": true,
+      "source_paths": ["config/public-data-agent.profile.json"]
+    },
+    "portable_skill": {
+      "enabled": false,
+      "id": "qsign-public-data"
+    },
+    "mcp": {
+      "mode": "absent",
+      "allowed_safety": []
+    }
+  },
+  "resources": [
+    {
+      "id": "public-context",
+      "kind": "documentation",
+      "url": "https://qsign.qdev.run/public-context.json",
+      "method": "GET",
+      "purpose": "Published product scope, safety limits, pages, and machine-readable links.",
+      "access": "public",
+      "safety": "read",
+      "required": true,
+      "media_types": ["application/json"],
+      "provenance_fields": ["publisher", "repository"],
+      "freshness_fields": ["version"],
+      "stable_id_fields": ["name"],
+      "source_paths": ["public/public-context.json"]
+    },
+    {
+      "id": "source-registry",
+      "kind": "catalog",
+      "url": "https://qsign.qdev.run/v1/sources",
+      "method": "GET",
+      "purpose": "Published source registry and license/access notes.",
+      "access": "public",
+      "safety": "read",
+      "required": true,
+      "media_types": ["application/json"],
+      "provenance_fields": ["url", "license_note"],
+      "freshness_fields": ["status"],
+      "stable_id_fields": ["id"],
+      "source_paths": ["src/qsign_translator/api.py", "data/source_registry.json"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "explain-qsign",
+      "title": "Explain QSign's published scope and limits",
+      "user_intents": ["What is QSign?", "What can QSign safely claim?"],
+      "resource_ids": ["public-context"],
+      "steps": ["Read the public context.", "State the prototype and human-review limits.", "Cite the public context URL."],
+      "empty_behavior": "Report that public project context is unavailable.",
+      "degraded_behavior": "Use only an available public context resource and name the missing one.",
+      "out_of_scope": "Do not produce a certified interpretation or disclose private review material."
+    },
+    {
+      "id": "cite-sources",
+      "title": "Find published source-registry entries",
+      "user_intents": ["What public sources does QSign list?", "What license note is published?"],
+      "resource_ids": ["source-registry"],
+      "steps": ["Read the source registry.", "Return only matching published entries.", "Cite the registry URL."],
+      "empty_behavior": "Say that no matching public source-registry entry was returned.",
+      "degraded_behavior": "Do not substitute an unverified source or an internal record.",
+      "out_of_scope": "Do not infer license status beyond the returned record."
+    }
+  ],
+  "probes": [
+    {
+      "id": "public-context-probe",
+      "resource_id": "public-context",
+      "url": "https://qsign.qdev.run/public-context.json",
+      "expect_status": [200],
+      "content_types": ["application/json"],
+      "json_required_paths": ["name", "safety.requires_human_review"],
+      "text_required": [],
+      "max_bytes": 1048576
+    },
+    {
+      "id": "source-registry-probe",
+      "resource_id": "source-registry",
+      "url": "https://qsign.qdev.run/v1/sources",
+      "expect_status": [200, 503],
+      "content_types": ["application/json"],
+      "json_required_paths": [],
+      "text_required": [],
+      "max_bytes": 1048576
+    }
+  ]
+}

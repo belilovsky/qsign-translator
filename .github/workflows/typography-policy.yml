@@ -1,0 +1,21 @@
+name: Typography policy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  typography:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Check source and public copy
+        run: python scripts/check_typography.py
+      - name: Run policy tests
+        run: PYTHONPATH=src python -m unittest tests.test_typography_policy
