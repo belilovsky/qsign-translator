@@ -17,6 +17,14 @@ class Settings:
     review_session_secret: str | None
     review_cookie_name: str
     review_cookie_secure: bool
+    qazcompute_language_routing_mode: str
+    qazcompute_language_routing_endpoint: str | None
+    qazcompute_language_routing_api_key: str | None
+    qazcompute_language_routing_timeout_seconds: float
+    identity_mode: str
+    identity_issuer: str
+    identity_audience: str | None
+    identity_provider_accepted: bool
 
 
 def get_settings() -> Settings:
@@ -37,4 +45,21 @@ def get_settings() -> Settings:
         not in {"0", "false", "no"}
         if os.environ.get("QSIGN_REVIEW_COOKIE_SECURE") is not None
         else environment != "local",
+        qazcompute_language_routing_mode=os.environ.get(
+            "QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_MODE", "disabled"
+        ).strip().lower(),
+        qazcompute_language_routing_endpoint=os.environ.get(
+            "QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_ENDPOINT"
+        ) or None,
+        qazcompute_language_routing_api_key=os.environ.get(
+            "QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_API_KEY"
+        ) or None,
+        qazcompute_language_routing_timeout_seconds=float(
+            os.environ.get("QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_TIMEOUT_SECONDS", "1.0")
+        ),
+        identity_mode=os.environ.get("QSIGN_IDENTITY_MODE", "documented").strip().lower(),
+        identity_issuer=os.environ.get("QSIGN_IDENTITY_ISSUER", "https://id.qdev.run").strip(),
+        identity_audience=os.environ.get("QSIGN_IDENTITY_AUDIENCE") or None,
+        identity_provider_accepted=os.environ.get("QSIGN_IDENTITY_PROVIDER_ACCEPTED", "").lower()
+        in {"1", "true", "yes"},
     )

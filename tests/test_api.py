@@ -32,6 +32,21 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["info"]["version"], "0.2.0")
 
+    def test_text_route_accepts_platform_language_alias_and_exposes_disabled_state(self) -> None:
+        response = self.client.post("/v1/translate/text", json={"text": "Сәлем, маған көмек керек", "language": "kz"})
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["language"], "kk")
+        routing = payload["metadata"]["platform_integration"]["language_routing"]
+        self.assertEqual(routing["state"], "disabled")
+        self.assertEqual(routing["authoritative_route"], "kk")
+        self.assertFalse(routing["remote_called"])
+        self.assertEqual(payload["metadata"]["platform_integration"]["sign_plan_authority"], "local_qsign")
+
+    def test_text_route_rejects_unknown_platform_language_alias(self) -> None:
+        response = self.client.post("/v1/translate/text", json={"text": "Hallo", "language": "de"})
+        self.assertEqual(response.status_code, 422)
+
     def test_head_routes_are_monitorable(self) -> None:
         for path in [
             "/",

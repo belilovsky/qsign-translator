@@ -277,6 +277,14 @@ docker compose up -d
 | `QSIGN_API_PORT` | Порт API | `8080` |
 | `QSIGN_REVIEW_TOKEN` | Общий bootstrap-token review API | `change-me-review-token` |
 | `QSIGN_REVIEW_SESSION_SECRET` | Секрет подписи review cookie-сессии | не задан |
+| `QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_MODE` | `disabled`, `shadow` или `hybrid`; по умолчанию сетевой вызов отключён | `disabled` |
+| `QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_ENDPOINT` | Явный HTTPS endpoint profile `qsign-language-routing.v1` | не задан |
+| `QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_API_KEY` | Runtime-secret утверждённого QazCompute transport; не попадает в ответы, логи или source control | не задан |
+| `QSIGN_QAZCOMPUTE_LANGUAGE_ROUTING_TIMEOUT_SECONDS` | Короткий таймаут shadow-проверки | `1.0` |
+| `QSIGN_IDENTITY_MODE` | Статус readiness OIDC; не заменяет локальную review-защиту без provider acceptance | `documented` |
+| `QSIGN_IDENTITY_ISSUER` | Ожидаемый issuer будущего server-side OIDC verifier | `https://id.qdev.run` |
+| `QSIGN_IDENTITY_AUDIENCE` | Точный production audience, назначаемый только в protected provider | не задан |
+| `QSIGN_IDENTITY_PROVIDER_ACCEPTED` | Явный acceptance switch; без server-side verifier не включает OIDC | `false` |
 
 ### Production
 

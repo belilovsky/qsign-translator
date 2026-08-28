@@ -18,6 +18,8 @@ Security-sensitive areas in this repository include:
 - object-storage credentials
 - generated media access
 - dependency and model provenance
+- Platform adapter allowlists and feature-only QazCompute routing
+- future OIDC issuer/audience, role mapping, callback and logout validation
 
 ## What To Expect
 
@@ -36,3 +38,5 @@ and should not be treated as hardened production guarantees:
 - review-video is a draft preview artifact
 - AI-video briefs are handoff contracts, not verified translation outputs
 - high-risk domains still require human review
+- QazCompute language routing is disabled by default and, when explicitly
+  configured, remains shadow evidence rather than sign-plan authority

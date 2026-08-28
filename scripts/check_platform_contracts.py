@@ -50,8 +50,8 @@ def validate_local_contracts(root: Path) -> list[str]:
     avds_capability = capabilities.get("avds") if isinstance(capabilities, dict) else None
     if not isinstance(qazstack, dict) or qazstack.get("mode") != "optional":
         errors.append("manifest must declare QazStack as an optional capability")
-    elif qazstack.get("contracts") != ["qazstack-consumer.json"]:
-        errors.append("manifest QazStack contract path must be qazstack-consumer.json")
+    elif qazstack.get("contracts") != ["qazstack-consumer.json", "contracts/qsign-platform-integration-v1.json"]:
+        errors.append("manifest must declare the QSign Platform integration contract")
     if not isinstance(avds_capability, dict) or avds_capability.get("mode") != "optional":
         errors.append("manifest must declare AVDS as an optional capability")
     elif "avds-ui-contract.json" not in avds_capability.get("contracts", []):
@@ -59,18 +59,26 @@ def validate_local_contracts(root: Path) -> list[str]:
 
     if consumer.get("project_id") != manifest.get("project_id") or consumer.get("project_id") != PROJECT_ID:
         errors.append("manifest and QazStack contract must share the QSign project id")
-    if consumer.get("integration_mode") != "documented-only":
-        errors.append("QSign must not claim a QazStack package or runtime adoption")
+    if consumer.get("integration_mode") != "hybrid-shadow":
+        errors.append("QSign must stay in hybrid-shadow until runtime acceptance")
     primitives = consumer.get("primitives")
-    if primitives != ["governance-and-audit", "observability-and-ui"]:
-        errors.append("QSign must declare the approved QazStack primitive pair")
+    expected_primitives = [
+        "governance-and-audit", "observability-and-ui", "language-routing",
+        "source-normalization", "reviewed-activity-evidence", "asset-evidence-contracts",
+        "compute-and-inference",
+    ]
+    if primitives != expected_primitives:
+        errors.append("QSign must declare the approved hybrid-shadow primitive set")
+    integration = consumer.get("integration_status")
+    if not isinstance(integration, dict) or integration.get("compute-and-inference") != "shadow-ready-no-authoritative-inference":
+        errors.append("compute contract must remain shadow-only")
     if QAZSTACK_CONTRACT_URL not in consumer.get("evidence", {}).get("runtime_urls", []):
         errors.append("QazStack contract must declare its projection URL")
 
     if avds.get("schema_version") != "avds-ui-contract-v1":
         errors.append("AVDS contract must use avds-ui-contract-v1")
-    if avds.get("qazstack_behavior_sources") != primitives:
-        errors.append("AVDS behavior sources must mirror the approved QazStack primitives")
+    if avds.get("qazstack_behavior_sources") != ["governance-and-audit", "observability-and-ui"]:
+        errors.append("AVDS behavior sources must stay limited to UI and governance primitives")
 
     machine_readable = context.get("machine_readable")
     if not isinstance(machine_readable, dict):
@@ -106,8 +114,8 @@ def validate_platform_mirror(platform_root: Path) -> list[str]:
     expected_contract = {
         "repository": "https://github.com/belilovsky/qsign-translator",
         "path": "qazstack-consumer.json",
-        "integration_mode": "documented-only",
-        "qazstack_version": "contract-only",
+        "integration_mode": "hybrid-shadow",
+        "qazstack_version": "qazstack-contracts-v1",
         "visibility": "source-contract-local-only",
     }
     if contract != expected_contract:
@@ -116,7 +124,12 @@ def validate_platform_mirror(platform_root: Path) -> list[str]:
     primitives = registry.get("primitives")
     if not isinstance(primitives, list):
         return errors + ["Platform primitives registry is malformed"]
-    for primitive_id in ("governance-and-audit", "observability-and-ui"):
+    expected_primitives = [
+        "governance-and-audit", "observability-and-ui", "language-routing",
+        "source-normalization", "reviewed-activity-evidence", "asset-evidence-contracts",
+        "compute-and-inference",
+    ]
+    for primitive_id in expected_primitives:
         primitive = next(
             (item for item in primitives if isinstance(item, dict) and item.get("id") == primitive_id),
             None,
@@ -128,11 +141,8 @@ def validate_platform_mirror(platform_root: Path) -> list[str]:
         (item for item in registry.get("consumers", []) if isinstance(item, dict) and item.get("id") == PROJECT_ID),
         None,
     )
-    if not isinstance(consumer, dict) or consumer.get("primitive_ids") != [
-        "governance-and-audit",
-        "observability-and-ui",
-    ]:
-        errors.append("Platform consumer record must mirror QSign's primitive pair")
+    if not isinstance(consumer, dict) or consumer.get("primitive_ids") != expected_primitives:
+        errors.append("Platform consumer record must mirror QSign's hybrid-shadow primitive set")
     return errors
 
 

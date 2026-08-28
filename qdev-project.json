@@ -16,9 +16,10 @@
   "capabilities": {
     "qazstack": {
       "mode": "optional",
-      "version": "contract-only",
+      "version": "qazstack-contracts-v1",
       "contracts": [
-        "qazstack-consumer.json"
+        "qazstack-consumer.json",
+        "contracts/qsign-platform-integration-v1.json"
       ]
     },
     "avds": {
@@ -41,8 +42,10 @@
     },
     "compute": {
       "mode": "optional",
-      "version": null,
-      "contracts": []
+      "version": "qsign-language-routing.v1",
+      "contracts": [
+        "contracts/qsign-platform-integration-v1.json"
+      ]
     },
     "geo": {
       "mode": "not-applicable",
@@ -51,9 +54,10 @@
     },
     "identity": {
       "mode": "optional",
-      "version": null,
+      "version": "oidc-documented",
       "contracts": [
-        "SECURITY.md"
+        "SECURITY.md",
+        "contracts/qsign-platform-integration-v1.json"
       ]
     }
   },

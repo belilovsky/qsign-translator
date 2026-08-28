@@ -70,3 +70,17 @@ No generated video should be served without the corresponding sign plan.
 The web player must stay disabled while `output_status=not_rendered` and the
 render plan has no resolved video fragments. A dactyl-only plan is useful for
 review, but it is not a video preview.
+
+## Platform adapter boundary
+
+The optional Platform adapter is deliberately downstream of local planning.
+It normalizes `kk`/`ru`/`en` aliases and emits source, rights and review evidence
+envelopes with strict field allowlists. It never exports input text, raw signer
+media, uploads, gesture data, reviewer identity, sessions, tokens, notes or
+biometrics.
+
+QazCompute receives only aggregate language-routing features in disabled,
+shadow or hybrid modes. A successful remote response is comparison evidence;
+the local QSign route and review gate are always returned as authoritative.
+`qsign-language-routing.v1` therefore cannot provide sign planning, ASR, video
+generation, or publishing authority.

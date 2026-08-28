@@ -2,13 +2,18 @@
   "schema_version": "qazstack-consumer-v1",
   "project_id": "qsign-translator",
   "product_name": "QSign Translator",
-  "lifecycle": "planned",
-  "integration_mode": "documented-only",
-  "qazstack_version": "contract-only",
+  "lifecycle": "shadow",
+  "integration_mode": "hybrid-shadow",
+  "qazstack_version": "qazstack-contracts-v1",
   "language_surface": "Python 3.11 FastAPI with a static HTML/CSS/JavaScript public surface",
   "primitives": [
     "governance-and-audit",
-    "observability-and-ui"
+    "observability-and-ui",
+    "language-routing",
+    "source-normalization",
+    "reviewed-activity-evidence",
+    "asset-evidence-contracts",
+    "compute-and-inference"
   ],
   "owns": [
     "sign-language-draft-planning",
@@ -26,7 +31,9 @@
       "qdev-project.json",
       "avds-ui-contract.json",
       "docs/avds4-absorption-audit.md",
+      "contracts/qsign-platform-integration-v1.json",
       "src/qsign_translator/api.py",
+      "src/qsign_translator/platform_adapters.py",
       "tests/test_api.py"
     ],
     "test_commands": [
@@ -42,5 +49,13 @@
     "checked_by": "qsign-local-contract-gate"
   },
   "owner": "qdev.run",
-  "notes": "QSign is an alpha product mapped to the planning lifecycle because the QazStack consumer schema has no alpha value. This is a documented-only contract: it does not install a QazStack runtime package, create a QazLake data plane, or turn local public-contract routes into live evidence before release."
+  "integration_status": {
+    "language-routing": "shadow-ready-disabled-by-default",
+    "source-normalization": "local-adapter",
+    "reviewed-activity-evidence": "local-envelope-only",
+    "asset-evidence-contracts": "local-envelope-only",
+    "compute-and-inference": "shadow-ready-no-authoritative-inference",
+    "identity": "documented-pending-provider-acceptance"
+  },
+  "notes": "QSign is an alpha product in hybrid-shadow integration. The local sign plan, dactyl fallback and human review remain authoritative. No QazLake data plane, raw media transfer, review payload transfer, or authoritative remote inference is enabled. Runtime identity adoption remains documented until the protected provider acceptance is complete."
 }

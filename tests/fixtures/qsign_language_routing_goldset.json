@@ -1,0 +1,11 @@
+{
+  "schema_version": "qsign-language-routing-goldset-v1",
+  "cases": [
+    {"id": "ru-cyrillic", "text": "Привет, мне нужна помощь", "expected_language": "ru", "expected_review_gate": "native_signer_review_recommended"},
+    {"id": "kk-cyrillic", "text": "Сәлеметсіз бе, маған көмек керек", "expected_language": "kk", "expected_review_gate": "native_signer_review_recommended"},
+    {"id": "en-latin", "text": "Please help me", "expected_language": "en", "expected_review_gate": "native_signer_review_recommended"},
+    {"id": "mixed-script", "text": "Мен need көмек", "expected_language": "kk", "expected_review_gate": "native_signer_review_required"},
+    {"id": "kk-latin", "text": "Salam men komek kerek", "expected_language": "kk", "expected_review_gate": "native_signer_review_required"},
+    {"id": "dactyl-fallback", "text": "ZXQJ", "expected_language": "en", "expected_review_gate": "native_signer_review_required"}
+  ]
+}

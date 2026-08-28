@@ -22,7 +22,9 @@ from .ai_video_brief import build_ai_video_batch_brief, build_ai_video_brief
 from .asr import AsrUnavailable, FasterWhisperAsr
 from .lexicon import load_default_lexicon
 from .lexicon import default_lexicon_path
+from .identity import OIDCReviewAdapter
 from .planner import SignPlanner
+from .platform_adapters import LanguageRoutingAdapter, normalize_platform_locale
 from .preview_video import PreviewVideoUnavailable
 from .preview_video import build_review_video
 from .settings import get_settings
@@ -58,12 +60,22 @@ SUPPORTED_RENDERED_VIDEO_TYPES = {"video/mp4": ".mp4"}
 
 class TextTranslateRequest(BaseModel):
     text: str = Field(min_length=1, max_length=5000)
-    language: Literal["ru", "kk", "en"] | None = None
+    language: str | None = None
 
     @field_validator("text")
     @classmethod
     def normalize_visible_text(cls, value: str) -> str:
         return normalize_text(value)
+
+    @field_validator("language")
+    @classmethod
+    def normalize_language_alias(cls, value: str | None) -> str | None:
+        normalized = normalize_platform_locale(value)
+        if value is not None and normalized is None and str(value).strip().lower() not in {
+            "", "auto", "detect", "detect_language", "unknown", "mixed"
+        }:
+            raise ValueError("language must resolve to kk, ru, en, or auto")
+        return normalized
 
 
 class FeedbackRequest(BaseModel):
@@ -508,6 +520,17 @@ def _plan_response(text: str, input_type: str, language_hint: str | None = None)
     plan = planner.plan(text, language_hint=language_hint)
     response = plan.to_dict()
     metadata = dict(response.get("metadata") or {})
+    routing = LanguageRoutingAdapter(
+        mode=get_settings().qazcompute_language_routing_mode,
+        endpoint=get_settings().qazcompute_language_routing_endpoint,
+        api_key=get_settings().qazcompute_language_routing_api_key,
+        timeout_seconds=get_settings().qazcompute_language_routing_timeout_seconds,
+    ).route(text, plan.language)
+    metadata["platform_integration"] = {
+        "language_routing": routing,
+        "sign_plan_authority": "local_qsign",
+        "review_authority": "local_qsign",
+    }
     try:
         job_id = db.record_translation_job(plan, input_type=input_type)
     except Exception as exc:  # pragma: no cover - operational fallback path
@@ -710,6 +733,19 @@ def _clear_review_cookie(response: Response) -> None:
 
 
 def require_review_access(request: Request, *, allowed_roles: set[str] | None = None) -> dict[str, str]:
+    if request.headers.get("authorization"):
+        identity = OIDCReviewAdapter(
+            mode=get_settings().identity_mode,
+            issuer=get_settings().identity_issuer,
+            audience=get_settings().identity_audience,
+            provider_accepted=get_settings().identity_provider_accepted,
+        )
+        # QSign never parses a bearer token locally.  The provider-facing
+        # server adapter is intentionally unavailable until its acceptance
+        # record exists, preventing a token header from bypassing review.
+        if identity.mode != "active" or not identity.provider_accepted:
+            raise HTTPException(status_code=403, detail="Central identity is not active")
+        raise HTTPException(status_code=503, detail="Central identity verifier is not configured")
     if not settings.review_token:
         raise HTTPException(status_code=503, detail="Review API is not configured")
     supplied = request.headers.get("x-qsign-review-token", "")

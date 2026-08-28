@@ -1,0 +1,40 @@
+{
+  "schema_version": "qsign-platform-integration-v1",
+  "project_id": "qsign-translator",
+  "owner": "qdev",
+  "state": "shadow-ready",
+  "shared_contracts": {
+    "language_routing": {
+      "profile": "qsign-language-routing.v1",
+      "canonical_locales": ["kk", "ru", "en"],
+      "legacy_aliases": ["kz", "rus", "eng", "kazakh", "russian", "english"],
+      "transport": "qazstack-approved-configured-endpoint",
+      "payload": "anonymized-language-features-only",
+      "authoritative_result": "local_qsign",
+      "accepted_modes": ["disabled", "shadow", "hybrid"],
+      "forbidden_input": ["audio", "video", "raw_gesture_data", "review_payload", "shared_memory_data"]
+    },
+    "source_normalization": {
+      "allowed_fields": ["id", "url", "language", "status", "license"],
+      "forbidden_data": ["datasets", "weights", "raw_clips", "media"]
+    },
+    "reviewed_activity_evidence": {
+      "allowed_fields": ["activity_id", "activity_type", "status", "occurred_at"],
+      "forbidden_data": ["task_text", "reviewer_identity", "sessions", "tokens", "notes", "biometrics", "video"]
+    },
+    "asset_evidence": {
+      "allowed_fields": ["asset_id", "source_id", "rights_status", "license", "derivative_of"],
+      "forbidden_data": ["raw_signer_media", "review_media", "uploads", "biometric_or_likeness_data"]
+    },
+    "identity": {
+      "state": "documented",
+      "issuer": "https://id.qdev.run",
+      "required_flow": "authorization_code_pkce",
+      "role_mapping": "deny_by_default",
+      "local_review_protection": "remains_active_until_provider_acceptance",
+      "required_acceptance": ["isolated_staging", "production_client", "exact_callback_logout_uris", "reviewer_role", "revoke_logout_flow"]
+    }
+  },
+  "local_specialization": ["sign_plan", "dactyl_fallback", "review_workflow", "video_brief"],
+  "promotion_requirements": ["provider_capability_acceptance", "goldset_non_regression", "runtime_passport", "public_contract_verification"]
+}
