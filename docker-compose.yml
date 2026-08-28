@@ -1,6 +1,9 @@
 services:
   api:
-    build: .
+    build:
+      context: .
+      args:
+        QSIGN_RELEASE_SHA: ${QSIGN_RELEASE_SHA:-}
     env_file:
       - .env
     ports:

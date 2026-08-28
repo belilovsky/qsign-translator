@@ -9,7 +9,6 @@ try:
     from fastapi.testclient import TestClient
 
     from qsign_translator.api import app
-    from qsign_translator.preview_video import PreviewVideoUnavailable
 except Exception as exc:  # pragma: no cover - optional API extra
     TestClient = None
     import_error = exc

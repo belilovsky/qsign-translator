@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import json
 import os
 import re
 import secrets
@@ -38,8 +39,6 @@ try:
     from pydantic import BaseModel, Field, field_validator
 except ImportError as exc:  # pragma: no cover - import guard for optional API extra
     raise RuntimeError("Install qsign-translator[api] to run the FastAPI service") from exc
-
-import json
 
 MAX_AUDIO_BYTES = 50 * 1024 * 1024
 MAX_RENDERED_VIDEO_BYTES = 250 * 1024 * 1024
